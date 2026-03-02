@@ -8,19 +8,6 @@
 		}
 	},
 	"mcp": {
-		"browser-automation": {
-			"type": "local",
-			"command": [
-				"docker",
-				"run",
-				"-i",
-				"--rm",
-				"--network",
-				"host",
-				"mcp/playwright"
-			],
-			"enabled": true
-		},
 		"tech-docs": {
 			"type": "remote",
 			"url": "https://mcp.context7.com/mcp",
@@ -52,11 +39,6 @@
 			},
 			"enabled": true
 		},
-		"jam": {
-			"type": "remote",
-			"url": "https://mcp.jam.dev/mcp",
-			"enabled": false
-		},
 		"code-examples": {
 			"type": "remote",
 			"url": "https://mcp.grep.app",
@@ -65,14 +47,6 @@
 		"github": {
 			"type": "remote",
 			"url": "https://api.githubcopilot.com/mcp/",
-			"enabled": false
-		},
-		"public-data": {
-			"type": "remote",
-			"url": "https://api.datacommons.org/mcp",
-			"headers": {
-				"X-API-Key": "{env:DATACOMMONS_API_KEY}"
-			},
 			"enabled": false
 		},
 		"repository-context": {
@@ -86,25 +60,17 @@
 				"enabled": false
 		}
 	},
-	"formatter": {
-	},
 	"keybinds": {
 		"command_list": "ctrl+l"
 	},
 	"plugin": [
 		"envsitter-guard@latest",
 		"@slkiser/opencode-quota"
-		// "opencode-mystatus",
-		// "@tarquinen/opencode-dcp@latest",
-		// "opencode-pty",
-		// "oh-my-opencode@latest"
 	],
 	// "experimental": {
 	// 	"quotaToast": {
 	// 		"enabledProviders": [
 	// 			"copilot",
-	// 			// "openai",
-	// 			// "google-antigravity"
 	// 		]
 	// 	}
 	// }

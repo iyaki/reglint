@@ -1,15 +1,15 @@
 {
   "version": 1,
   "skills": {
-    "frontend-design": {
-      "source": "anthropics/skills",
+    "code-search": {
+      "source": "iyaki/opencode-base-template",
       "sourceType": "github",
-      "computedHash": "063a0e6448123cd359ad0044cc46b0e490cc7964d45ef4bb9fd842bd2ffbca67"
+      "computedHash": "731193d39a9977a3b65af35c126ab701101f728a4e086d69c70cf947db1badcf"
     },
-    "reddit": {
-      "source": "resciencelab/opc-skills",
+    "shell-command": {
+      "source": "iyaki/opencode-base-template",
       "sourceType": "github",
-      "computedHash": "cb78c8355aba2e3334289c99e7ed06fb2d38a1defb17a649f5082611939a162d"
+      "computedHash": "8d55f17079e56f91df0af691bd5f6712f5fc53fef2f6a8d7fd6143ea39645b21"
     },
     "skill-creator": {
       "source": "anthropics/skills",
