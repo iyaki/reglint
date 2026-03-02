@@ -1,0 +1,99 @@
+{
+	"name": "Some project",
+	"image": "mcr.microsoft.com/devcontainers/universal:5-linux",
+
+	"runArgs": [
+		"--env-file", "${localWorkspaceFolder}/.env",
+		"--userns=keep-id" // For podman users, to avoid permission issues with bind mountson on rootless mode.
+	],
+
+	"mounts": [
+		// OpenCode config and data - https://opencode.ai/docs/cli/#configuration-and-data
+		{ "source": "${localEnv:HOME}/.opencode", "target": "/home/codespace/.local/share/opencode", "type": "bind" },
+		{ "source": "${localEnv:HOME}/.local/state/opencode", "target": "/home/codespace/.local/state/opencode", "type": "bind" },
+		// Global vercel skills config
+		{ "source": "${localWorkspaceFolder}/.agents/.skill-lock.json", "target": "/home/codespace/.agents/.skill-lock.json", "type": "bind" },
+		// GitHub CLI config
+		{ "source": "${localEnv:HOME}/.config/gh/", "target": "/home/codespace/.config/gh/", "type": "bind" },
+		// Uncomment if you have an (PHP) Intelephense license and want to use it in the container (for opencode and oraios/serena)
+		// For usage with serena mcp uncomment also on opencode.json configuration file
+		// { "source": "${localEnv:HOME}/intelephense/licence.txt", "target": "/home/codespace/intelephense/licence.txt", "type": "bind" }
+	],
+
+	"remoteEnv": {
+		// https://opencode.ai/docs/cli/#environment-variables
+		"OPENCODE_EXPERIMENTAL_LSP_TOOL": "true",
+		"OPENCODE_EXPERIMENTAL_LSP_TY": "true",
+		"OPENCODE_ENABLE_EXPERIMENTAL_MODELS": "true",
+		"OPENCODE_DISABLE_AUTOCOMPACT": "true",
+		"OPENCODE_DISABLE_CLAUDE_CODE": "true",
+		"OPENCODE_DISABLE_FILETIME_CHECK": "true",
+		"OPENCODE_EXPERIMENTAL_DISABLE_FILEWATCHER": "true",
+		"OPENCODE_EXPERIMENTAL_MARKDOWN": "true",
+		"OPENCODE_EXPERIMENTAL_PLAN_MODE": "true",
+		"OPENCODE_EXPERIMENTAL_ICON_DISCOVERY": "true",
+		"OPENCODE_EXPERIMENTAL_BASH_DEFAULT_TIMEOUT_MS": "300000",
+		// "PLAYWRIGHT_DOCKER_IMAGE": "mcr.microsoft.com/playwright:v1.58.2-noble",
+		"PATH": "${containerEnv:PATH}:scripts",
+		// For usage with /editr command from OpenCode - https://opencode.ai/docs/tui/#editor-setup
+		"EDITOR": "code --wait",
+		"VISUAL": "code --wait",
+		"XDG_CONFIG_HOME": "/home/codespace/.config",
+    "XDG_CACHE_HOME": "/home/codespace/.cache",
+    "XDG_DATA_HOME": "/home/codespace/.local/share",
+    "XDG_STATE_HOME": "/home/codespace/.local/state"
+	},
+
+	"features": {
+		"ghcr.io/devcontainers/features/common-utils:2": {
+			"installZsh": false,
+			"installOhMyZsh": false,
+			"installOhMyZshConfig": false,
+			"username": "automatic"
+		},
+		// "ghcr.io/devcontainers/features/git:1": {
+		// 	"version": "latest"
+		// },
+		"ghcr.io/devcontainers-extra/features/shfmt:1": {},
+		"ghcr.io/devcontainers-extra/features/npm-packages:1": {
+			"packages": "agent-browser,repomix"
+			// "packages": "opencode-ai,@github/copilot,@google/gemini-cli,@covibes/zeroshot,agent-browser,repomix"
+		},
+		"ghcr.io/devcontainers-extra/features/uv:1": {},
+		"ghcr.io/devcontainers-extra/features/opencode:1": {},
+		"ghcr.io/iyaki/devcontainer-features/opencode-ralph:1": {}
+	},
+
+	"customizations": {
+		"vscode": {
+			"extensions": [
+				"sst-dev.opencode",
+				"editorconfig.editorconfig",
+				"nhoizey.gremlins",
+				"streetsidesoftware.code-spell-checker-spanish",
+				"streetsidesoftware.code-spell-checker",
+				"GitHub.copilot-chat"
+			]
+		}
+	},
+
+	"initializeCommand": "${localWorkspaceFolder}/.devcontainer/setup.sh",
+	"postCreateCommand": {
+		"Setup agent browser": "agent-browser install --with-deps"
+		// "Pull playwright image": "docker pull $PLAYWRIGHT_DOCKER_IMAGE"
+	},
+
+	// Use 'forwardPorts' to make a list of ports inside the container available locally.
+	"forwardPorts": [
+		// Add your own ports here
+		4096
+	],
+	"portsAttributes": {
+		"4096": {
+			"label": "Default OpenCode server"
+		}
+	}
+
+	// Uncomment to connect as root instead. More info: https://aka.ms/dev-containers-non-root.
+	// "remoteUser": "root"
+}
