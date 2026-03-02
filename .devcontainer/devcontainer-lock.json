@@ -1,0 +1,34 @@
+{
+  "features": {
+    "ghcr.io/devcontainers-extra/features/npm-packages:1": {
+      "version": "1.0.1",
+      "resolved": "ghcr.io/devcontainers-extra/features/npm-packages@sha256:0851cc312204f4044f22230986134026409565f9e632d8ab2b8c639e81cedd7c",
+      "integrity": "sha256:0851cc312204f4044f22230986134026409565f9e632d8ab2b8c639e81cedd7c"
+    },
+    "ghcr.io/devcontainers-extra/features/opencode:1": {
+      "version": "1.0.0",
+      "resolved": "ghcr.io/devcontainers-extra/features/opencode@sha256:7c15617cc9e501bc218097adc4910a00f81ed52fc5a5eef463aa1cc01317f9ba",
+      "integrity": "sha256:7c15617cc9e501bc218097adc4910a00f81ed52fc5a5eef463aa1cc01317f9ba"
+    },
+    "ghcr.io/devcontainers-extra/features/shfmt:1": {
+      "version": "1.0.2",
+      "resolved": "ghcr.io/devcontainers-extra/features/shfmt@sha256:9d87bdd69e7b37554488291e79b37a40d1e18beddfa151454570d5bf72423df8",
+      "integrity": "sha256:9d87bdd69e7b37554488291e79b37a40d1e18beddfa151454570d5bf72423df8"
+    },
+    "ghcr.io/devcontainers-extra/features/uv:1": {
+      "version": "1.0.2",
+      "resolved": "ghcr.io/devcontainers-extra/features/uv@sha256:1ac5b9f17a9e9e745933d0ac2ecf758e06ed3da4423cd22c94cce4d482fd2dd8",
+      "integrity": "sha256:1ac5b9f17a9e9e745933d0ac2ecf758e06ed3da4423cd22c94cce4d482fd2dd8"
+    },
+    "ghcr.io/devcontainers/features/common-utils:2": {
+      "version": "2.5.6",
+      "resolved": "ghcr.io/devcontainers/features/common-utils@sha256:9ddad2e4f71f172cc0bf28461e70948218f70f8ad6cd936b5c8dbe0a8acf6b45",
+      "integrity": "sha256:9ddad2e4f71f172cc0bf28461e70948218f70f8ad6cd936b5c8dbe0a8acf6b45"
+    },
+    "ghcr.io/iyaki/devcontainer-features/opencode-ralph:1": {
+      "version": "1.0.0",
+      "resolved": "ghcr.io/iyaki/devcontainer-features/opencode-ralph@sha256:5572c55ebc70876a65bd795d0e7c673bdc933e8a7570509f8914123e484b2a11",
+      "integrity": "sha256:5572c55ebc70876a65bd795d0e7c673bdc933e8a7570509f8914123e484b2a11"
+    }
+  }
+}
