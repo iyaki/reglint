@@ -1,0 +1,165 @@
+# Testing and Validations
+
+## Overview
+
+### Purpose
+
+- Define validation rules for configuration, rules, and CLI inputs.
+- Establish the automated test strategy for correctness and regression safety.
+- Keep outputs consistent across console, JSON, and SARIF formats.
+
+### Goals
+
+- Fail fast on invalid configuration or rule definitions with clear errors.
+- Ensure validation happens before any scan starts.
+- Provide deterministic outputs so tests and CI are stable.
+- Cover core workflows and edge cases with unit and integration tests.
+
+### Non-Goals
+
+- Performance benchmarking or load testing.
+- Formal verification or proof of correctness.
+- Defining CI pipelines beyond required test commands.
+
+### Scope
+
+- CLI-only execution (no services or APIs).
+- Validation and testing of local scans, outputs, and exit codes.
+- Local quality tooling (linting, security, architecture guardrails) and git hooks.
+
+## Quality Tooling
+
+### Tooling set
+
+- `golangci-lint` (lint aggregator)
+- `govulncheck` (Go vulnerability scanner)
+- `nancy` (dependency vulnerability scan)
+- `go-arch-lint` (architecture guardrails)
+- `gofmt` (formatting)
+- `lefthook` (git hooks runner)
+
+### Local installation
+
+```bash
+go install github.com/golangci/golangci-lint/v2/cmd/golangci-lint@v2.10.0
+go install golang.org/x/vuln/cmd/govulncheck@latest
+go install github.com/sonatype-nexus-community/nancy@latest
+go install github.com/fe3dback/go-arch-lint@latest
+go install github.com/evilmartians/lefthook/v2@v2.1.2
+```
+
+### Local usage
+
+Full suite:
+
+```bash
+bash scripts/quality.sh all
+```
+
+Install git hooks:
+
+```bash
+lefthook install
+```
+
+Targeted runs:
+
+```bash
+bash scripts/quality.sh format
+bash scripts/quality.sh lint
+bash scripts/quality.sh security
+bash scripts/quality.sh arch
+bash scripts/quality.sh gofmt
+bash scripts/quality.sh golangci
+bash scripts/quality.sh govulncheck
+bash scripts/quality.sh nancy
+bash scripts/quality.sh go-arch-lint
+```
+
+### Configuration files
+
+- `/.golangci.yml` - lint configuration
+- `/.go-arch-lint.yml` - architecture rules
+- `/.tool-versions` - pinned golangci-lint version
+- `/lefthook.yml` - git hook configuration
+
+### CI coverage
+
+- `/.github/workflows/quality.yml` runs lint, security, and architecture checks.
+- `/.github/workflows/quality-local.yml` installs all tools and runs `scripts/quality.sh all` on demand.
+
+## Validation Rules
+
+### RuleSet (configuration)
+
+- YAML must parse successfully.
+- `rules` is required and must be a non-empty list.
+- `include` and `exclude` must be lists of strings when set.
+- `failOn` must be one of `error|warning|notice|info` when set.
+- `concurrency` must be a positive integer when set.
+
+### Rule (per entry)
+
+- `message` is required and must be non-empty.
+- `regex` is required and must compile with RE2.
+- `severity` must be one of `error|warning|notice|info` when set.
+- `paths` and `exclude` must be lists of strings when set.
+
+### CLI (analyze)
+
+- Unknown commands exit with code `1` and show a single error message.
+- `--config` must point to a readable file.
+- `--format` must be one of `console|json|sarif` (per formatter specs).
+- Output paths must be writable when `--out-*` flags are set.
+
+### Runtime scan
+
+- Invalid YAML or regex patterns exit with code `1`.
+- File read errors are recorded and scanning continues.
+- Matches at or above `failOn` return exit code `2`.
+- Output writer errors exit with code `1`.
+
+## Test Strategy
+
+### Unit tests
+
+- Config loader: YAML parsing, defaults, and validation errors.
+- Rule compiler: regex compilation, severity normalization, message templates.
+- Path filtering: include/exclude behavior with doublestar globs.
+- Scan engine: line/column mapping and match aggregation.
+
+### Integration tests
+
+- CLI analyze happy path with fixture rules and sample files.
+- Exit code behavior for invalid config, invalid regex, and `failOn` threshold.
+- Output writers produce valid JSON and SARIF.
+
+### Golden tests
+
+- Snapshot console/JSON/SARIF outputs for fixture directories.
+- Keep outputs deterministic by sorting matches by file path, then line, then rule index.
+
+### Regression tests
+
+- Binary and large file skipping behavior.
+- Regex capture group interpolation (`$0`, `$1`, `$$`).
+- Mixed include/exclude rules and per-rule overrides.
+
+## Test Data
+
+- Use a top-level `testdata/` directory with:
+  - `rules/` for sample RuleSet files.
+  - `fixtures/` for code samples and edge cases.
+  - `golden/` for expected outputs.
+
+## Test Execution
+
+- `go test ./...` runs unit and integration tests.
+- Optional: `UPDATE_GOLDEN=1 go test ./...` to refresh golden files.
+- Unit tests must enforce line coverage > 90% (exclude integration and testdata packages).
+
+## Verifications
+
+- `go test ./...` passes.
+- `regex-checker analyze --config testdata/rules/example.yaml ./testdata/fixtures` exits with `0` when below `failOn`.
+- `regex-checker analyze --config testdata/rules/fail.yaml ./testdata/fixtures` exits with `2` when above `failOn`.

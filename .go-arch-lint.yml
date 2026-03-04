@@ -1,0 +1,56 @@
+version: 3
+workdir: .
+allow:
+  ignoreNotFoundComponents: true
+
+components:
+  cmd:
+    in:
+      - cmd/**
+  cli:
+    in:
+      - internal/cli/**
+  config:
+    in:
+      - internal/config/**
+  rules:
+    in:
+      - internal/rules/**
+  scan:
+    in:
+      - internal/scan/**
+  io:
+    in:
+      - internal/io/**
+  output:
+    in:
+      - internal/output/**
+
+commonComponents:
+  - config
+  - rules
+  - io
+
+deps:
+  cmd:
+    anyProjectDeps: true
+  cli:
+    mayDependOn:
+      - config
+      - rules
+      - scan
+      - output
+      - io
+  scan:
+    mayDependOn:
+      - rules
+      - io
+  output:
+    mayDependOn:
+      - rules
+      - scan
+  config:
+    mayDependOn:
+      - rules
+  rules: {}
+  io: {}

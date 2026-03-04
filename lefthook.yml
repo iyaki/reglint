@@ -1,0 +1,16 @@
+assert_lefthook_installed: true
+
+pre-commit:
+  parallel: true
+  jobs:
+    - name: gofmt
+      run: bash scripts/quality.sh gofmt
+      stage_fixed: true
+    - name: golangci-lint
+      run: bash scripts/quality.sh golangci
+    - name: govulncheck
+      run: bash scripts/quality.sh govulncheck
+    - name: nancy
+      run: bash scripts/quality.sh nancy
+    - name: go-arch-lint
+      run: bash scripts/quality.sh go-arch-lint

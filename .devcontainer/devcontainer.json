@@ -1,5 +1,5 @@
 {
-	"name": "Some project",
+	"name": "Regex Checker Dev Container",
 	"image": "mcr.microsoft.com/devcontainers/universal:5-linux",
 
 	"runArgs": [
@@ -9,12 +9,28 @@
 
 	"mounts": [
 		// OpenCode config and data - https://opencode.ai/docs/cli/#configuration-and-data
-		{ "source": "${localEnv:HOME}/.opencode", "target": "/home/codespace/.local/share/opencode", "type": "bind" },
-		{ "source": "${localEnv:HOME}/.local/state/opencode", "target": "/home/codespace/.local/state/opencode", "type": "bind" },
+		{
+			"source": "${localEnv:HOME}/.opencode",
+			"target": "/home/codespace/.local/share/opencode",
+			"type": "bind"
+		},
+		{
+			"source": "${localEnv:HOME}/.local/state/opencode",
+			"target": "/home/codespace/.local/state/opencode",
+			"type": "bind"
+		},
 		// Global vercel skills config
-		{ "source": "${localWorkspaceFolder}/.agents/.skill-lock.json", "target": "/home/codespace/.agents/.skill-lock.json", "type": "bind" },
+		{
+			"source": "${localWorkspaceFolder}/.agents/.skill-lock.json",
+			"target": "/home/codespace/.agents/.skill-lock.json",
+			"type": "bind"
+		},
 		// GitHub CLI config
-		{ "source": "${localEnv:HOME}/.config/gh/", "target": "/home/codespace/.config/gh/", "type": "bind" },
+		{
+			"source": "${localEnv:HOME}/.config/gh/",
+			"target": "/home/codespace/.config/gh/",
+			"type": "bind"
+		}
 		// Uncomment if you have an (PHP) Intelephense license and want to use it in the container (for opencode and oraios/serena)
 		// For usage with serena mcp uncomment also on opencode.json configuration file
 		// { "source": "${localEnv:HOME}/intelephense/licence.txt", "target": "/home/codespace/intelephense/licence.txt", "type": "bind" }
@@ -34,14 +50,14 @@
 		"OPENCODE_EXPERIMENTAL_ICON_DISCOVERY": "true",
 		"OPENCODE_EXPERIMENTAL_BASH_DEFAULT_TIMEOUT_MS": "300000",
 		// "PLAYWRIGHT_DOCKER_IMAGE": "mcr.microsoft.com/playwright:v1.58.2-noble",
-		"PATH": "${containerEnv:PATH}:scripts",
+		"PATH": "${containerEnv:PATH}:scripts:${containerEnv:GOPATH}/bin",
 		// For usage with /editr command from OpenCode - https://opencode.ai/docs/tui/#editor-setup
 		"EDITOR": "code --wait",
 		"VISUAL": "code --wait",
 		"XDG_CONFIG_HOME": "/home/codespace/.config",
-    "XDG_CACHE_HOME": "/home/codespace/.cache",
-    "XDG_DATA_HOME": "/home/codespace/.local/share",
-    "XDG_STATE_HOME": "/home/codespace/.local/state"
+		"XDG_CACHE_HOME": "/home/codespace/.cache",
+		"XDG_DATA_HOME": "/home/codespace/.local/share",
+		"XDG_STATE_HOME": "/home/codespace/.local/state"
 	},
 
 	"features": {
@@ -50,6 +66,9 @@
 			"installOhMyZsh": false,
 			"installOhMyZshConfig": false,
 			"username": "automatic"
+		},
+		"ghcr.io/devcontainers/features/go:1": {
+			"version": "1.25"
 		},
 		// "ghcr.io/devcontainers/features/git:1": {
 		// 	"version": "latest"
@@ -70,7 +89,6 @@
 				"sst-dev.opencode",
 				"editorconfig.editorconfig",
 				"nhoizey.gremlins",
-				"streetsidesoftware.code-spell-checker-spanish",
 				"streetsidesoftware.code-spell-checker",
 				"GitHub.copilot-chat"
 			]
@@ -79,8 +97,10 @@
 
 	"initializeCommand": "${localWorkspaceFolder}/.devcontainer/setup.sh",
 	"postCreateCommand": {
-		"Setup agent browser": "agent-browser install --with-deps"
-		// "Pull playwright image": "docker pull $PLAYWRIGHT_DOCKER_IMAGE"
+		"Install npm packages": "npm install",
+		"Setup agent browser": "agent-browser install --with-deps",
+		"Install go tools": "/bin/bash .devcontainer/install-go-tools.sh",
+		"Setup lefthook": "lefthook install"
 	},
 
 	// Use 'forwardPorts' to make a list of ports inside the container available locally.
