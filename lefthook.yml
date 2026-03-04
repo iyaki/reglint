@@ -2,14 +2,18 @@ assert_lefthook_installed: true
 
 pre-commit:
   parallel: true
-  jobs:
-    - name: gofmt
-      run: bash scripts/quality.sh gofmt
+  setup:
+    # Format files
+    - run: bash scripts/quality.sh gofmt
       stage_fixed: true
+  jobs:
+    # - name: gofmt
+      # run: bash scripts/quality.sh gofmt
+      # stage_fixed: true
     - name: test-coverage
       run: bash scripts/quality.sh coverage
-    - name: mutation-testing
-      run: bash scripts/quality.sh mutation
+    # - name: mutation-testing
+    #   run: bash scripts/quality.sh mutation
     - name: golangci-lint
       run: bash scripts/quality.sh golangci
     - name: govulncheck

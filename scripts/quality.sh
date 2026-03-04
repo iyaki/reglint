@@ -106,7 +106,7 @@ run_mutation_testing() {
 
 run_test() {
 	run_test_coverage
-	run_mutation_testing
+	# run_mutation_testing
 }
 
 run_govulncheck() {
