@@ -110,7 +110,7 @@
 ### 4.1 Scan engine
 
 - [x] Walk filesystem roots and apply include/exclude glob filtering.
-- [ ] Skip files exceeding `maxFileSizeBytes` or binary detection (per core spec).
+- [x] Skip files exceeding `maxFileSizeBytes` or binary detection (per core spec).
 - [ ] Capture matches with 1-based line/column rune indices.
 - [x] Add scan result data models (`Match`, `ScanStats`, `ScanResult`) in `internal/scan`.
 - [ ] Aggregate `ScanResult` with deterministic ordering.
@@ -183,6 +183,7 @@
 - 2026-03-04: `go test ./internal/output -run TestWriteJSONNoMatches` - pass.
 - 2026-03-04: `go test ./internal/output` - pass.
 - 2026-03-04: `go test ./internal/scan -run TestCollectFilesFiltersByIncludeExclude` - pass.
+- 2026-03-04: `go test ./internal/scan` - pass.
 - 2026-03-04: `go test ./...` - pass.
 - 2026-03-04: `go test ./internal/cli -run TestBuildScanRequest` - pass.
 - 2026-03-04: Read `specs/cli-analyze.md` - documented flags, validations, exit codes, and output rules.

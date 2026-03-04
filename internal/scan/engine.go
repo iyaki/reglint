@@ -2,6 +2,7 @@ package scan
 
 import (
 	"errors"
+	"io"
 	"os"
 	"path/filepath"
 	"sort"
@@ -10,8 +11,14 @@ import (
 	"github.com/bmatcuk/doublestar/v4"
 )
 
-func collectFiles(roots []string, include []string, exclude []string) ([]string, error) {
+const (
+	binaryProbeSize = 8000
+	nullByte        = 0x00
+)
+
+func collectFiles(roots []string, include []string, exclude []string, maxFileSizeBytes int64) ([]string, int, error) {
 	var files []string
+	skipped := 0
 
 	for _, root := range roots {
 		root = filepath.Clean(root)
@@ -32,23 +39,28 @@ func collectFiles(roots []string, include []string, exclude []string) ([]string,
 				return nil
 			}
 
-			match, err := matchesPath(relPath, include, exclude)
+			selected, fileSkipped, err := evaluateFile(path, relPath, entry, include, exclude, maxFileSizeBytes)
 			if err != nil {
 				return err
 			}
-			if match {
+			if fileSkipped {
+				skipped++
+
+				return nil
+			}
+			if selected {
 				files = append(files, relPath)
 			}
 
 			return nil
 		}); err != nil {
-			return nil, err
+			return nil, 0, err
 		}
 	}
 
 	sort.Strings(files)
 
-	return files, nil
+	return files, skipped, nil
 }
 
 func matchesPath(path string, include []string, exclude []string) (bool, error) {
@@ -94,4 +106,63 @@ func normalizePatterns(patterns []string) []string {
 	}
 
 	return normalized
+}
+
+func evaluateFile(
+	path string,
+	relPath string,
+	entry os.DirEntry,
+	include []string,
+	exclude []string,
+	maxFileSizeBytes int64,
+) (bool, bool, error) {
+	match, err := matchesPath(relPath, include, exclude)
+	if err != nil {
+		return false, false, err
+	}
+	if !match {
+		return false, false, nil
+	}
+
+	skip, err := shouldSkipFile(path, entry, maxFileSizeBytes)
+	if err != nil {
+		return false, false, err
+	}
+	if skip {
+		return false, true, nil
+	}
+
+	return true, false, nil
+}
+
+func shouldSkipFile(path string, entry os.DirEntry, maxFileSizeBytes int64) (bool, error) {
+	info, err := entry.Info()
+	if err != nil {
+		return false, err
+	}
+	if maxFileSizeBytes > 0 && info.Size() > maxFileSizeBytes {
+		return true, nil
+	}
+
+	file, err := os.Open(path)
+	if err != nil {
+		return false, err
+	}
+
+	buffer := make([]byte, binaryProbeSize)
+	read, readErr := file.Read(buffer)
+	closeErr := file.Close()
+	if closeErr != nil {
+		return false, closeErr
+	}
+	if readErr != nil && !errors.Is(readErr, io.EOF) {
+		return false, readErr
+	}
+	for _, value := range buffer[:read] {
+		if value == nullByte {
+			return true, nil
+		}
+	}
+
+	return false, nil
 }
