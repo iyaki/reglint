@@ -67,6 +67,12 @@ func validateRule(rule Rule, index int) error {
 	if strings.TrimSpace(rule.Regex) == "" {
 		return fmt.Errorf("rule %d regex is required", index+1)
 	}
+	if err := validateStringList(rule.Paths, "paths", index); err != nil {
+		return err
+	}
+	if err := validateStringList(rule.Exclude, "exclude", index); err != nil {
+		return err
+	}
 	if _, err := regexp.Compile(rule.Regex); err != nil {
 		return fmt.Errorf("rule %d regex is invalid: %w", index+1, err)
 	}
@@ -84,4 +90,14 @@ func isValidSeverity(value string) bool {
 	default:
 		return false
 	}
+}
+
+func validateStringList(values []string, field string, index int) error {
+	for _, value := range values {
+		if strings.TrimSpace(value) == "" {
+			return fmt.Errorf("rule %d %s must not contain empty values", index+1, field)
+		}
+	}
+
+	return nil
 }

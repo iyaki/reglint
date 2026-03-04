@@ -8,11 +8,11 @@ import (
 
 // Rule represents a single regex rule entry.
 type Rule struct {
-	Message  string   `yaml:"message"`
-	Regex    string   `yaml:"regex"`
-	Severity string   `yaml:"severity,omitempty"`
-	Paths    []string `yaml:"paths,omitempty"`
-	Exclude  []string `yaml:"exclude,omitempty"`
+	Message  string     `yaml:"message"`
+	Regex    string     `yaml:"regex"`
+	Severity string     `yaml:"severity,omitempty"`
+	Paths    StringList `yaml:"paths,omitempty"`
+	Exclude  StringList `yaml:"exclude,omitempty"`
 }
 
 func (r Rule) toRulesRule() rules.Rule {
@@ -21,12 +21,12 @@ func (r Rule) toRulesRule() rules.Rule {
 		severity = "warning"
 	}
 
-	paths := append([]string{}, r.Paths...)
+	paths := append([]string{}, []string(r.Paths)...)
 	if len(paths) == 0 {
 		paths = []string{"**/*"}
 	}
 
-	exclude := append([]string{}, r.Exclude...)
+	exclude := append([]string{}, []string(r.Exclude)...)
 
 	return rules.Rule{
 		Message:  r.Message,

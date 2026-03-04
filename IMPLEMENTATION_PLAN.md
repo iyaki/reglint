@@ -158,6 +158,7 @@
 - [x] CLI routing for `analyze` command.
 - [x] Init command parsing and overwrite behavior.
 - [x] Validate output paths are writable for JSON/SARIF flags.
+- [x] Validate rule paths/exclude lists reject invalid YAML types.
 
 ### 5.2 Integration + golden tests
 
@@ -235,6 +236,7 @@
 - 2026-03-04: `go test ./internal/cli` - pass.
 - 2026-03-04: `go test ./internal/cli -run TestBuildScanRequestUsesRuleSetConcurrencyWhenNotSetInCLI` - pass.
 - 2026-03-04: `go test ./internal/cli -run TestBuildScanRequestUsesCLIConcurrencyWhenSet` - pass.
+- 2026-03-04: `go test ./internal/config -run TestLoadRuleSetRejectsRulePathsNotList` - pass.
 
 ## Summary
 

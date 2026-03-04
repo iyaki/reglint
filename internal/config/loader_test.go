@@ -78,6 +78,50 @@ func TestLoadRuleSetRejectsExcludeNonStringItems(t *testing.T) {
 	}
 }
 
+func TestLoadRuleSetRejectsRulePathsNotList(t *testing.T) {
+	t.Parallel()
+
+	path := writeConfigFile(t, "rules:\n  - message: 'hello'\n    regex: 'world'\n    paths: 'src/**'\n")
+
+	_, err := config.LoadRuleSet(path)
+	if err == nil {
+		t.Fatal("expected error, got nil")
+	}
+}
+
+func TestLoadRuleSetRejectsRulePathsNonStringItems(t *testing.T) {
+	t.Parallel()
+
+	path := writeConfigFile(t, "rules:\n  - message: 'hello'\n    regex: 'world'\n    paths:\n      - 1\n")
+
+	_, err := config.LoadRuleSet(path)
+	if err == nil {
+		t.Fatal("expected error, got nil")
+	}
+}
+
+func TestLoadRuleSetRejectsRuleExcludeNotList(t *testing.T) {
+	t.Parallel()
+
+	path := writeConfigFile(t, "rules:\n  - message: 'hello'\n    regex: 'world'\n    exclude: 'vendor/**'\n")
+
+	_, err := config.LoadRuleSet(path)
+	if err == nil {
+		t.Fatal("expected error, got nil")
+	}
+}
+
+func TestLoadRuleSetRejectsRuleExcludeNonStringItems(t *testing.T) {
+	t.Parallel()
+
+	path := writeConfigFile(t, "rules:\n  - message: 'hello'\n    regex: 'world'\n    exclude:\n      - true\n")
+
+	_, err := config.LoadRuleSet(path)
+	if err == nil {
+		t.Fatal("expected error, got nil")
+	}
+}
+
 func TestLoadRuleSetParsesConfig(t *testing.T) {
 	t.Parallel()
 
