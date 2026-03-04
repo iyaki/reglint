@@ -160,7 +160,7 @@
 - [x] CLI analyze happy path with fixture rules and sample files.
 - [x] Exit code behavior for invalid config and `failOn` threshold.
 - [x] JSON/SARIF output validation and deterministic ordering.
-- [ ] Golden snapshots for console/JSON/SARIF outputs.
+- [x] Golden snapshots for console/JSON/SARIF outputs.
 
 ### 5.3 Quality tooling baseline
 
@@ -186,6 +186,8 @@
 - 2026-03-04: `bash scripts/quality.sh coverage` - pass.
 - 2026-03-04: `go test ./internal/output -run TestWriteJSONNoMatches` - pass.
 - 2026-03-04: `go test ./internal/output` - pass.
+- 2026-03-04: `UPDATE_GOLDEN=1 go test ./internal/output -run TestGolden` - pass.
+- 2026-03-04: `go test ./internal/output -run TestGolden` - pass.
 - 2026-03-04: `go test ./cmd/regex-checker` - pass.
 - 2026-03-04: `go test ./internal/cli` - pass.
 - 2026-03-04: `go test ./internal/output` - pass.

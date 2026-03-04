@@ -1,0 +1,99 @@
+{
+  "version": "2.1.0",
+  "$schema": "https://json.schemastore.org/sarif-2.1.0.json",
+  "runs": [
+    {
+      "tool": {
+        "driver": {
+          "name": "regex-checker",
+          "rules": [
+            {
+              "id": "RC0001",
+              "shortDescription": {
+                "text": "Avoid hardcoded token: $1"
+              }
+            },
+            {
+              "id": "RC0002",
+              "shortDescription": {
+                "text": "Suspicious marker"
+              }
+            }
+          ]
+        }
+      },
+      "results": [
+        {
+          "ruleId": "RC0001",
+          "ruleIndex": 0,
+          "level": "error",
+          "message": {
+            "text": "Avoid hardcoded token: ab"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "a/file.go"
+                },
+                "region": {
+                  "startLine": 3,
+                  "startColumn": 4,
+                  "endLine": 3,
+                  "endColumn": 6
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "RC0002",
+          "ruleIndex": 1,
+          "level": "note",
+          "message": {
+            "text": "Suspicious marker"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "a/file.go"
+                },
+                "region": {
+                  "startLine": 3,
+                  "startColumn": 4,
+                  "endLine": 3,
+                  "endColumn": 8
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "RC0002",
+          "ruleIndex": 1,
+          "level": "warning",
+          "message": {
+            "text": "Suspicious marker"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "b/file.go"
+                },
+                "region": {
+                  "startLine": 2,
+                  "startColumn": 1,
+                  "endLine": 2,
+                  "endColumn": 7
+                }
+              }
+            }
+          ]
+        }
+      ],
+      "columnKind": "unicodeCodePoints"
+    }
+  ]
+}

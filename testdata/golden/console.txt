@@ -1,0 +1,10 @@
+a/file.go
+  ERROR 2:5 Error msg
+  WARN  2:5 Alpha warn
+  WARN  2:5 Zulu warn
+  INFO  10:1 Info msg
+
+b/file.go
+  WARN  2:3 Warn msg
+
+Summary: files=2 skipped=1 matches=5 durationMs=12
