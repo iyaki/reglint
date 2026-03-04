@@ -74,22 +74,22 @@
 ## Phase 3: Config loading + scan request construction
 
 **Goal:** Load rules config, apply precedence, build `ScanRequest`.
-**Status:** Not started
+**Status:** In progress
 **Paths:** `internal/config/`, `internal/rules/`, `internal/scan/`
 **Reference patterns:** `specs/configuration.md`, `specs/regex-rules.md`, `specs/data-model.md`
 
 ### 3.1 Config loader + rule compilation
 
-- [ ] Implement YAML parsing for RuleSet and validation of required fields.
-- [ ] Compile regex rules with RE2 and normalize severity defaults.
-- [ ] Implement message interpolation rules (`$0`, `$1`, `$$`).
-- [ ] Enforce RuleSet defaults for `include`, `exclude`, `failOn`, `concurrency`.
+- [x] Implement YAML parsing for RuleSet and validation of required fields.
+- [x] Compile regex rules with RE2 and normalize severity defaults.
+- [x] Implement message interpolation rules (`$0`, `$1`, `$$`).
+- [x] Enforce RuleSet defaults for `include`, `exclude`, `failOn`, `concurrency`.
 
 ### 3.2 CLI precedence integration
 
-- [ ] Apply CLI overrides for `include`, `exclude`, and `failOn`.
-- [ ] Resolve effective include/exclude lists per rule.
-- [ ] Build `ScanRequest` with roots, rules, include/exclude, max size, concurrency.
+- [x] Apply CLI overrides for `include`, `exclude`, and `failOn`.
+- [x] Resolve effective include/exclude lists per rule.
+- [x] Build `ScanRequest` with roots, rules, include/exclude, max size, concurrency.
 
 **Definition of Done**
 
@@ -112,12 +112,13 @@
 - [ ] Walk filesystem roots and apply include/exclude glob filtering.
 - [ ] Skip files exceeding `maxFileSizeBytes` or binary detection (per core spec).
 - [ ] Capture matches with 1-based line/column rune indices.
+- [x] Add scan result data models (`Match`, `ScanStats`, `ScanResult`) in `internal/scan`.
 - [ ] Aggregate `ScanResult` with deterministic ordering.
 
 ### 4.2 Console output
 
-- [ ] Implement console formatter with grouping by file and summary line.
-- [ ] Ensure `No matches found.` output when no matches.
+- [x] Implement console formatter with grouping by file and summary line.
+- [x] Ensure `No matches found.` output when no matches.
 
 ### 4.3 JSON output
 
@@ -149,7 +150,7 @@
 ### 5.1 Unit tests
 
 - [ ] Config loader defaulting and validation.
-- [ ] Rule compiler regex compilation and message interpolation.
+- [x] Rule compiler regex compilation and message interpolation.
 - [ ] Path filtering include/exclude behavior.
 - [ ] Scan engine line/column mapping and match aggregation.
 - [x] CLI routing for `analyze` command.
@@ -179,6 +180,7 @@
 
 ## Verification Log
 
+- 2026-03-04: `go test ./internal/cli -run TestBuildScanRequest` - pass.
 - 2026-03-04: Read `specs/cli-analyze.md` - documented flags, validations, exit codes, and output rules.
 - 2026-03-04: Read `specs/cli.md` - confirmed CLI command structure and alias requirements.
 - 2026-03-04: Read `specs/core-architecture.md` - captured module layout and scan/output flow.
@@ -187,6 +189,7 @@
 - 2026-03-04: `git log -n 10 -- specs` - reviewed recent spec changes for analyze scope.
 - 2026-03-04: `glob **/*.go` - no Go source files found.
 - 2026-03-04: `glob internal/**`, `glob cmd/**` - no implementation directories found.
+- 2026-03-04: `go test ./internal/rules` - pass.
 - 2026-03-04: Read quality/tooling configs (`scripts/quality.sh`, `.golangci.yml`, `.go-arch-lint.yml`, `lefthook.yml`, `.github/workflows/quality*.yml`) - tooling baseline present.
 - 2026-03-04: `go test ./internal/cli` - pass.
 - 2026-03-04: `go test ./internal/cli` - pass (added analyze routing coverage).
@@ -194,6 +197,12 @@
 - 2026-03-04: `bash scripts/quality.sh all` - pass.
 - 2026-03-04: `go test ./internal/cli` - pass.
 - 2026-03-04: `bash scripts/quality.sh all` - pass.
+- 2026-03-04: `go test ./internal/config` - pass.
+- 2026-03-04: `go test ./...` - pass.
+- 2026-03-04: `go test ./internal/config -run TestRuleSetToRulesDefaultsRulePathsAndExclude` - pass.
+- 2026-03-04: `go test ./internal/config -run TestRuleSetToRulesDefaultsConcurrency` - pass.
+- 2026-03-04: `go test ./internal/scan -run TestScanModelsHoldFields` - pass.
+- 2026-03-04: `go test ./internal/output` - pass.
 
 ## Summary
 
@@ -201,7 +210,7 @@
 | -------------------------------------- | ------------------------------------------------------- |
 | Phase 1: CLI entrypoint + routing      | Complete                                                |
 | Phase 2: Flag parsing + validation     | Complete                                                |
-| Phase 3: Config loading + scan request | Not started                                             |
+| Phase 3: Config loading + scan request | In progress                                             |
 | Phase 4: Scan engine + output writers  | Not started                                             |
 | Phase 5: Tests + validation coverage   | Partially started (tooling baseline + CLI routing test) |
 
