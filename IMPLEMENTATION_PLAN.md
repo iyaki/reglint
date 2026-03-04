@@ -152,7 +152,7 @@
 - [x] Config loader defaulting and validation.
 - [x] Rule compiler regex compilation and message interpolation.
 - [x] Path filtering include/exclude behavior.
-- [ ] Scan engine line/column mapping and match aggregation.
+- [x] Scan engine line/column mapping and match aggregation.
 - [x] CLI routing for `analyze` command.
 
 ### 5.2 Integration + golden tests
@@ -220,6 +220,8 @@
 - 2026-03-04: `go test ./internal/scan -run TestScanModelsHoldFields` - pass.
 - 2026-03-04: `go test ./internal/output` - pass.
 - 2026-03-04: `bash scripts/quality.sh all` - pass.
+- 2026-03-04: `go test ./internal/scan -run TestRunScansFileRoot` - pass.
+- 2026-03-04: `go test ./internal/scan` - pass.
 
 ## Summary
 

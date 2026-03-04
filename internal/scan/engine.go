@@ -3,6 +3,7 @@ package scan
 import (
 	"errors"
 	"io"
+	"io/fs"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -189,6 +190,17 @@ func collectEntries(
 	skipped := 0
 
 	for _, root := range roots {
+		fileEntries, fileSkipped, isFile, err := collectFileEntry(root, include, exclude, maxFileSizeBytes)
+		if err != nil {
+			return nil, 0, err
+		}
+		if isFile {
+			skipped += fileSkipped
+			entries = append(entries, fileEntries...)
+
+			continue
+		}
+
 		files, fileSkipped, err := collectFiles([]string{root}, include, exclude, maxFileSizeBytes)
 		if err != nil {
 			return nil, 0, err
@@ -208,6 +220,48 @@ func collectEntries(
 	})
 
 	return entries, skipped, nil
+}
+
+func collectFileEntry(
+	root string,
+	include []string,
+	exclude []string,
+	maxFileSizeBytes int64,
+) ([]fileEntry, int, bool, error) {
+	info, err := os.Stat(root)
+	if err != nil {
+		return nil, 0, false, err
+	}
+	if info.IsDir() {
+		return nil, 0, false, nil
+	}
+
+	rootDir := filepath.Dir(root)
+	relPath, err := filepath.Rel(rootDir, root)
+	if err != nil {
+		return nil, 0, true, err
+	}
+	relPath = filepath.ToSlash(relPath)
+	entry := fs.FileInfoToDirEntry(info)
+	selected, fileSkipped, err := evaluateFile(
+		root,
+		relPath,
+		entry,
+		include,
+		exclude,
+		maxFileSizeBytes,
+	)
+	if err != nil {
+		return nil, 0, true, err
+	}
+	if fileSkipped {
+		return nil, 1, true, nil
+	}
+	if selected {
+		return []fileEntry{{root: rootDir, relPath: relPath}}, 0, true, nil
+	}
+
+	return nil, 0, true, nil
 }
 
 func compileRules(ruleList []rules.Rule, defaultInclude []string, defaultExclude []string) ([]compiledRule, error) {

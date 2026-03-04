@@ -208,6 +208,41 @@ func TestRunRejectsEmptyInclude(t *testing.T) {
 	}
 }
 
+func TestRunScansFileRoot(t *testing.T) {
+	t.Parallel()
+
+	root := t.TempDir()
+	path := filepath.Join(root, "sample.txt")
+	writeFileWithContent(t, path, "secret")
+
+	request := Request{
+		Roots: []string{path},
+		Rules: []rules.Rule{
+			{
+				Message:  "Found $0",
+				Regex:    "secret",
+				Severity: "warning",
+				Paths:    []string{"**/*"},
+			},
+		},
+		Include:          []string{"**/*"},
+		Exclude:          nil,
+		MaxFileSizeBytes: 1024,
+		Concurrency:      1,
+	}
+
+	result, err := Run(request)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if len(result.Matches) != 1 {
+		t.Fatalf("expected 1 match, got %d", len(result.Matches))
+	}
+	if result.Matches[0].FilePath != "sample.txt" {
+		t.Fatalf("unexpected file path: %s", result.Matches[0].FilePath)
+	}
+}
+
 func TestBuildCapturesHandlesMissingGroups(t *testing.T) {
 	t.Parallel()
 
