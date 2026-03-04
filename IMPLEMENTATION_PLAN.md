@@ -104,7 +104,7 @@
 ## Phase 4: Scan engine + output writers
 
 **Goal:** Implement scanning behavior and output rendering for console/JSON/SARIF.
-**Status:** In progress
+**Status:** Complete
 **Paths:** `internal/scan/`, `internal/output/`, `internal/io/`
 **Reference patterns:** `specs/core-architecture.md`, `specs/formatter-console.md`, `specs/formatter-json.md`, `specs/formatter-sarif.md`
 
@@ -144,7 +144,7 @@
 ## Phase 5: Tests + validation coverage
 
 **Goal:** Implement unit/integration/golden tests and quality tooling checks.
-**Status:** Partially started (tooling present; tests missing)
+**Status:** In progress (concurrency coverage added for scan engine)
 **Paths:** `internal/**`, `testdata/`, `scripts/quality.sh`, `.github/workflows/`
 **Reference patterns:** `specs/testing-and-validations.md`
 
@@ -154,6 +154,7 @@
 - [x] Rule compiler regex compilation and message interpolation.
 - [x] Path filtering include/exclude behavior.
 - [x] Scan engine line/column mapping and match aggregation.
+- [x] Scan engine concurrency uses worker pool for file reads.
 - [x] CLI routing for `analyze` command.
 - [x] Init command parsing and overwrite behavior.
 - [x] Validate output paths are writable for JSON/SARIF flags.
@@ -185,6 +186,7 @@
 
 - 2026-03-04: `go test ./internal/scan -run TestRunCapturesRuneLineAndColumn` - pass.
 - 2026-03-04: `go test ./internal/scan` - pass.
+- 2026-03-04: `go test ./internal/scan -run TestRunUsesConcurrencyForFileReads` - pass.
 - 2026-03-04: `go test ./...` - pass.
 - 2026-03-04: `bash scripts/quality.sh coverage` - pass.
 - 2026-03-04: `go test ./internal/output -run TestWriteJSONNoMatches` - pass.
@@ -234,15 +236,15 @@
 
 ## Summary
 
-| Phase                                  | Status                                                         |
-| -------------------------------------- | -------------------------------------------------------------- |
-| Phase 1: CLI entrypoint + routing      | Complete                                                       |
-| Phase 2: Flag parsing + validation     | Complete                                                       |
-| Phase 3: Config loading + scan request | In progress                                                    |
-| Phase 4: Scan engine + output writers  | In progress                                                    |
-| Phase 5: Tests + validation coverage   | Partially started (tooling baseline + CLI analyze integration) |
+| Phase                                  | Status                                                   |
+| -------------------------------------- | -------------------------------------------------------- |
+| Phase 1: CLI entrypoint + routing      | Complete                                                 |
+| Phase 2: Flag parsing + validation     | Complete                                                 |
+| Phase 3: Config loading + scan request | In progress                                              |
+| Phase 4: Scan engine + output writers  | Complete                                                 |
+| Phase 5: Tests + validation coverage   | In progress (tooling baseline + CLI analyze integration) |
 
-**Remaining effort:** Complete remaining scan engine tests, golden outputs, and finalize Phase 3/4 status.
+**Remaining effort:** Complete remaining test coverage for integration/golden outputs and finalize Phase 3 status.
 
 ## Known Existing Work
 

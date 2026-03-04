@@ -15,6 +15,8 @@ import (
 	"github.com/iyaki/regex-checker/internal/rules"
 )
 
+var readFile = os.ReadFile
+
 const (
 	binaryProbeSize = 8000
 	nullByte        = 0x00
@@ -83,6 +85,19 @@ type fileEntry struct {
 	relPath string
 }
 
+type scanEntryResult struct {
+	entryIndex int
+	filePath   string
+	matches    []Match
+	scanned    bool
+	err        error
+}
+
+type scanEntryWork struct {
+	index int
+	entry fileEntry
+}
+
 // Run executes a scan request and returns the aggregated result.
 func Run(request Request) (Result, error) {
 	start := time.Now()
@@ -97,7 +112,7 @@ func Run(request Request) (Result, error) {
 		return Result{}, err
 	}
 
-	matches, filesScanned, filesSkipped, err := scanEntries(entries, compiled)
+	matches, filesScanned, filesSkipped, err := scanEntries(entries, compiled, request.Concurrency)
 	if err != nil {
 		return Result{}, err
 	}
@@ -132,52 +147,142 @@ func collectScanEntries(request Request) ([]fileEntry, int, []string, []string, 
 
 	return entries, skipped, include, exclude, nil
 }
-
-func scanEntries(entries []fileEntry, compiled []compiledRule) ([]Match, int, int, error) {
+func scanEntries(entries []fileEntry, compiled []compiledRule, concurrency int) ([]Match, int, int, error) {
 	var matches []Match
 	filesScanned := 0
 	filesSkipped := 0
 
-	for _, entry := range entries {
-		fullPath := filepath.Join(entry.root, filepath.FromSlash(entry.relPath))
-		contentBytes, err := os.ReadFile(fullPath)
-		if err != nil {
+	concurrency = requestConcurrency(entries, compiled, concurrency)
+	if concurrency == 1 {
+		return scanEntriesSequential(entries, compiled)
+	}
+
+	entryCh := make(chan scanEntryWork)
+	resultCh := make(chan scanEntryResult)
+	workerCount := minInt(concurrency, len(entries))
+
+	for i := 0; i < workerCount; i++ {
+		go func() {
+			for work := range entryCh {
+				result := scanEntry(work.entry, compiled, work.index)
+				resultCh <- result
+			}
+		}()
+	}
+
+	go func() {
+		for index, entry := range entries {
+			entryCh <- scanEntryWork{index: index, entry: entry}
+		}
+		close(entryCh)
+	}()
+
+	results := make([]scanEntryResult, len(entries))
+	for i := 0; i < len(entries); i++ {
+		result := <-resultCh
+		results[result.entryIndex] = result
+	}
+
+	for _, result := range results {
+		if result.err != nil {
+			return nil, 0, 0, result.err
+		}
+		if !result.scanned {
 			filesSkipped++
 
 			continue
 		}
 		filesScanned++
-		content := string(contentBytes)
-
-		for _, rule := range compiled {
-			match, err := matchesPath(entry.relPath, rule.paths, rule.exclude)
-			if err != nil {
-				return nil, 0, 0, err
-			}
-			if !match {
-				continue
-			}
-
-			indices := rule.regex.FindAllStringSubmatchIndex(content, -1)
-			for _, index := range indices {
-				captures := buildCaptures(content, index)
-				line, column := lineColumnFromIndex(content, index[0])
-				message := rules.InterpolateMessage(rule.rule.Message, captures)
-
-				matches = append(matches, Match{
-					Message:   message,
-					Severity:  rule.rule.Severity,
-					FilePath:  entry.relPath,
-					Line:      line,
-					Column:    column,
-					MatchText: captures[0],
-					RuleIndex: rule.rule.Index,
-				})
-			}
-		}
+		matches = append(matches, result.matches...)
 	}
 
 	return matches, filesScanned, filesSkipped, nil
+}
+
+func scanEntriesSequential(entries []fileEntry, compiled []compiledRule) ([]Match, int, int, error) {
+	var matches []Match
+	filesScanned := 0
+	filesSkipped := 0
+
+	for index, entry := range entries {
+		result := scanEntry(entry, compiled, index)
+		if result.err != nil {
+			return nil, 0, 0, result.err
+		}
+		if !result.scanned {
+			filesSkipped++
+
+			continue
+		}
+		filesScanned++
+		matches = append(matches, result.matches...)
+	}
+
+	return matches, filesScanned, filesSkipped, nil
+}
+
+func scanEntry(entry fileEntry, compiled []compiledRule, entryIndex int) scanEntryResult {
+	fullPath := filepath.Join(entry.root, filepath.FromSlash(entry.relPath))
+	contentBytes, err := readFile(fullPath)
+	if err != nil {
+		return scanEntryResult{entryIndex: entryIndex, filePath: entry.relPath}
+	}
+	content := string(contentBytes)
+
+	matches := make([]Match, 0)
+	for _, rule := range compiled {
+		match, err := matchesPath(entry.relPath, rule.paths, rule.exclude)
+		if err != nil {
+			return scanEntryResult{filePath: entry.relPath, err: err}
+		}
+		if !match {
+			continue
+		}
+
+		indices := rule.regex.FindAllStringSubmatchIndex(content, -1)
+		for _, index := range indices {
+			captures := buildCaptures(content, index)
+			line, column := lineColumnFromIndex(content, index[0])
+			message := rules.InterpolateMessage(rule.rule.Message, captures)
+
+			matches = append(matches, Match{
+				Message:   message,
+				Severity:  rule.rule.Severity,
+				FilePath:  entry.relPath,
+				Line:      line,
+				Column:    column,
+				MatchText: captures[0],
+				RuleIndex: rule.rule.Index,
+			})
+		}
+	}
+
+	return scanEntryResult{
+		entryIndex: entryIndex,
+		filePath:   entry.relPath,
+		matches:    matches,
+		scanned:    true,
+	}
+}
+
+func requestConcurrency(entries []fileEntry, compiled []compiledRule, defaultValue int) int {
+	if len(entries) == 0 || len(compiled) == 0 {
+		return 1
+	}
+
+	if defaultValue <= 0 {
+		return 1
+	}
+
+	return defaultValue
+}
+
+func minInt(a, b int) int {
+	if a < b {
+		return a
+	}
+
+	return b
 }
 
 func collectEntries(

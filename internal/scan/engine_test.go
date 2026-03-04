@@ -6,7 +6,9 @@ import (
 	"path/filepath"
 	"reflect"
 	"regexp"
+	"sync/atomic"
 	"testing"
+	"time"
 
 	"github.com/iyaki/regex-checker/internal/rules"
 )
@@ -113,6 +115,107 @@ func TestCollectFilesSkipsBinaryFiles(t *testing.T) {
 	want := []string{"src/text.txt"}
 	if !reflect.DeepEqual(files, want) {
 		t.Fatalf("expected files %v, got %v", want, files)
+	}
+}
+
+func TestRunUsesConcurrencyForFileReads(t *testing.T) {
+	t.Parallel()
+	root := t.TempDir()
+	writeFileWithContent(t, filepath.Join(root, "a.txt"), "secret")
+	writeFileWithContent(t, filepath.Join(root, "b.txt"), "secret")
+
+	request := Request{
+		Roots: []string{root},
+		Rules: []rules.Rule{
+			{
+				Message:  "Found $0",
+				Regex:    "secret",
+				Severity: "warning",
+				Paths:    []string{"**/*"},
+			},
+		},
+		Include:          []string{"**/*"},
+		Exclude:          nil,
+		MaxFileSizeBytes: 1024,
+		Concurrency:      2,
+	}
+
+	result, maxActive, runErr := runWithReadBlocking(t, request, 2)
+
+	if runErr != nil {
+		t.Fatalf("unexpected error: %v", runErr)
+	}
+	if maxActive < 2 {
+		t.Fatalf("expected concurrent reads, max=%d", maxActive)
+	}
+	if len(result.Matches) != 2 {
+		t.Fatalf("expected 2 matches, got %d", len(result.Matches))
+	}
+}
+
+func updateMaxActive(maxActive *int64, current int64) {
+	for {
+		prev := atomic.LoadInt64(maxActive)
+		if current <= prev || atomic.CompareAndSwapInt64(maxActive, prev, current) {
+			return
+		}
+	}
+}
+
+func runWithReadBlocking(t *testing.T, request Request, expected int) (Result, int64, error) {
+	t.Helper()
+	originalReadFile := readFile
+	defer func() {
+		readFile = originalReadFile
+	}()
+
+	started := make(chan struct{}, expected)
+	release := make(chan struct{})
+	var active int64
+	var maxActive int64
+	readFile = func(path string) ([]byte, error) {
+		current := atomic.AddInt64(&active, 1)
+		updateMaxActive(&maxActive, current)
+		started <- struct{}{}
+		<-release
+		data, err := originalReadFile(path)
+		atomic.AddInt64(&active, -1)
+
+		return data, err
+	}
+
+	done := make(chan struct{})
+	var result Result
+	var runErr error
+	go func() {
+		result, runErr = Run(request)
+		close(done)
+	}()
+
+	waitForSignals(t, started, expected, "concurrent reads")
+	close(release)
+	awaitCompletion(t, done, "scan completion")
+
+	return result, maxActive, runErr
+}
+
+func waitForSignals(t *testing.T, signals <-chan struct{}, count int, label string) {
+	t.Helper()
+	for i := 0; i < count; i++ {
+		select {
+		case <-signals:
+		case <-time.After(2 * time.Second):
+			t.Fatalf("timeout waiting for %s", label)
+		}
+	}
+}
+
+func awaitCompletion(t *testing.T, done <-chan struct{}, label string) {
+	t.Helper()
+	select {
+	case <-done:
+	case <-time.After(2 * time.Second):
+		t.Fatalf("timeout waiting for %s", label)
 	}
 }
 
@@ -335,7 +438,7 @@ func TestScanEntriesCountsSkippedOnReadError(t *testing.T) {
 		t.Fatalf("unexpected error: %v", err)
 	}
 
-	_, filesScanned, filesSkipped, err := scanEntries(entries, compiled)
+	_, filesScanned, filesSkipped, err := scanEntries(entries, compiled, 1)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -496,7 +599,7 @@ func TestScanEntriesSkipsRuleWhenPathExcluded(t *testing.T) {
 	}
 
 	entries := []fileEntry{{root: root, relPath: "sample.txt"}}
-	result, _, _, err := scanEntries(entries, compiled)
+	result, _, _, err := scanEntries(entries, compiled, 1)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -518,7 +621,7 @@ func TestScanEntriesErrorsOnInvalidRulePattern(t *testing.T) {
 		exclude: nil,
 	}}
 
-	_, filesScanned, filesSkipped, err := scanEntries(entries, compiled)
+	_, filesScanned, filesSkipped, err := scanEntries(entries, compiled, 1)
 	if err == nil {
 		t.Fatal("expected error for invalid rule path pattern")
 	}
