@@ -41,26 +41,26 @@
 ## Phase 2: Analyze flag parsing + validation
 
 **Goal:** Parse analyze flags, validate inputs, and map to `CLIConfig`.
-**Status:** Not started
+**Status:** Complete
 **Paths:** `internal/cli/analyze.go`
 **Reference patterns:** `specs/cli-analyze.md`
 
 ### 2.1 Flag parsing + defaults
 
-- [ ] Parse flags: `--config`, `--format`, `--out-json`, `--out-sarif`, `--include`, `--exclude`, `--concurrency`, `--max-file-size`, `--fail-on`.
-- [ ] Default roots to `.` when no positional paths are provided.
-- [ ] Default `--config` to `regex-rules.yaml` in CWD.
-- [ ] Default formats to `console`.
-- [ ] Default `--concurrency` to `GOMAXPROCS` and `--max-file-size` to `5242880`.
+- [x] Parse flags: `--config`, `--format`, `--out-json`, `--out-sarif`, `--include`, `--exclude`, `--concurrency`, `--max-file-size`, `--fail-on`.
+- [x] Default roots to `.` when no positional paths are provided.
+- [x] Default `--config` to `regex-rules.yaml` in CWD.
+- [x] Default formats to `console`.
+- [x] Default `--concurrency` to `GOMAXPROCS` and `--max-file-size` to `5242880`.
 
 ### 2.2 Validation rules
 
-- [ ] Validate `--config` file existence and readability.
-- [ ] Validate `--format` values (`console|json|sarif`) and de-duplicate.
-- [ ] Validate `--concurrency` and `--max-file-size` are positive integers.
-- [ ] Validate `--fail-on` values (`error|warning|notice|info`).
-- [ ] Enforce output path requirements for multi-format output.
-- [ ] Enforce stdout behavior when only JSON or SARIF requested without output path.
+- [x] Validate `--config` file existence and readability.
+- [x] Validate `--format` values (`console|json|sarif`) and de-duplicate.
+- [x] Validate `--concurrency` and `--max-file-size` are positive integers.
+- [x] Validate `--fail-on` values (`error|warning|notice|info`).
+- [x] Enforce output path requirements for multi-format output.
+- [x] Enforce stdout behavior when only JSON or SARIF requested without output path.
 
 **Definition of Done**
 
@@ -192,13 +192,15 @@
 - 2026-03-04: `go test ./internal/cli` - pass (added analyze routing coverage).
 - 2026-03-04: `go test ./...` - pass.
 - 2026-03-04: `bash scripts/quality.sh all` - pass.
+- 2026-03-04: `go test ./internal/cli` - pass.
+- 2026-03-04: `bash scripts/quality.sh all` - pass.
 
 ## Summary
 
 | Phase                                  | Status                                                  |
 | -------------------------------------- | ------------------------------------------------------- |
 | Phase 1: CLI entrypoint + routing      | Complete                                                |
-| Phase 2: Flag parsing + validation     | Not started                                             |
+| Phase 2: Flag parsing + validation     | Complete                                                |
 | Phase 3: Config loading + scan request | Not started                                             |
 | Phase 4: Scan engine + output writers  | Not started                                             |
 | Phase 5: Tests + validation coverage   | Partially started (tooling baseline + CLI routing test) |

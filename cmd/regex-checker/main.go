@@ -8,9 +8,15 @@ import (
 	"github.com/iyaki/regex-checker/internal/cli"
 )
 
+var (
+	args                   = os.Args
+	outputWriter io.Writer = os.Stdout
+	exitFunc               = os.Exit
+)
+
 func main() {
-	code := run(os.Args[1:], os.Stdout)
-	os.Exit(code)
+	code := run(args[1:], outputWriter)
+	exitFunc(code)
 }
 
 func run(args []string, out io.Writer) int {
