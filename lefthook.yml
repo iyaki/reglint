@@ -6,6 +6,10 @@ pre-commit:
     - name: gofmt
       run: bash scripts/quality.sh gofmt
       stage_fixed: true
+    - name: test-coverage
+      run: bash scripts/quality.sh coverage
+    - name: mutation-testing
+      run: bash scripts/quality.sh mutation
     - name: golangci-lint
       run: bash scripts/quality.sh golangci
     - name: govulncheck

@@ -36,6 +36,7 @@
 - `nancy` (dependency vulnerability scan)
 - `go-arch-lint` (architecture guardrails)
 - `gofmt` (formatting)
+- `go-mutesting` (mutation testing)
 - `lefthook` (git hooks runner)
 
 ### Local installation
@@ -45,6 +46,7 @@ go install github.com/golangci/golangci-lint/v2/cmd/golangci-lint@v2.10.0
 go install golang.org/x/vuln/cmd/govulncheck@latest
 go install github.com/sonatype-nexus-community/nancy@latest
 go install github.com/fe3dback/go-arch-lint@latest
+go install github.com/avito-tech/go-mutesting/...
 go install github.com/evilmartians/lefthook/v2@v2.1.2
 ```
 
@@ -67,6 +69,9 @@ Targeted runs:
 ```bash
 bash scripts/quality.sh format
 bash scripts/quality.sh lint
+bash scripts/quality.sh test
+bash scripts/quality.sh coverage
+bash scripts/quality.sh mutation
 bash scripts/quality.sh security
 bash scripts/quality.sh arch
 bash scripts/quality.sh gofmt
@@ -145,6 +150,16 @@ bash scripts/quality.sh go-arch-lint
 - Regex capture group interpolation (`$0`, `$1`, `$$`).
 - Mixed include/exclude rules and per-rule overrides.
 
+### Mutation testing
+
+- Enforced via `go-mutesting` on local quality runs.
+- Minimum mutation score default: `0.8` (override with `MUTATION_SCORE_MIN`).
+- Targets default to `./...` (override with `MUTATION_TARGETS`).
+
+### Coverage
+
+- Minimum line coverage default: `90%` (override with `COVERAGE_MIN`).
+
 ## Test Data
 
 - Use a top-level `testdata/` directory with:
@@ -157,6 +172,7 @@ bash scripts/quality.sh go-arch-lint
 - `go test ./...` runs unit and integration tests.
 - Optional: `UPDATE_GOLDEN=1 go test ./...` to refresh golden files.
 - Unit tests must enforce line coverage > 90% (exclude integration and testdata packages).
+- Mutation testing must meet the minimum mutation score.
 
 ## Verifications
 
