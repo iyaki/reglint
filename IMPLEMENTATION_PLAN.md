@@ -122,7 +122,7 @@
 
 ### 4.3 JSON output
 
-- [ ] Implement JSON formatter with `schemaVersion = 1` and stable ordering.
+- [x] Implement JSON formatter with `schemaVersion = 1` and stable ordering.
 - [ ] Write to stdout or `--out-json` per rules.
 
 ### 4.4 SARIF output
@@ -180,6 +180,8 @@
 
 ## Verification Log
 
+- 2026-03-04: `go test ./internal/output -run TestWriteJSONNoMatches` - pass.
+- 2026-03-04: `go test ./internal/output` - pass.
 - 2026-03-04: `go test ./internal/cli -run TestBuildScanRequest` - pass.
 - 2026-03-04: Read `specs/cli-analyze.md` - documented flags, validations, exit codes, and output rules.
 - 2026-03-04: Read `specs/cli.md` - confirmed CLI command structure and alias requirements.
