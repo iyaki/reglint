@@ -103,13 +103,13 @@
 ## Phase 4: Scan engine + output writers
 
 **Goal:** Implement scanning behavior and output rendering for console/JSON/SARIF.
-**Status:** Not started
+**Status:** In progress
 **Paths:** `internal/scan/`, `internal/output/`, `internal/io/`
 **Reference patterns:** `specs/core-architecture.md`, `specs/formatter-console.md`, `specs/formatter-json.md`, `specs/formatter-sarif.md`
 
 ### 4.1 Scan engine
 
-- [ ] Walk filesystem roots and apply include/exclude glob filtering.
+- [x] Walk filesystem roots and apply include/exclude glob filtering.
 - [ ] Skip files exceeding `maxFileSizeBytes` or binary detection (per core spec).
 - [ ] Capture matches with 1-based line/column rune indices.
 - [x] Add scan result data models (`Match`, `ScanStats`, `ScanResult`) in `internal/scan`.
@@ -151,7 +151,7 @@
 
 - [ ] Config loader defaulting and validation.
 - [x] Rule compiler regex compilation and message interpolation.
-- [ ] Path filtering include/exclude behavior.
+- [x] Path filtering include/exclude behavior.
 - [ ] Scan engine line/column mapping and match aggregation.
 - [x] CLI routing for `analyze` command.
 
@@ -182,6 +182,8 @@
 
 - 2026-03-04: `go test ./internal/output -run TestWriteJSONNoMatches` - pass.
 - 2026-03-04: `go test ./internal/output` - pass.
+- 2026-03-04: `go test ./internal/scan -run TestCollectFilesFiltersByIncludeExclude` - pass.
+- 2026-03-04: `go test ./...` - pass.
 - 2026-03-04: `go test ./internal/cli -run TestBuildScanRequest` - pass.
 - 2026-03-04: Read `specs/cli-analyze.md` - documented flags, validations, exit codes, and output rules.
 - 2026-03-04: Read `specs/cli.md` - confirmed CLI command structure and alias requirements.
