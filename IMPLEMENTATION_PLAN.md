@@ -152,6 +152,7 @@
 - [ ] Rule compiler regex compilation and message interpolation.
 - [ ] Path filtering include/exclude behavior.
 - [ ] Scan engine line/column mapping and match aggregation.
+- [x] CLI routing for `analyze` command.
 
 ### 5.2 Integration + golden tests
 
@@ -188,18 +189,19 @@
 - 2026-03-04: `glob internal/**`, `glob cmd/**` - no implementation directories found.
 - 2026-03-04: Read quality/tooling configs (`scripts/quality.sh`, `.golangci.yml`, `.go-arch-lint.yml`, `lefthook.yml`, `.github/workflows/quality*.yml`) - tooling baseline present.
 - 2026-03-04: `go test ./internal/cli` - pass.
+- 2026-03-04: `go test ./internal/cli` - pass (added analyze routing coverage).
 - 2026-03-04: `go test ./...` - pass.
 - 2026-03-04: `bash scripts/quality.sh all` - pass.
 
 ## Summary
 
-| Phase                                  | Status                               |
-| -------------------------------------- | ------------------------------------ |
-| Phase 1: CLI entrypoint + routing      | Complete                             |
-| Phase 2: Flag parsing + validation     | Not started                          |
-| Phase 3: Config loading + scan request | Not started                          |
-| Phase 4: Scan engine + output writers  | Not started                          |
-| Phase 5: Tests + validation coverage   | Partially started (tooling baseline) |
+| Phase                                  | Status                                                  |
+| -------------------------------------- | ------------------------------------------------------- |
+| Phase 1: CLI entrypoint + routing      | Complete                                                |
+| Phase 2: Flag parsing + validation     | Not started                                             |
+| Phase 3: Config loading + scan request | Not started                                             |
+| Phase 4: Scan engine + output writers  | Not started                                             |
+| Phase 5: Tests + validation coverage   | Partially started (tooling baseline + CLI routing test) |
 
 **Remaining effort:** Phases 2-4 and core test coverage remain; CLI entrypoint routing is in place.
 
