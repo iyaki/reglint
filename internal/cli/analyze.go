@@ -138,9 +138,6 @@ func parseFormats(value string) ([]string, error) {
 		if format == "" {
 			return nil, errors.New("format must not be empty")
 		}
-		if !isValidFormat(format) {
-			return nil, fmt.Errorf("invalid format: %s", format)
-		}
 		if _, ok := seen[format]; ok {
 			continue
 		}
@@ -148,16 +145,19 @@ func parseFormats(value string) ([]string, error) {
 		result = append(result, format)
 	}
 
-	return result, nil
-}
-
-func isValidFormat(value string) bool {
-	switch value {
-	case "console", "json", "sarif":
-		return true
-	default:
-		return false
+	registry, err := output.NewRegistry(
+		output.ConsoleFormatter{},
+		output.JSONFormatter{},
+		output.SARIFFormatter{},
+	)
+	if err != nil {
+		return nil, err
 	}
+	if _, err := registry.Resolve(result); err != nil {
+		return nil, err
+	}
+
+	return result, nil
 }
 
 func validateAnalyzeConfig(cfg Config) error {
@@ -340,26 +340,45 @@ func runAnalyze(args []string) (scan.Result, string, []string, []rules.Rule, Con
 }
 
 func renderOutputs(formats []string, ruleset []rules.Rule, cfg Config, result scan.Result, out *bytes.Buffer) error {
+	registry, err := output.NewRegistry(
+		output.ConsoleFormatter{},
+		output.JSONFormatter{},
+		output.SARIFFormatter{Rules: ruleset},
+	)
+	if err != nil {
+		return err
+	}
+
 	for _, format := range formats {
-		switch format {
-		case "console":
-			if err := output.WriteConsole(result, out); err != nil {
-				return err
-			}
-		case "json":
-			if err := writeJSONOutput(cfg, result, out); err != nil {
-				return err
-			}
-		case "sarif":
-			if err := writeSARIFOutput(cfg, result, ruleset, out); err != nil {
-				return err
-			}
-		default:
-			return fmt.Errorf("invalid format: %s", format)
+		formatter, err := registry.ResolveName(format)
+		if err != nil {
+			return err
+		}
+		if err := renderFormat(formatter, cfg, ruleset, result, out); err != nil {
+			return err
 		}
 	}
 
 	return nil
+}
+
+func renderFormat(
+	formatter output.Formatter,
+	cfg Config,
+	ruleset []rules.Rule,
+	result scan.Result,
+	out *bytes.Buffer,
+) error {
+	switch formatter.Name() {
+	case "console":
+		return formatter.Write(result, out)
+	case "json":
+		return writeJSONOutput(cfg, result, out)
+	case "sarif":
+		return writeSARIFOutput(cfg, result, ruleset, out)
+	default:
+		return fmt.Errorf("invalid format: %s", formatter.Name())
+	}
 }
 
 func writeJSONOutput(cfg Config, result scan.Result, out *bytes.Buffer) error {

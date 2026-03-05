@@ -70,6 +70,19 @@ func WriteJSON(result scan.Result, out io.Writer) error {
 	return encoder.Encode(payload)
 }
 
+// JSONFormatter renders JSON output.
+type JSONFormatter struct{}
+
+// Name returns the format identifier.
+func (JSONFormatter) Name() string {
+	return "json"
+}
+
+// Write renders JSON output to the writer.
+func (JSONFormatter) Write(result scan.Result, out io.Writer) error {
+	return WriteJSON(result, out)
+}
+
 func buildJSONMatches(matches []scan.Match) ([]jsonMatch, error) {
 	if len(matches) == 0 {
 		return []jsonMatch{}, nil

@@ -49,6 +49,19 @@ func WriteConsole(result scan.Result, out io.Writer) error {
 	return err
 }
 
+// ConsoleFormatter renders console output.
+type ConsoleFormatter struct{}
+
+// Name returns the format identifier.
+func (ConsoleFormatter) Name() string {
+	return "console"
+}
+
+// Write renders console output to the writer.
+func (ConsoleFormatter) Write(result scan.Result, out io.Writer) error {
+	return WriteConsole(result, out)
+}
+
 func appendConsoleMatches(builder *strings.Builder, matches []scan.Match) error {
 	if len(matches) == 0 {
 		builder.WriteString("No matches found.\n")

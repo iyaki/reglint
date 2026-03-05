@@ -84,6 +84,21 @@ func WriteSARIF(result scan.Result, ruleSet []rules.Rule, out io.Writer) error {
 	return report.PrettyWrite(out)
 }
 
+// SARIFFormatter renders SARIF output.
+type SARIFFormatter struct {
+	Rules []rules.Rule
+}
+
+// Name returns the format identifier.
+func (SARIFFormatter) Name() string {
+	return "sarif"
+}
+
+// Write renders SARIF output to the writer.
+func (formatter SARIFFormatter) Write(result scan.Result, out io.Writer) error {
+	return WriteSARIF(result, formatter.Rules, out)
+}
+
 func normalizePath(path string) string {
 	cleaned := filepath.ToSlash(path)
 
