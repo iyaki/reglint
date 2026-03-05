@@ -16,13 +16,13 @@ type jsonOutputResult struct {
 }
 
 type jsonOutputMatch struct {
-	Message   string `json:"message"`
-	Severity  string `json:"severity"`
-	FilePath  string `json:"filePath"`
-	FileURI   string `json:"fileUri"`
-	Line      int    `json:"line"`
-	Column    int    `json:"column"`
-	MatchText string `json:"matchText"`
+	Message      string `json:"message"`
+	Severity     string `json:"severity"`
+	FilePath     string `json:"filePath"`
+	AbsolutePath string `json:"absolutePath"`
+	Line         int    `json:"line"`
+	Column       int    `json:"column"`
+	MatchText    string `json:"matchText"`
 }
 
 type jsonOutputStats struct {
@@ -221,7 +221,7 @@ func assertFirstMatch(t *testing.T, match jsonOutputMatch) {
 	if match.Severity != "error" {
 		t.Fatalf("unexpected first severity: %s", match.Severity)
 	}
-	assertFileURI(t, match.FilePath, match.Line, match.FileURI)
+	assertAbsolutePath(t, match.FilePath, match.Line, match.AbsolutePath)
 }
 
 func assertWarningOrdering(t *testing.T, first jsonOutputMatch, second jsonOutputMatch) {
@@ -230,8 +230,8 @@ func assertWarningOrdering(t *testing.T, first jsonOutputMatch, second jsonOutpu
 	if first.Message != "Alpha warn" || second.Message != "Zulu warn" {
 		t.Fatalf("unexpected warning ordering: %s, %s", first.Message, second.Message)
 	}
-	assertFileURI(t, first.FilePath, first.Line, first.FileURI)
-	assertFileURI(t, second.FilePath, second.Line, second.FileURI)
+	assertAbsolutePath(t, first.FilePath, first.Line, first.AbsolutePath)
+	assertAbsolutePath(t, second.FilePath, second.Line, second.AbsolutePath)
 }
 
 func assertInfoMatch(t *testing.T, match jsonOutputMatch) {
@@ -240,7 +240,7 @@ func assertInfoMatch(t *testing.T, match jsonOutputMatch) {
 	if match.Message != "Info msg" {
 		t.Fatalf("unexpected info ordering: %+v", match)
 	}
-	assertFileURI(t, match.FilePath, match.Line, match.FileURI)
+	assertAbsolutePath(t, match.FilePath, match.Line, match.AbsolutePath)
 }
 
 func assertLastMatch(t *testing.T, match jsonOutputMatch) {
@@ -249,7 +249,7 @@ func assertLastMatch(t *testing.T, match jsonOutputMatch) {
 	if match.FilePath != "b/file.go" {
 		t.Fatalf("unexpected last match: %+v", match)
 	}
-	assertFileURI(t, match.FilePath, match.Line, match.FileURI)
+	assertAbsolutePath(t, match.FilePath, match.Line, match.AbsolutePath)
 }
 
 func decodeRawJSON(t *testing.T, data []byte) map[string]any {
@@ -290,24 +290,27 @@ func assertLowerCamelCaseMatchKeys(t *testing.T, match map[string]any) {
 	if _, ok := match["matchText"]; !ok {
 		t.Fatalf("expected matchText key, got %v", match)
 	}
-	if _, ok := match["fileUri"]; !ok {
-		t.Fatalf("expected fileUri key, got %v", match)
+	if _, ok := match["fileUri"]; ok {
+		t.Fatalf("expected no fileUri key, got %v", match)
+	}
+	if _, ok := match["absolutePath"]; !ok {
+		t.Fatalf("expected absolutePath key, got %v", match)
 	}
 }
 
-func assertFileURI(t *testing.T, filePath string, line int, fileURI string) {
+func assertAbsolutePath(t *testing.T, filePath string, line int, absolutePath string) {
 	t.Helper()
 
-	if fileURI == "" {
-		t.Fatalf("expected fileUri to be set")
+	if absolutePath == "" {
+		t.Fatalf("expected absolutePath to be set")
 	}
 
-	expected, err := fileURIWithLine(filePath, line)
+	expected, err := absolutePathWithLine(filePath, line)
 	if err != nil {
-		t.Fatalf("failed to build file uri: %v", err)
+		t.Fatalf("failed to build absolute path: %v", err)
 	}
-	if fileURI != expected {
-		t.Fatalf("unexpected fileUri: %s", fileURI)
+	if absolutePath != expected {
+		t.Fatalf("unexpected absolutePath: %s", absolutePath)
 	}
 }
 

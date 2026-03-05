@@ -50,7 +50,7 @@
 ## Phase 2: Console formatter alignment
 
 **Goal:** Align console output with `specs/formatter-console.md` (two-line entries, absolute path line, no file URIs).
-**Status:** Partial
+**Status:** Complete
 **Paths:** `internal/output/console.go`, `internal/output/console_test.go`, `testdata/golden/console.txt`
 **Reference patterns:** `specs/formatter-console.md`
 
@@ -90,8 +90,8 @@
 - [x] Emit `schemaVersion = 1` with `matches` array and `stats` object.
 - [x] Ensure deterministic ordering of matches.
 - [x] Write empty `matches` array when no matches exist.
-- [ ] Replace `fileUri` with `absolutePath` (`<abs-path>:<line>`) per spec.
-- [ ] Keep `matchText` present in JSON output.
+- [x] Replace `fileUri` with `absolutePath` (`<abs-path>:<line>`) per spec.
+- [x] Keep `matchText` present in JSON output.
 
 ### 3.2 Output destination rules (CLI integration)
 
@@ -148,6 +148,10 @@
 - 2026-03-05: `go test ./internal/output -run TestFormatConsoleMatchLine` - passed.
 - 2026-03-05: `go test ./internal/output -run TestFormatConsoleMatchLineReturnsErrorWhenCwdMissing` - passed.
 - 2026-03-05: `go test ./internal/output -run TestGoldenConsoleOutput` - passed.
+- 2026-03-05: `go test ./internal/output -run TestWriteJSONOrdersMatches` - failed (expected absolutePath to be set).
+- 2026-03-05: `go test ./internal/output -run TestWriteJSONOrdersMatches` - passed.
+- 2026-03-05: `go test ./internal/output -run TestWriteJSON` - passed.
+- 2026-03-05: `UPDATE_GOLDEN=1 go test ./internal/output -run TestGoldenJSONOutput` - passed.
 
 ## Summary
 
@@ -155,10 +159,10 @@
 | ------------------------------------- | -------- |
 | Phase 1: Formatter core + registry    | Complete |
 | Phase 2: Console formatter alignment  | Complete |
-| Phase 3: JSON formatter alignment     | Partial  |
+| Phase 3: JSON formatter alignment     | Complete |
 | Phase 4: SARIF formatter verification | Complete |
 
-**Remaining effort:** Align JSON outputs with spec schema.
+**Remaining effort:** None.
 
 ## Known Existing Work
 
