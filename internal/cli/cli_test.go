@@ -5,7 +5,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/iyaki/regex-checker/internal/cli"
+	"github.com/iyaki/reglint/internal/cli"
 )
 
 func TestRunRoutesAnalyzeAlias(t *testing.T) {

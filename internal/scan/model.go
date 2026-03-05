@@ -1,7 +1,7 @@
 // Package scan defines scan request and result models.
 package scan
 
-import "github.com/iyaki/regex-checker/internal/rules"
+import "github.com/iyaki/reglint/internal/rules"
 
 // Request defines the input to the scan service.
 type Request struct {

@@ -3,7 +3,7 @@ package rules_test
 import (
 	"testing"
 
-	"github.com/iyaki/regex-checker/internal/rules"
+	"github.com/iyaki/reglint/internal/rules"
 )
 
 func TestInterpolateMessage(t *testing.T) {

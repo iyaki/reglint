@@ -5,7 +5,7 @@
     {
       "tool": {
         "driver": {
-          "name": "regex-checker",
+          "name": "RegLint",
           "rules": [
             {
               "id": "RC0001",

@@ -1,11 +1,11 @@
-// Command regex-checker provides the CLI entrypoint.
+// Command reglint provides the CLI entrypoint.
 package main
 
 import (
 	"io"
 	"os"
 
-	"github.com/iyaki/regex-checker/internal/cli"
+	"github.com/iyaki/reglint/internal/cli"
 )
 
 var (

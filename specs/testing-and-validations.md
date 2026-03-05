@@ -174,5 +174,5 @@ bash scripts/quality.sh go-arch-lint
 ## Verifications
 
 - `go test ./...` passes.
-- `regex-checker analyze --config testdata/rules/example.yaml ./testdata/fixtures` exits with `0` when below `failOn`.
-- `regex-checker analyze --config testdata/rules/fail.yaml ./testdata/fixtures` exits with `2` when above `failOn`.
+- `reglint analyze --config testdata/rules/example.yaml ./testdata/fixtures` exits with `0` when below `failOn`.
+- `reglint analyze --config testdata/rules/fail.yaml ./testdata/fixtures` exits with `2` when above `failOn`.

@@ -6,7 +6,7 @@ Status: Implemented
 
 ### Purpose
 
-- Define the YAML schema for regex-checker rules.
+- Define the YAML schema for RegLint rules.
 - Capture defaults and validation rules in one place.
 - Document global scan controls that apply across rules.
 

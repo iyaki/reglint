@@ -8,7 +8,7 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/iyaki/regex-checker/internal/scan"
+	"github.com/iyaki/reglint/internal/scan"
 )
 
 // WriteConsole renders a scan result to the provided writer.

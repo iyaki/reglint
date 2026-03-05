@@ -6,8 +6,8 @@ import (
 	"encoding/json"
 	"testing"
 
-	"github.com/iyaki/regex-checker/internal/rules"
-	"github.com/iyaki/regex-checker/internal/scan"
+	"github.com/iyaki/reglint/internal/rules"
+	"github.com/iyaki/reglint/internal/scan"
 )
 
 type sarifLog struct {
@@ -201,7 +201,7 @@ func assertSARIFMetadata(t *testing.T, log sarifLog) {
 	if run.ColumnKind != "unicodeCodePoints" {
 		t.Fatalf("unexpected columnKind: %s", run.ColumnKind)
 	}
-	if run.Tool.Driver.Name != "regex-checker" {
+	if run.Tool.Driver.Name != "RegLint" {
 		t.Fatalf("unexpected driver name: %s", run.Tool.Driver.Name)
 	}
 }

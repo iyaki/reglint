@@ -8,15 +8,15 @@ import (
 	"strings"
 	"unicode/utf8"
 
-	"github.com/iyaki/regex-checker/internal/rules"
-	"github.com/iyaki/regex-checker/internal/scan"
+	"github.com/iyaki/reglint/internal/rules"
+	"github.com/iyaki/reglint/internal/scan"
 	"github.com/owenrumney/go-sarif/v2/sarif"
 )
 
 const (
 	sarifVersion  = "2.1.0"
 	sarifSchema   = "https://json.schemastore.org/sarif-2.1.0.json"
-	sarifToolName = "regex-checker"
+	sarifToolName = "RegLint"
 )
 
 const (

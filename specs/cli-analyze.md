@@ -34,7 +34,7 @@ Status: Implemented
 
 ```
 cmd/
-  regex-checker/
+  reglint/
     main.go
 internal/
   cli/
@@ -108,7 +108,7 @@ type CLIConfig struct {
 1. Parse flags.
 2. Collect positional arguments as `roots`.
 3. If no roots provided, set `roots = ["."]`.
-4. Resolve the config path (default `regex-rules.yaml`).
+4. Resolve the config path (default `reglint-rules.yaml`).
 5. Validate flags and formats (see Validation).
 6. Load and compile rules from the config file.
 7. Apply CLI overrides and build `ScanRequest`.
@@ -116,7 +116,7 @@ type CLIConfig struct {
 
 ### Validation and errors
 
-- `--config` defaults to `regex-rules.yaml` in the current directory. If the file is missing or unreadable, print an error and exit with code 1.
+- `--config` defaults to `reglint-rules.yaml` in the current directory. If the file is missing or unreadable, print an error and exit with code 1.
 - `--format` must include only `console`, `json`, or `sarif`.
 - `--concurrency` must be a positive integer.
 - `--max-file-size` must be a positive integer.
@@ -137,23 +137,23 @@ type CLIConfig struct {
 ### Command syntax
 
 ```
-regex-checker analyze [flags] [path ...]
-regex-checker analyse [flags] [path ...]
+reglint analyze [flags] [path ...]
+reglint analyse [flags] [path ...]
 ```
 
 ### Flags
 
-| Flag              | Type   | Required | Default            | Purpose                                       |
-| ----------------- | ------ | -------- | ------------------ | --------------------------------------------- |
-| `--config`        | string | no       | `regex-rules.yaml` | Path to YAML rules config file.               |
-| `--format`        | string | no       | `console`          | Comma-separated list of `console,json,sarif`. |
-| `--out-json`      | string | no       | none               | Output path for JSON results.                 |
-| `--out-sarif`     | string | no       | none               | Output path for SARIF results.                |
-| `--include`       | string | no       | none               | Repeatable include glob for all rules.        |
-| `--exclude`       | string | no       | none               | Repeatable exclude glob for all rules.        |
-| `--concurrency`   | int    | no       | `GOMAXPROCS`       | Worker count.                                 |
-| `--max-file-size` | int    | no       | `5242880`          | Skip files larger than N bytes.               |
-| `--fail-on`       | string | no       | none               | Fail if matches at or above severity.         |
+| Flag              | Type   | Required | Default              | Purpose                                       |
+| ----------------- | ------ | -------- | -------------------- | --------------------------------------------- |
+| `--config`        | string | no       | `reglint-rules.yaml` | Path to YAML rules config file.               |
+| `--format`        | string | no       | `console`            | Comma-separated list of `console,json,sarif`. |
+| `--out-json`      | string | no       | none                 | Output path for JSON results.                 |
+| `--out-sarif`     | string | no       | none                 | Output path for SARIF results.                |
+| `--include`       | string | no       | none                 | Repeatable include glob for all rules.        |
+| `--exclude`       | string | no       | none                 | Repeatable exclude glob for all rules.        |
+| `--concurrency`   | int    | no       | `GOMAXPROCS`         | Worker count.                                 |
+| `--max-file-size` | int    | no       | `5242880`            | Skip files larger than N bytes.               |
+| `--fail-on`       | string | no       | none                 | Fail if matches at or above severity.         |
 
 ### Precedence
 
@@ -173,9 +173,9 @@ regex-checker analyse [flags] [path ...]
 
 ## Verifications
 
-- `regex-checker analyze --config rules.yaml` scans current directory and exits with code 0/2.
-- `regex-checker analyze --config rules.yaml --format json` writes JSON to stdout.
-- `regex-checker analyze --config rules.yaml --format console,json --out-json /tmp/scan.json` writes console to stdout and JSON to file.
+- `reglint analyze --config reglint-rules.yaml` scans current directory and exits with code 0/2.
+- `reglint analyze --config reglint-rules.yaml --format json` writes JSON to stdout.
+- `reglint analyze --config reglint-rules.yaml --format console,json --out-json /tmp/scan.json` writes console to stdout and JSON to file.
 - Invalid `--fail-on` value exits with code 1 and prints an error.
 
 ## Appendices
@@ -183,7 +183,7 @@ regex-checker analyse [flags] [path ...]
 ### Examples
 
 ```
-regex-checker analyze --config configs/example.rules.yaml
-regex-checker analyse --config configs/example.rules.yaml --format json --out-json /tmp/scan.json
-regex-checker analyze --config configs/example.rules.yaml --format sarif --out-sarif /tmp/scan.sarif
+reglint analyze --config configs/example.rules.yaml
+reglint analyse --config configs/example.rules.yaml --format json --out-json /tmp/scan.json
+reglint analyze --config configs/example.rules.yaml --format sarif --out-sarif /tmp/scan.sarif
 ```

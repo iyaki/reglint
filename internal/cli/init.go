@@ -10,7 +10,7 @@ import (
 )
 
 const (
-	defaultInitPath = "regex-rules.yaml"
+	defaultInitPath = "reglint-rules.yaml"
 )
 
 // InitConfig holds parsed init command inputs.

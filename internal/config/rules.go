@@ -3,7 +3,7 @@ package config
 import (
 	"runtime"
 
-	"github.com/iyaki/regex-checker/internal/rules"
+	"github.com/iyaki/reglint/internal/rules"
 )
 
 // Rule represents a single regex rule entry.

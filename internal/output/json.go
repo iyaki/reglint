@@ -5,7 +5,7 @@ import (
 	"io"
 	"sort"
 
-	"github.com/iyaki/regex-checker/internal/scan"
+	"github.com/iyaki/reglint/internal/scan"
 )
 
 type jsonResult struct {

@@ -41,7 +41,7 @@ func Run(args []string, handlers map[string]Handler, out io.Writer) int {
 
 func writeHelp(out io.Writer) {
 	_, _ = fmt.Fprintln(out, "Usage:")
-	_, _ = fmt.Fprintln(out, "  regex-checker <command> [flags]")
+	_, _ = fmt.Fprintln(out, "  reglint <command> [flags]")
 	_, _ = fmt.Fprintln(out, "")
 	_, _ = fmt.Fprintln(out, "Commands:")
 	_, _ = fmt.Fprintln(out, "  analyze (alias: analyse)")

@@ -1,4 +1,4 @@
-module github.com/iyaki/regex-checker
+module github.com/iyaki/reglint
 
 go 1.25
 

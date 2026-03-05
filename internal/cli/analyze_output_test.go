@@ -8,8 +8,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/iyaki/regex-checker/internal/rules"
-	"github.com/iyaki/regex-checker/internal/scan"
+	"github.com/iyaki/reglint/internal/rules"
+	"github.com/iyaki/reglint/internal/scan"
 )
 
 func TestWriteJSONOutputRequiresPathForMultipleFormats(t *testing.T) {
@@ -55,7 +55,7 @@ func TestWriteSARIFOutputToStdout(t *testing.T) {
 	if err := writeSARIFOutput(cfg, scan.Result{}, sampleRules(), buffer); err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
-	if !strings.Contains(buffer.String(), "regex-checker") {
+	if !strings.Contains(buffer.String(), "RegLint") {
 		t.Fatalf("unexpected stdout output: %q", buffer.String())
 	}
 }
@@ -99,7 +99,7 @@ func TestRenderOutputsWritesSARIFFile(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to read sarif output: %v", err)
 	}
-	if !strings.Contains(string(data), "regex-checker") {
+	if !strings.Contains(string(data), "RegLint") {
 		t.Fatalf("expected sarif output, got %q", string(data))
 	}
 }

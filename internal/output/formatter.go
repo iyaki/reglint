@@ -3,7 +3,7 @@ package output
 import (
 	"io"
 
-	"github.com/iyaki/regex-checker/internal/scan"
+	"github.com/iyaki/reglint/internal/scan"
 )
 
 // Formatter renders a scan result to the provided writer.

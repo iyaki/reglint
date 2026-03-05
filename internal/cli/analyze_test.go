@@ -6,7 +6,7 @@ import (
 	"runtime"
 	"testing"
 
-	"github.com/iyaki/regex-checker/internal/cli"
+	"github.com/iyaki/reglint/internal/cli"
 )
 
 func TestParseAnalyzeDefaults(t *testing.T) {

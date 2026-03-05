@@ -8,8 +8,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/iyaki/regex-checker/internal/cli"
-	"github.com/iyaki/regex-checker/internal/scan"
+	"github.com/iyaki/reglint/internal/cli"
+	"github.com/iyaki/reglint/internal/scan"
 )
 
 func TestRunShowsHelpWhenNoArgs(t *testing.T) {
@@ -51,7 +51,7 @@ func TestRunRoutesAnalyze(t *testing.T) {
 	if code != 1 {
 		t.Fatalf("expected exit code 1 for missing config, got %d", code)
 	}
-	if !strings.Contains(output.String(), "config file not found: regex-rules.yaml") {
+	if !strings.Contains(output.String(), "config file not found: reglint-rules.yaml") {
 		t.Fatalf("unexpected output: %q", output.String())
 	}
 }
@@ -65,7 +65,7 @@ func TestRunRoutesAnalyseAlias(t *testing.T) {
 	if code != 1 {
 		t.Fatalf("expected exit code 1 for missing config, got %d", code)
 	}
-	if !strings.Contains(output.String(), "config file not found: regex-rules.yaml") {
+	if !strings.Contains(output.String(), "config file not found: reglint-rules.yaml") {
 		t.Fatalf("unexpected output: %q", output.String())
 	}
 }
@@ -256,7 +256,7 @@ func TestMainExitsWithRunCode(t *testing.T) {
 		exitFunc = originalExit
 	}()
 
-	args = []string{"regex-checker"}
+	args = []string{"reglint"}
 	outputWriter = &output
 	exitFunc = func(code int) {
 		exited = true

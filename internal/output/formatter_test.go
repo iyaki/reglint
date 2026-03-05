@@ -7,7 +7,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/iyaki/regex-checker/internal/scan"
+	"github.com/iyaki/reglint/internal/scan"
 )
 
 func TestConsoleFormatterNameAndWrite(t *testing.T) {
@@ -63,7 +63,7 @@ func TestSARIFFormatterNameAndWrite(t *testing.T) {
 	if err := formatter.Write(scan.Result{}, &buffer); err != nil {
 		t.Fatalf("unexpected write error: %v", err)
 	}
-	if !strings.Contains(buffer.String(), "regex-checker") {
+	if !strings.Contains(buffer.String(), "RegLint") {
 		t.Fatalf("unexpected sarif output: %q", buffer.String())
 	}
 }

@@ -7,8 +7,8 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/iyaki/regex-checker/internal/rules"
-	"github.com/iyaki/regex-checker/internal/scan"
+	"github.com/iyaki/reglint/internal/rules"
+	"github.com/iyaki/reglint/internal/scan"
 )
 
 func TestGoldenConsoleOutput(t *testing.T) {

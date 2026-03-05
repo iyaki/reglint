@@ -4,7 +4,7 @@
 
 ### Purpose
 
-- Define the core architectural building blocks for the regex-checker CLI.
+- Define the core architectural building blocks for the RegLint CLI.
 - Establish clear module boundaries, data flow, and extension points.
 
 ### Goals
@@ -31,7 +31,7 @@
 
 ```
 cmd/
-  regex-checker/
+  reglint/
     main.go
 internal/
   config/
@@ -107,7 +107,7 @@ ScanResult
 
 ### CLI run (happy path)
 
-1. User runs `regex-checker --rules <file> [path ...]`.
+1. User runs `reglint --rules <file> [path ...]`.
 2. Config loader validates YAML and compiles rules.
 3. ScanService scans files with engine.
 4. Output writers render console and optional JSON/SARIF.

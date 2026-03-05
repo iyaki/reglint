@@ -1,4 +1,4 @@
-# Regex Checker CLI
+# RegLint CLI
 
 Status: Implemented
 
@@ -6,7 +6,7 @@ Status: Implemented
 
 ### Purpose
 
-- Provide the single CLI entrypoint for regex-checker.
+- Provide the single CLI entrypoint for RegLint.
 - Define shared CLI behavior and subcommand structure.
 
 ### Goals
@@ -32,7 +32,7 @@ Status: Implemented
 
 ```
 cmd/
-  regex-checker/
+  reglint/
     main.go
 internal/
   config/
@@ -107,7 +107,7 @@ CLICommand
 ### Command syntax
 
 ```
-regex-checker <command> [flags]
+reglint <command> [flags]
 
 Commands:
   analyze (alias: analyse)
@@ -145,15 +145,15 @@ Commands:
 
 ## Verifications
 
-- `regex-checker analyze --config rules.yaml` scans current directory and exits with code 0/2.
-- `regex-checker init` writes `regex-rules.yaml` in the current directory.
+- `reglint analyze --config reglint-rules.yaml` scans current directory and exits with code 0/2.
+- `reglint init` writes `reglint-rules.yaml` in the current directory.
 
 ## Appendices
 
 ### Examples
 
 ```
-regex-checker analyze --config configs/example.rules.yaml
-regex-checker analyse --config configs/example.rules.yaml --format json --out-json /tmp/scan.json
-regex-checker init --out configs/rules.yaml
+reglint analyze --config configs/example.rules.yaml
+reglint analyse --config configs/example.rules.yaml --format json --out-json /tmp/scan.json
+reglint init --out configs/reglint-rules.yaml
 ```

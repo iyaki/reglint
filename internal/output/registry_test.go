@@ -5,7 +5,7 @@ import (
 	"io"
 	"testing"
 
-	"github.com/iyaki/regex-checker/internal/scan"
+	"github.com/iyaki/reglint/internal/scan"
 )
 
 type fakeFormatter struct {

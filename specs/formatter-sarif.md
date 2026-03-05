@@ -81,7 +81,7 @@ SarifToolComponent
 
 - Definition: Tool driver descriptor.
 - Fields:
-  - `name` (string, required): `regex-checker`.
+- `name` (string, required): `RegLint`.
   - `rules` (array of SarifRuleDescriptor, required)
 
 SarifRuleDescriptor
@@ -212,7 +212,7 @@ SarifLocation
 		{
 			"tool": {
 				"driver": {
-					"name": "regex-checker",
+					"name": "RegLint",
 					"rules": [
 						{
 							"id": "RC0001",

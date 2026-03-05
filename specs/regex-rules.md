@@ -6,7 +6,7 @@ Status: Implemented
 
 ### Purpose
 
-- Define the regex rule schema used by regex-checker.
+- Define the regex rule schema used by RegLint.
 - Capture rule-level defaults and validation.
 - Document message templates and regex constraints.
 

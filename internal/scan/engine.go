@@ -12,7 +12,7 @@ import (
 	"time"
 
 	"github.com/bmatcuk/doublestar/v4"
-	"github.com/iyaki/regex-checker/internal/rules"
+	"github.com/iyaki/reglint/internal/rules"
 )
 
 var readFile = os.ReadFile

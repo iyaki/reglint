@@ -21,7 +21,7 @@ Design docs and technical specifications
 
 ### CLI
 
-- [Regex Checker CLI](specs/cli.md)
+- [RegLint CLI](specs/cli.md)
 - [Analyze command](specs/cli-analyze.md)
 - [Init command](specs/cli-init.md)
 

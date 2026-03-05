@@ -4,7 +4,7 @@
 
 ### Purpose
 
-Regex Checker is a tool designed to help developers enforce custom code quality rules using regular expressions. By defining rules in a simple YAML format, teams can quickly identify and address issues in their codebase without the overhead of complex static analysis tools.
+RegLint is a tool designed to help developers enforce custom code quality rules using regular expressions. By defining rules in a simple YAML format, teams can quickly identify and address issues in their codebase without the overhead of complex static analysis tools.
 
 ### Goals
 

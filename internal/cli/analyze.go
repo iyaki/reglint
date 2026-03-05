@@ -10,14 +10,14 @@ import (
 	"runtime"
 	"strings"
 
-	"github.com/iyaki/regex-checker/internal/config"
-	"github.com/iyaki/regex-checker/internal/output"
-	"github.com/iyaki/regex-checker/internal/rules"
-	"github.com/iyaki/regex-checker/internal/scan"
+	"github.com/iyaki/reglint/internal/config"
+	"github.com/iyaki/reglint/internal/output"
+	"github.com/iyaki/reglint/internal/rules"
+	"github.com/iyaki/reglint/internal/scan"
 )
 
 const (
-	defaultConfigPath   = "regex-rules.yaml"
+	defaultConfigPath   = "reglint-rules.yaml"
 	defaultFormat       = "console"
 	defaultMaxFileBytes = int64(5242880)
 )
@@ -271,7 +271,7 @@ func validateExistingOutputPath(info os.FileInfo, path string) error {
 }
 
 func validateOutputDirectoryWritable(parent, path string) error {
-	probe, err := os.CreateTemp(parent, ".regex-checker-*")
+	probe, err := os.CreateTemp(parent, ".reglint-*")
 	if err != nil {
 		return fmt.Errorf("output path not writable: %s", path)
 	}

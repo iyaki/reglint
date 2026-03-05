@@ -3,9 +3,9 @@ package cli_test
 import (
 	"testing"
 
-	"github.com/iyaki/regex-checker/internal/cli"
-	"github.com/iyaki/regex-checker/internal/config"
-	"github.com/iyaki/regex-checker/internal/rules"
+	"github.com/iyaki/reglint/internal/cli"
+	"github.com/iyaki/reglint/internal/config"
+	"github.com/iyaki/reglint/internal/rules"
 )
 
 func TestBuildScanRequestOverridesIncludeExcludeAndFailOn(t *testing.T) {

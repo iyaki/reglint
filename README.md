@@ -1,14 +1,40 @@
-# Devcontainerized Project Repository Template
+# RegLint
 
-For use with [OpenCode](https://opencode.ai/) and [Ralph](https://github.com/iyaki/ralph).
+RegLint is a regex-based linter that scans codebases using YAML-defined rules and emits console, JSON, or SARIF outputs for local and CI workflows.
 
-Remember to:
+## Quickstart
 
- - Change devcontainer project name
- - Change README.md to reflect your project
- - Modify AGENTS.md as needed
- - Configure git hooks to work as backpressure for agents
+```bash
+reglint init
+reglint analyze --config reglint-rules.yaml
+```
 
-Optional configurations:
+## CLI
 
-- Add DATACOMMONS_API_KEY env var (on .env file) for usage with Data Commons MCP and enable the MCP server on opencode config - https://apikeys.datacommons.org/
+```bash
+reglint <command> [flags]
+
+Commands:
+  analyze (alias: analyse)
+  init
+```
+
+## Config
+
+The default rules file name is `reglint-rules.yaml`.
+
+```bash
+reglint init --out configs/reglint-rules.yaml
+reglint analyze --config configs/reglint-rules.yaml
+```
+
+## Outputs
+
+- `console` writes to stdout.
+- `json` writes to stdout when it is the only format; otherwise set `--out-json`.
+- `sarif` writes to stdout when it is the only format; otherwise set `--out-sarif`.
+
+```bash
+reglint analyze --config reglint-rules.yaml --format console,json --out-json /tmp/scan.json
+reglint analyze --config reglint-rules.yaml --format sarif --out-sarif /tmp/scan.sarif
+```

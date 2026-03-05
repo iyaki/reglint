@@ -32,7 +32,7 @@ Status: Implemented
 
 ```
 cmd/
-  regex-checker/
+  reglint/
     main.go
 internal/
   cli/
@@ -49,7 +49,7 @@ internal/
 ### Data flow summary
 
 1. Parse flags.
-2. Resolve output path (default `regex-rules.yaml`).
+2. Resolve output path (default `reglint-rules.yaml`).
 3. If output exists and `--force` is not set, error.
 4. Render default config content.
 5. Write file and print a success message.
@@ -79,7 +79,7 @@ type InitConfig struct {
 ### Generate default config (happy path)
 
 1. Parse flags.
-2. Resolve output path (default `regex-rules.yaml`).
+2. Resolve output path (default `reglint-rules.yaml`).
 3. Check if the output path exists.
 4. If exists and `--force` is not set, error and exit 1.
 5. Write the default YAML.
@@ -101,15 +101,15 @@ type InitConfig struct {
 ### Command syntax
 
 ```
-regex-checker init [flags]
+reglint init [flags]
 ```
 
 ### Flags
 
-| Flag      | Type   | Required | Default            | Purpose                               |
-| --------- | ------ | -------- | ------------------ | ------------------------------------- |
-| `--out`   | string | no       | `regex-rules.yaml` | Output path for the config file.      |
-| `--force` | bool   | no       | `false`            | Overwrite if the file already exists. |
+| Flag      | Type   | Required | Default              | Purpose                               |
+| --------- | ------ | -------- | -------------------- | ------------------------------------- |
+| `--out`   | string | no       | `reglint-rules.yaml` | Output path for the config file.      |
+| `--force` | bool   | no       | `false`              | Overwrite if the file already exists. |
 
 ### Default config content
 
@@ -135,16 +135,16 @@ Notes:
 
 ## Verifications
 
-- `regex-checker init` writes `regex-rules.yaml` in the current directory.
-- `regex-checker init --out configs/rules.yaml` writes the file at the specified path.
-- `regex-checker init` fails if the file exists; `regex-checker init --force` overwrites it.
+- `reglint init` writes `reglint-rules.yaml` in the current directory.
+- `reglint init --out configs/reglint-rules.yaml` writes the file at the specified path.
+- `reglint init` fails if the file exists; `reglint init --force` overwrites it.
 
 ## Appendices
 
 ### Examples
 
 ```
-regex-checker init
-regex-checker init --out configs/rules.yaml
-regex-checker init --force
+reglint init
+reglint init --out configs/reglint-rules.yaml
+reglint init --force
 ```

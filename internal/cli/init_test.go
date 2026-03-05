@@ -7,7 +7,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/iyaki/regex-checker/internal/cli"
+	"github.com/iyaki/reglint/internal/cli"
 )
 
 func TestParseInitDefaults(t *testing.T) {
@@ -18,7 +18,7 @@ func TestParseInitDefaults(t *testing.T) {
 		t.Fatalf("expected no error, got %v", err)
 	}
 
-	if cfg.OutputPath != "regex-rules.yaml" {
+	if cfg.OutputPath != "reglint-rules.yaml" {
 		t.Fatalf("expected default output path, got %q", cfg.OutputPath)
 	}
 	if cfg.Force {
