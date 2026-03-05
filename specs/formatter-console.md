@@ -63,6 +63,7 @@ ConsoleMatchLine
   - `line` (int): 1-based line number.
   - `column` (int): 1-based column number (rune index).
   - `message` (string): Interpolated match message.
+  - `fileUri` (string): Absolute file URI suffix in the format `file://<abs-path>:<line>`.
 
 ConsoleSummary
 
@@ -88,7 +89,7 @@ ConsoleSummary
 
 1. Sort matches (Ordering).
 2. For each `filePath`, print the file header line.
-3. For each match in that file, print a match line.
+3. For each match in that file, print a match line with the `fileUri` suffix.
 4. After all files, print the summary line.
 
 ### No matches
@@ -118,6 +119,7 @@ ConsoleSummary
 
 - Output contains interpolated messages that may include sensitive data.
 - Do not emit raw `matchText` in console output.
+- Output includes absolute file URIs, which may reveal local filesystem layout.
 
 ## Dependencies
 
@@ -146,11 +148,18 @@ ConsoleSummary
 
 ```
 path/to/file.ext
-  ERROR 12:5 Avoid hardcoded token: abc123
-  WARN  42:1 Unexpected debug flag
+  ERROR 12:5 Avoid hardcoded token: abc123 file:///abs/path/to/file.ext:12
+  WARN  42:1 Unexpected debug flag file:///abs/path/to/file.ext:42
 
 another/file.go
-  NOTICE 3:9 Use of TODO comment
+  NOTICE 3:9 Use of TODO comment file:///abs/another/file.go:3
 
 Summary: files=10 skipped=1 matches=3 durationMs=120
 ```
+
+### File URI format
+
+- Scheme is fixed to `file` (no configuration).
+- Path is absolute and URL-encoded (spaces become `%20`).
+- The line number is appended as `:<line>` (no column).
+- Windows drive letters use a leading slash (example: `file:///C:/path/to/file.go:12`).
