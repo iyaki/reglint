@@ -68,7 +68,7 @@
 			"installOhMyZshConfig": false,
 			"username": "automatic"
 		},
-		"ghcr.io/devcontainers/features/go:1": {
+		"ghcr.io/devcontainers/features/go:": {
 			"version": "1.25"
 		},
 		// "ghcr.io/devcontainers/features/git:1": {
