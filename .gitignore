@@ -4,3 +4,4 @@
 /repomix-output.xml
 report.json
 go-mutesting-report.html
+*.tmp
