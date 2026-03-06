@@ -31,6 +31,12 @@
 			"source": "${localEnv:HOME}/.config/gh/",
 			"target": "/home/codespace/.config/gh/",
 			"type": "bind"
+		},
+		// Override Git LFS artifacts script to avoid conflicts with pre configured git hooks (e.g, lefthook).
+		{
+			"source": "${localWorkspaceFolder}/.devcontainer/pull-git-lfs-artifacts-override.sh",
+			"target": "/usr/local/share/pull-git-lfs-artifacts.sh",
+			"type": "bind"
 		}
 		// Uncomment if you have an (PHP) Intelephense license and want to use it in the container (for opencode and oraios/serena)
 		// For usage with serena mcp uncomment also on opencode.json configuration file
