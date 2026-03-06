@@ -1,0 +1,38 @@
+Add information abou commands to execute and build the application (for testing purposses, add also examples to execute it with testing data) to the @AGENTS.md 
+Called the Read tool with the following input: {"filePath":"/workspaces/regex-checker/AGENTS.md"}
+<path>/workspaces/regex-checker/AGENTS.md</path>
+<type>file</type>
+<content>1: # Agent Guidelines
+2: 
+3: ## Spec-First Workflow
+4: 
+5: - Read `specs/README.md` before any feature work.
+6: - Assume specs describe intent, not implementation.
+7: - Verify reality in the codebase before claiming something exists.
+8: - Implement to spec patterns and data shapes; update specs only when asked.
+9: - When Writting specs, **NEVER** follow Test Driven Development practices. Write the spec first and stop.
+10: 
+11: ## Testing and Quality Gates
+12: 
+13: - Follow Test Driven Development practices: write failing tests before implementation.
+14: - Local suite: `bash scripts/quality.sh all`.
+15: - Targeted runs:
+16:   - `bash scripts/quality.sh lint|test|coverage|security|arch`.
+17: - Coverage gate: default min 90% (`COVERAGE_MIN` override).
+18: - Run core tests with `go test ./...`.
+19: 
+20: ## Tooling Expectations
+21: 
+22: - Go version: 1.25 (see `go.mod`).
+23: - Mutation testing tool: `go-mutesting`.
+24: - Lint and security via `golangci-lint`, `govulncheck`, `go-arch-lint`, `go-fmt`.
+25: 
+26: ## Implementation Guidance
+27: 
+28: - Keep scans deterministic and reproducible.
+29: - Skip binary/oversized files per spec; record skipped file stats.
+30: - Treat match text as sensitive; avoid logging it in console.
+31: - When multiple code paths do similar work with small variations, consolidate into shared services with request structs.
+
+(End of file - total 31 lines)
+</content>
