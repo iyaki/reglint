@@ -18,9 +18,6 @@
 				"--open-web-dashboard", "false",
 				"--context", "ide"
 			],
-			"environment": {
-				// "INTELEPHENSE_LICENSE_KEY": "{file:/home/codespace/intelephense/licence.txt}"
-			},
 			"enabled": false
 		},
 		"web-search": {

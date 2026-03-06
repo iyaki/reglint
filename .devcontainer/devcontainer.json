@@ -38,9 +38,6 @@
 			"target": "/usr/local/share/pull-git-lfs-artifacts.sh",
 			"type": "bind"
 		}
-		// Uncomment if you have an (PHP) Intelephense license and want to use it in the container (for opencode and oraios/serena)
-		// For usage with serena mcp uncomment also on opencode.json configuration file
-		// { "source": "${localEnv:HOME}/intelephense/licence.txt", "target": "/home/codespace/intelephense/licence.txt", "type": "bind" }
 	],
 
 	"remoteEnv": {
