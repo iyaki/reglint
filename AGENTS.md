@@ -17,6 +17,13 @@
 - Coverage gate: default min 90% (`COVERAGE_MIN` override).
 - Run core tests with `go test ./...`.
 
+## Build and Run
+
+- Build the CLI binary: `go build -o bin/reglint ./cmd/reglint`.
+- Run from source (no build): `go run ./cmd/reglint <command> [flags]`.
+- Example with test data (config + fixture): `go run ./cmd/reglint analyze --config testdata/rules/example.yaml testdata/fixtures`.
+- Example with failing config (failOn): `go run ./cmd/reglint analyze --config testdata/rules/fail.yaml testdata/fixtures`.
+
 ## Tooling Expectations
 
 - Go version: 1.25 (see `go.mod`).
