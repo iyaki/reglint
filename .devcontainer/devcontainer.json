@@ -109,8 +109,7 @@
 		"Install npm packages": "npm install",
 		"Setup agent browser": "agent-browser install --with-deps",
 		"Install go tools": "/bin/bash .devcontainer/install-go-tools.sh",
-		"Setup lefthook": "/go/bin/lefthook install",
-		"Install entire": "/bin/bash .devcontainer/setup-entire.sh"
+		"Setup lefthook": "/go/bin/lefthook install"
 	},
 
 	// Use 'forwardPorts' to make a list of ports inside the container available locally.
