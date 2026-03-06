@@ -16,17 +16,17 @@
 			"type": "http",
 			"url": "https://gitmcp.io/docs"
 		},
-		"oraios/serena": {
-			"type": "stdio",
-			"command": "uvx",
-			"args": [
-				"--from", "git+https://github.com/oraios/serena",
-				"serena",
-				"start-mcp-server",
-				"--project-from-cwd",
-				"--open-web-dashboard", "false",
-				"--context", "ide"
-			]
-		}
+		// "oraios/serena": {
+		// 	"type": "stdio",
+		// 	"command": "uvx",
+		// 	"args": [
+		// 		"--from", "git+https://github.com/oraios/serena",
+		// 		"serena",
+		// 		"start-mcp-server",
+		// 		"--project-from-cwd",
+		// 		"--open-web-dashboard", "false",
+		// 		"--context", "ide"
+		// 	]
+		// }
 	}
 }
