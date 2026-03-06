@@ -110,8 +110,8 @@ bash scripts/quality.sh go-arch-lint
 ### CLI (analyze)
 
 - Unknown commands exit with code `1` and show a single error message.
-- `--config` must point to a readable file.
-- `--format` must be one of `console|json|sarif` (per formatter specs).
+- `--config` (`-c`) must point to a readable file.
+- `--format` (`-f`) must be one of `console|json|sarif` (per formatter specs).
 - Output paths must be writable when `--out-*` flags are set.
 
 ### Runtime scan

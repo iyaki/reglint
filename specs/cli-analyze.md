@@ -116,8 +116,8 @@ type CLIConfig struct {
 
 ### Validation and errors
 
-- `--config` defaults to `reglint-rules.yaml` in the current directory. If the file is missing or unreadable, print an error and exit with code 1.
-- `--format` must include only `console`, `json`, or `sarif`.
+- `--config` (`-c`) defaults to `reglint-rules.yaml` in the current directory. If the file is missing or unreadable, print an error and exit with code 1.
+- `--format` (`-f`) must include only `console`, `json`, or `sarif`.
 - `--concurrency` must be a positive integer.
 - `--max-file-size` must be a positive integer.
 - `--fail-on` must be one of `error|warning|notice|info` when set.
@@ -145,8 +145,8 @@ reglint analyse [flags] [path ...]
 
 | Flag              | Type   | Required | Default              | Purpose                                       |
 | ----------------- | ------ | -------- | -------------------- | --------------------------------------------- |
-| `--config`        | string | no       | `reglint-rules.yaml` | Path to YAML rules config file.               |
-| `--format`        | string | no       | `console`            | Comma-separated list of `console,json,sarif`. |
+| `--config,-c`     | string | no       | `reglint-rules.yaml` | Path to YAML rules config file.               |
+| `--format,-f`     | string | no       | `console`            | Comma-separated list of `console,json,sarif`. |
 | `--out-json`      | string | no       | none                 | Output path for JSON results.                 |
 | `--out-sarif`     | string | no       | none                 | Output path for SARIF results.                |
 | `--include`       | string | no       | none                 | Repeatable include glob for all rules.        |
@@ -174,8 +174,8 @@ reglint analyse [flags] [path ...]
 ## Verifications
 
 - `reglint analyze --config reglint-rules.yaml` scans current directory and exits with code 0/2.
-- `reglint analyze --config reglint-rules.yaml --format json` writes JSON to stdout.
-- `reglint analyze --config reglint-rules.yaml --format console,json --out-json /tmp/scan.json` writes console to stdout and JSON to file.
+- `reglint analyze -c reglint-rules.yaml -f json` writes JSON to stdout.
+- `reglint analyze -c reglint-rules.yaml -f console,json --out-json /tmp/scan.json` writes console to stdout and JSON to file.
 - Invalid `--fail-on` value exits with code 1 and prints an error.
 
 ## Appendices
@@ -184,6 +184,6 @@ reglint analyse [flags] [path ...]
 
 ```
 reglint analyze --config configs/example.rules.yaml
-reglint analyse --config configs/example.rules.yaml --format json --out-json /tmp/scan.json
-reglint analyze --config configs/example.rules.yaml --format sarif --out-sarif /tmp/scan.sarif
+reglint analyse -c configs/example.rules.yaml -f json --out-json /tmp/scan.json
+reglint analyze -c configs/example.rules.yaml -f sarif --out-sarif /tmp/scan.sarif
 ```

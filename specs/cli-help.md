@@ -202,7 +202,7 @@ Formatting rules:
 ## Verifications
 
 - `reglint --help` exits `0` and prints the root usage and commands list.
-- `reglint analyze --help` exits `0` and lists analyze flags including `--config` and `--format`.
+- `reglint analyze --help` exits `0` and lists analyze flags including `--config/-c` and `--format/-f`.
 - `reglint analyse -h` exits `0` and prints the analyze usage lines.
 - `reglint init --help` exits `0` and lists `--out` and `--force`.
 - `reglint bogus --help` exits `1` and prints `Unknown command: bogus` only.
@@ -234,8 +234,8 @@ Usage:
 
 Flags:
   -h, --help bool (default false)  Print help and exit.
-  --config string (default reglint-rules.yaml)  Path to YAML rules config file.
-  --format string (default console)  Comma-separated list of formats.
+  -c, --config string (default reglint-rules.yaml)  Path to YAML rules config file.
+  -f, --format string (default console)  Comma-separated list of formats.
   --out-json string (default none)  Output path for JSON results.
   --out-sarif string (default none)  Output path for SARIF results.
   --include string (default none)  Repeatable include glob.

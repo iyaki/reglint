@@ -154,6 +154,6 @@ Commands:
 
 ```
 reglint analyze --config configs/example.rules.yaml
-reglint analyse --config configs/example.rules.yaml --format json --out-json /tmp/scan.json
+reglint analyse -c configs/example.rules.yaml -f json --out-json /tmp/scan.json
 reglint init --out configs/reglint-rules.yaml
 ```
