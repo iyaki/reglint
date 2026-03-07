@@ -19,6 +19,9 @@ components:
   scan:
     in:
       - internal/scan/**
+  ignore:
+    in:
+      - internal/ignore/**
   io:
     in:
       - internal/io/**
@@ -40,6 +43,9 @@ deps:
     mayDependOn:
       - rules
       - io
+    anyVendorDeps: true
+  ignore:
+    anyProjectDeps: true
     anyVendorDeps: true
   output:
     mayDependOn:

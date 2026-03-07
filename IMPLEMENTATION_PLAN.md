@@ -71,7 +71,7 @@
 ## Phase 11: Ignore file loader + parser
 
 **Goal:** Load, parse, and normalize ignore rules in deterministic order.
-**Status:** Not started
+**Status:** In progress
 **Paths:** `internal/ignore/loader.go`, `internal/ignore/parser.go`, `internal/ignore/matcher.go`
 **Reference pattern:** `internal/scan/engine.go`
 
@@ -83,9 +83,9 @@
 
 ### 11.2 Ignore parser
 
-- [ ] Parse blank lines and comments with escaped `#` and `!`.
-- [ ] Support negated rules, anchored `/`, trailing `/` directory-only.
-- [ ] Build `IgnoreRule` with base dir, source path, line number, pattern.
+- [x] Parse blank lines and comments with escaped `#` and `!`.
+- [x] Support negated rules, anchored `/`, trailing `/` directory-only.
+- [x] Build `IgnoreRule` with base dir, source path, line number, pattern.
 
 **Definition of Done**
 
@@ -191,6 +191,7 @@
 - 2026-03-07: `git log -n 10 --oneline -- specs/ignore-files.md` - reviewed ignore spec change history.
 - 2026-03-07: `go test ./internal/config ./internal/cli` - ok
 - 2026-03-07: `go test ./internal/cli -run TestBuildScanRequestResolvesIgnoreSettings` - ok
+- 2026-03-07: `go test ./internal/ignore` - ok
 
 ## Summary
 
@@ -198,7 +199,7 @@
 | ------------------------------------ | ----------- |
 | Phase 9: Ignore settings + config    | Complete    |
 | Phase 10: Ignore settings resolution | Complete    |
-| Phase 11: Ignore loader + parser     | Not started |
+| Phase 11: Ignore loader + parser     | In progress |
 | Phase 12: Ignore matcher + filtering | Not started |
 | Phase 13: Error handling + stats     | Not started |
 | Phase 14: Tests + fixtures           | Not started |
