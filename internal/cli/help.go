@@ -112,12 +112,14 @@ func analyzeHelpFlags() []HelpFlag {
 		helpFlag(),
 		{
 			Long:        "--config",
+			Short:       "-c",
 			Type:        "string",
 			Default:     defaultConfigPath,
 			Description: "Path to YAML rules config file.",
 		},
 		{
 			Long:        "--format",
+			Short:       "-f",
 			Type:        "string",
 			Default:     defaultFormat,
 			Description: "Comma-separated list of formats.",

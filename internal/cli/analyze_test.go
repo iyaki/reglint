@@ -4,6 +4,7 @@ import (
 	"os"
 	"path/filepath"
 	"runtime"
+	"strings"
 	"testing"
 
 	"github.com/iyaki/reglint/internal/cli"
@@ -22,6 +23,49 @@ func TestParseAnalyzeDefaults(t *testing.T) {
 	assertDefaultConfig(t, got, configPath)
 }
 
+func TestParseAnalyzeShortConfigFlag(t *testing.T) {
+	t.Parallel()
+
+	configPath := writeTempConfig(t)
+
+	got, err := cli.ParseAnalyzeArgs([]string{"-c", configPath})
+	if err != nil {
+		t.Fatalf("expected no error, got %v", err)
+	}
+
+	assertDefaultConfig(t, got, configPath)
+}
+
+func TestParseAnalyzeShortFormatFlag(t *testing.T) {
+	t.Parallel()
+
+	configPath := writeTempConfig(t)
+
+	got, err := cli.ParseAnalyzeArgs([]string{"-c", configPath, "-f", "json"})
+	if err != nil {
+		t.Fatalf("expected no error, got %v", err)
+	}
+
+	if len(got.Formats) != 1 || got.Formats[0] != "json" {
+		t.Fatalf("expected formats [json], got %v", got.Formats)
+	}
+}
+
+func TestParseAnalyzeShortFormatHonorsShortValueWithLongDefault(t *testing.T) {
+	t.Parallel()
+
+	configPath := writeTempConfig(t)
+
+	got, err := cli.ParseAnalyzeArgs([]string{"-c", configPath, "-f", "sarif", "--format", "console"})
+	if err != nil {
+		t.Fatalf("expected no error, got %v", err)
+	}
+
+	if len(got.Formats) != 1 || got.Formats[0] != "console" {
+		t.Fatalf("expected formats [console], got %v", got.Formats)
+	}
+}
+
 func TestParseAnalyzeFormatsDedupAndTrim(t *testing.T) {
 	t.Parallel()
 
@@ -33,6 +77,35 @@ func TestParseAnalyzeFormatsDedupAndTrim(t *testing.T) {
 	}
 
 	want := []string{"json"}
+	if len(got.Formats) != len(want) {
+		t.Fatalf("expected formats %v, got %v", want, got.Formats)
+	}
+	for i := range want {
+		if got.Formats[i] != want[i] {
+			t.Fatalf("expected formats %v, got %v", want, got.Formats)
+		}
+	}
+}
+
+func TestParseAnalyzeFormatsKeepsOrderAfterDuplicates(t *testing.T) {
+	t.Parallel()
+
+	configPath := writeTempConfig(t)
+	jsonPath := writableFile(t, "scan.json")
+	sarifPath := writableFile(t, "scan.sarif")
+
+	formatValue := strings.Join([]string{"json", "json", "sarif"}, ", ")
+	got, err := cli.ParseAnalyzeArgs([]string{
+		"--config", configPath,
+		"--format", formatValue,
+		"--out-json", jsonPath,
+		"--out-sarif", sarifPath,
+	})
+	if err != nil {
+		t.Fatalf("expected no error, got %v", err)
+	}
+
+	want := []string{"json", "sarif"}
 	if len(got.Formats) != len(want) {
 		t.Fatalf("expected formats %v, got %v", want, got.Formats)
 	}
@@ -100,6 +173,17 @@ func TestParseAnalyzeRequiresOutPathForMultiFormat(t *testing.T) {
 	}
 }
 
+func TestParseAnalyzeRequiresOutSARIFForMultiFormat(t *testing.T) {
+	t.Parallel()
+
+	configPath := writeTempConfig(t)
+
+	_, err := cli.ParseAnalyzeArgs([]string{"--config", configPath, "--format", "console,sarif"})
+	if err == nil {
+		t.Fatal("expected error, got nil")
+	}
+}
+
 func TestParseAnalyzeAllowsSingleJsonToStdout(t *testing.T) {
 	t.Parallel()
 
@@ -156,12 +240,80 @@ func TestParseAnalyzeRejectsEmptyFormatValue(t *testing.T) {
 	}
 }
 
+func TestParseAnalyzeRejectsWhitespaceFormatValue(t *testing.T) {
+	t.Parallel()
+
+	configPath := writeTempConfig(t)
+
+	_, err := cli.ParseAnalyzeArgs([]string{"--config", configPath, "--format", " "})
+	if err == nil {
+		t.Fatal("expected error, got nil")
+	}
+}
+
+func TestParseAnalyzeRejectsFormatWithEmptyComponent(t *testing.T) {
+	t.Parallel()
+
+	configPath := writeTempConfig(t)
+
+	_, err := cli.ParseAnalyzeArgs([]string{"--config", configPath, "--format", "json,"})
+	if err == nil {
+		t.Fatal("expected error, got nil")
+	}
+}
+
+func TestParseAnalyzeRejectsFormatWithWhitespaceComponent(t *testing.T) {
+	t.Parallel()
+
+	configPath := writeTempConfig(t)
+
+	_, err := cli.ParseAnalyzeArgs([]string{"--config", configPath, "--format", "json, , sarif"})
+	if err == nil {
+		t.Fatal("expected error, got nil")
+	}
+}
+
 func TestParseAnalyzeRequiresConfigFile(t *testing.T) {
 	t.Parallel()
 
 	missingPath := filepath.Join(t.TempDir(), "missing.yaml")
 
 	_, err := cli.ParseAnalyzeArgs([]string{"--config", missingPath})
+	if err == nil {
+		t.Fatal("expected error, got nil")
+	}
+}
+
+func TestParseAnalyzeRejectsConfigDirectoryEvenWithoutOutPaths(t *testing.T) {
+	t.Parallel()
+
+	_, err := cli.ParseAnalyzeArgs([]string{"--config", t.TempDir(), "--format", "json"})
+	if err == nil {
+		t.Fatal("expected error, got nil")
+	}
+}
+
+func TestParseAnalyzeRejectsConfigDirectory(t *testing.T) {
+	t.Parallel()
+
+	_, err := cli.ParseAnalyzeArgs([]string{"--config", t.TempDir()})
+	if err == nil {
+		t.Fatal("expected error, got nil")
+	}
+}
+
+func TestParseAnalyzeRejectsUnreadableConfigFile(t *testing.T) {
+	t.Parallel()
+
+	path := writableFile(t, "rules.yaml")
+	if err := os.Chmod(path, 0o000); err != nil {
+		t.Fatalf("failed to set permissions: %v", err)
+	}
+	t.Cleanup(func() {
+		_ = os.Chmod(path, 0o600)
+	})
+
+	_, err := cli.ParseAnalyzeArgs([]string{"--config", path})
 	if err == nil {
 		t.Fatal("expected error, got nil")
 	}
@@ -178,6 +330,31 @@ func TestParseAnalyzeRejectsZeroConcurrency(t *testing.T) {
 	}
 }
 
+func TestParseAnalyzeSetsConcurrencyWhenProvided(t *testing.T) {
+	t.Parallel()
+
+	configPath := writeTempConfig(t)
+
+	got, err := cli.ParseAnalyzeArgs([]string{"--config", configPath, "--concurrency", "2"})
+	if err != nil {
+		t.Fatalf("expected no error, got %v", err)
+	}
+	if !got.ConcurrencySet {
+		t.Fatal("expected concurrency to be marked as set")
+	}
+}
+
+func TestParseAnalyzeAcceptsConcurrencyOne(t *testing.T) {
+	t.Parallel()
+
+	configPath := writeTempConfig(t)
+
+	_, err := cli.ParseAnalyzeArgs([]string{"--config", configPath, "--concurrency", "1"})
+	if err != nil {
+		t.Fatalf("expected no error, got %v", err)
+	}
+}
+
 func TestParseAnalyzeRejectsZeroMaxFileSize(t *testing.T) {
 	t.Parallel()
 
@@ -186,6 +363,17 @@ func TestParseAnalyzeRejectsZeroMaxFileSize(t *testing.T) {
 	_, err := cli.ParseAnalyzeArgs([]string{"--config", configPath, "--max-file-size", "0"})
 	if err == nil {
 		t.Fatal("expected error, got nil")
+	}
+}
+
+func TestParseAnalyzeAcceptsMaxFileSizeOne(t *testing.T) {
+	t.Parallel()
+
+	configPath := writeTempConfig(t)
+
+	_, err := cli.ParseAnalyzeArgs([]string{"--config", configPath, "--max-file-size", "1"})
+	if err != nil {
+		t.Fatalf("expected no error, got %v", err)
 	}
 }
 
@@ -263,6 +451,19 @@ func TestParseAnalyzeRejectsOutJSONDirectory(t *testing.T) {
 	}
 }
 
+func TestParseAnalyzeRejectsOutJSONWhenParentUnreadable(t *testing.T) {
+	t.Parallel()
+
+	configPath := writeTempConfig(t)
+	outputDir := noExecDir(t)
+	outputPath := filepath.Join(outputDir, "scan.json")
+
+	_, err := cli.ParseAnalyzeArgs([]string{"--config", configPath, "--format", "json", "--out-json", outputPath})
+	if err == nil {
+		t.Fatal("expected error, got nil")
+	}
+}
+
 func TestParseAnalyzeAllowsWritableOutSARIFFile(t *testing.T) {
 	t.Parallel()
 
@@ -284,6 +485,44 @@ func TestParseAnalyzeRejectsOutSARIFDirectory(t *testing.T) {
 	_, err := cli.ParseAnalyzeArgs([]string{"--config", configPath, "--format", "sarif", "--out-sarif", outputPath})
 	if err == nil {
 		t.Fatal("expected error, got nil")
+	}
+}
+
+func TestParseAnalyzeRejectsOutSARIFWithMissingParent(t *testing.T) {
+	t.Parallel()
+
+	configPath := writeTempConfig(t)
+	outputPath := filepath.Join(t.TempDir(), "missing", "scan.sarif")
+
+	_, err := cli.ParseAnalyzeArgs([]string{"--config", configPath, "--format", "sarif", "--out-sarif", outputPath})
+	if err == nil {
+		t.Fatal("expected error, got nil")
+	}
+}
+
+func TestParseAnalyzeAcceptsOutJSONInCurrentDir(t *testing.T) {
+	t.Parallel()
+
+	configPath := writeTempConfig(t)
+	outputPath := "scan.json"
+	cleanupFile(t, outputPath)
+
+	_, err := cli.ParseAnalyzeArgs([]string{"--config", configPath, "--format", "json", "--out-json", outputPath})
+	if err != nil {
+		t.Fatalf("expected no error, got %v", err)
+	}
+}
+
+func TestParseAnalyzeAcceptsOutSARIFInCurrentDir(t *testing.T) {
+	t.Parallel()
+
+	configPath := writeTempConfig(t)
+	outputPath := "scan.sarif"
+	cleanupFile(t, outputPath)
+
+	_, err := cli.ParseAnalyzeArgs([]string{"--config", configPath, "--format", "sarif", "--out-sarif", outputPath})
+	if err != nil {
+		t.Fatalf("expected no error, got %v", err)
 	}
 }
 
@@ -349,6 +588,20 @@ func readOnlyDir(t *testing.T) string {
 	return dir
 }
 
+func noExecDir(t *testing.T) string {
+	t.Helper()
+
+	dir := t.TempDir()
+	if err := os.Chmod(dir, 0o600); err != nil {
+		t.Fatalf("failed to set permissions: %v", err)
+	}
+	t.Cleanup(func() {
+		_ = os.Chmod(dir, 0o700)
+	})
+
+	return dir
+}
+
 func writableFile(t *testing.T, name string) string {
 	t.Helper()
 
@@ -375,4 +628,16 @@ func readOnlyFile(t *testing.T, name string) string {
 	})
 
 	return path
+}
+
+func cleanupFile(t *testing.T, path string) {
+	t.Helper()
+
+	if _, err := os.Stat(path); err == nil {
+		if err := os.Remove(path); err != nil {
+			t.Fatalf("failed to remove file: %v", err)
+		}
+	} else if !os.IsNotExist(err) {
+		t.Fatalf("failed to stat file: %v", err)
+	}
 }

@@ -107,8 +107,8 @@ func TestRunShowsHelpForAnalyzeFlag(t *testing.T) {
 		"\n" +
 		"Flags:\n" +
 		"  -h, --help bool (default false)  Print help and exit.\n" +
-		"      --config string (default reglint-rules.yaml)  Path to YAML rules config file.\n" +
-		"      --format string (default console)  Comma-separated list of formats.\n" +
+		"  -c, --config string (default reglint-rules.yaml)  Path to YAML rules config file.\n" +
+		"  -f, --format string (default console)  Comma-separated list of formats.\n" +
 		"      --out-json string (default none)  Output path for JSON results.\n" +
 		"      --out-sarif string (default none)  Output path for SARIF results.\n" +
 		"      --include string (default none)  Repeatable include glob.\n" +

@@ -23,6 +23,23 @@ func TestHandleAnalyzeMissingConfig(t *testing.T) {
 	}
 }
 
+func TestHandleAnalyzeSurfaceRenderErrors(t *testing.T) {
+	t.Parallel()
+
+	config := "rules:\n  - message: 'hello'\n    regex: 'world'\n"
+	configPath := writeConfig(t, config)
+
+	var output bytes.Buffer
+	code := HandleAnalyze([]string{"--config", configPath, "--format", "json", "--out-json", t.TempDir()}, &output)
+
+	if code != exitCodeError {
+		t.Fatalf("expected exit code %d, got %d", exitCodeError, code)
+	}
+	if !strings.Contains(output.String(), "output path is a directory") {
+		t.Fatalf("unexpected output: %q", output.String())
+	}
+}
+
 func TestHandleAnalyzeFailOnThreshold(t *testing.T) {
 	t.Parallel()
 
@@ -62,6 +79,68 @@ func TestHandleAnalyzeNoMatches(t *testing.T) {
 		t.Fatalf("expected exit code 0, got %d", code)
 	}
 	if !strings.Contains(output.String(), "No matches found.") {
+		t.Fatalf("unexpected output: %q", output.String())
+	}
+}
+
+func TestHandleAnalyzeReturnsZeroWhenFailOnUnset(t *testing.T) {
+	t.Parallel()
+
+	rootDir := t.TempDir()
+	writeFile(t, rootDir, "sample.txt", "token=abc")
+	configPath := writeConfig(t, sampleConfig())
+
+	var output bytes.Buffer
+	code := HandleAnalyze([]string{
+		"--config", configPath,
+		rootDir,
+	}, &output)
+
+	if code != 0 {
+		t.Fatalf("expected exit code 0, got %d", code)
+	}
+	if !strings.Contains(output.String(), "Summary:") {
+		t.Fatalf("unexpected output: %q", output.String())
+	}
+}
+
+func TestHandleAnalyzeAcceptsShortFlags(t *testing.T) {
+	t.Parallel()
+
+	rootDir := t.TempDir()
+	writeFile(t, rootDir, "sample.txt", "clean")
+	configPath := writeConfig(t, sampleConfig())
+
+	var output bytes.Buffer
+	code := HandleAnalyze([]string{
+		"-c", configPath,
+		"-f", "console",
+		rootDir,
+	}, &output)
+
+	if code != 0 {
+		t.Fatalf("expected exit code 0, got %d", code)
+	}
+	if !strings.Contains(output.String(), "No matches found.") {
+		t.Fatalf("unexpected output: %q", output.String())
+	}
+}
+
+func TestHandleAnalyzeReturnsErrorWhenFormatsInvalid(t *testing.T) {
+	t.Parallel()
+
+	configPath := writeConfig(t, sampleConfig())
+
+	var output bytes.Buffer
+	code := HandleAnalyze([]string{
+		"--config", configPath,
+		"--format", "bogus",
+	}, &output)
+
+	if code != exitCodeError {
+		t.Fatalf("expected exit code %d, got %d", exitCodeError, code)
+	}
+	if !strings.Contains(output.String(), "invalid format") {
 		t.Fatalf("unexpected output: %q", output.String())
 	}
 }

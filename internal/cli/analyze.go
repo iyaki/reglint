@@ -85,7 +85,9 @@ func ParseAnalyzeArgs(args []string) (Config, error) {
 	flagSet.SetOutput(&strings.Builder{})
 
 	flagSet.StringVar(&cfg.ConfigPath, "config", defaultConfigPath, "Path to YAML rules config file.")
+	flagSet.StringVar(&cfg.ConfigPath, "c", defaultConfigPath, "Path to YAML rules config file.")
 	formatValue := flagSet.String("format", defaultFormat, "Comma-separated list of formats.")
+	formatShort := flagSet.String("f", defaultFormat, "Comma-separated list of formats.")
 	flagSet.StringVar(&cfg.OutJSON, "out-json", "", "Output path for JSON results.")
 	flagSet.StringVar(&cfg.OutSARIF, "out-sarif", "", "Output path for SARIF results.")
 	var include stringSlice
@@ -112,7 +114,11 @@ func ParseAnalyzeArgs(args []string) (Config, error) {
 		cfg.Roots = append([]string{}, flagSet.Args()...)
 	}
 
-	formats, err := parseFormats(*formatValue)
+	formatInput := *formatValue
+	if wasFlagProvided(flagSet, "f") && !wasFlagProvided(flagSet, "format") {
+		formatInput = *formatShort
+	}
+	formats, err := parseFormats(formatInput)
 	if err != nil {
 		return Config{}, err
 	}
@@ -340,11 +346,7 @@ func runAnalyze(args []string) (scan.Result, string, []string, []rules.Rule, Con
 }
 
 func renderOutputs(formats []string, ruleset []rules.Rule, cfg Config, result scan.Result, out *bytes.Buffer) error {
-	registry, err := output.NewRegistry(
-		output.ConsoleFormatter{},
-		output.JSONFormatter{},
-		output.SARIFFormatter{Rules: ruleset},
-	)
+	registry, err := outputRegistry(ruleset)
 	if err != nil {
 		return err
 	}
@@ -360,6 +362,16 @@ func renderOutputs(formats []string, ruleset []rules.Rule, cfg Config, result sc
 	}
 
 	return nil
+}
+
+var outputRegistry = defaultOutputRegistry
+
+func defaultOutputRegistry(ruleset []rules.Rule) (*output.Registry, error) {
+	return output.NewRegistry(
+		output.ConsoleFormatter{},
+		output.JSONFormatter{},
+		output.SARIFFormatter{Rules: ruleset},
+	)
 }
 
 func renderFormat(
