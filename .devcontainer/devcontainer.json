@@ -111,6 +111,9 @@
 		"Install go tools": "/bin/bash .devcontainer/install-go-tools.sh",
 		"Setup lefthook": "/go/bin/lefthook install"
 	},
+	"postStartCommand": {
+		"Refresh opencode available models": "opencode model --refresh"
+	},
 
 	// Use 'forwardPorts' to make a list of ports inside the container available locally.
 	"forwardPorts": [
