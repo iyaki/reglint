@@ -15,6 +15,7 @@ Status: Implemented
 - Stable, well-documented flags and exit codes.
 - Clear validation errors and deterministic behavior.
 - Support console, JSON, and SARIF output selection.
+- Allow ANSI colors in console output to be disabled via config or environment variables.
 - Provide the `analyse` alias with identical behavior.
 
 ### Non-Goals
@@ -56,9 +57,10 @@ internal/
 1. Parse flags and positional paths.
 2. Load and validate the rules config.
 3. Resolve include/exclude lists and defaults.
-4. Build `ScanRequest`.
-5. Run scan and render requested outputs.
-6. Exit with a deterministic code.
+4. Resolve effective console color settings from config and environment variables.
+5. Build `ScanRequest`.
+6. Run scan and render requested outputs.
+7. Exit with a deterministic code.
 
 ## Data model
 
@@ -78,6 +80,7 @@ CLIConfig
   - `concurrency` (int, required)
   - `maxFileSizeBytes` (int64, required)
   - `failOnSeverity` (string, optional)
+  - `consoleColorsEnabled` (bool, required)
 
 Reference struct (Go):
 
@@ -93,6 +96,7 @@ type CLIConfig struct {
     Concurrency      int
     MaxFileSizeBytes int64
     FailOnSeverity   string
+    ConsoleColorsEnabled bool
 }
 ```
 
@@ -163,13 +167,20 @@ reglint analyse [flags] [path ...]
 - If `--exclude` is not provided, use RuleSet `exclude` or default to `**/.git/**`, `**/node_modules/**`, `**/vendor/**`.
 - If `--fail-on` is provided, it overrides RuleSet `failOn`.
 - If `--fail-on` is not provided, use RuleSet `failOn` when set; otherwise unset.
+- Console color behavior for `--format console`:
+  - Start from RuleSet `consoleColorsEnabled` from `specs/configuration.md` (default `true`).
+  - If `NO_COLOR` is set and non-empty, force colors disabled.
+  - Environment variables have higher precedence than RuleSet.
 
 ### Output behavior
 
 - `console` always writes to stdout.
+- `console` may include ANSI colors for severity labels when colors are enabled.
+- If colors are disabled by RuleSet or environment variables, `console` output is plain text.
 - If `json` is the only format and `--out-json` is unset, write JSON to stdout.
 - If `sarif` is the only format and `--out-sarif` is unset, write SARIF to stdout.
 - If multiple formats are requested, JSON and SARIF must have explicit output paths.
+- Environment-variable color controls apply only to `console`; `json` and `sarif` never emit ANSI escape sequences.
 
 ## Verifications
 
@@ -177,6 +188,8 @@ reglint analyse [flags] [path ...]
 - `reglint analyze -c reglint-rules.yaml -f json` writes JSON to stdout.
 - `reglint analyze -c reglint-rules.yaml -f console,json --out-json /tmp/scan.json` writes console to stdout and JSON to file.
 - Invalid `--fail-on` value exits with code 1 and prints an error.
+- With `consoleColorsEnabled: false` in config, `-f console` output has no ANSI escape sequences.
+- With `NO_COLOR=1`, `-f console` output has no ANSI escape sequences even if config enables colors.
 
 ## Appendices
 

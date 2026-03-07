@@ -1,6 +1,6 @@
 # Configuration
 
-Status: Implemented
+Status: Partially Implemented
 
 ## Overview
 
@@ -30,6 +30,7 @@ RuleSet
   - `exclude` (list of string, optional): Global exclude globs. Overridden by per-rule `exclude`.
   - `failOn` (string, optional): One of `error|warning|notice|info`. Causes non-zero exit status at or above this severity.
   - `concurrency` (int, optional): Worker count for scanning.
+  - `consoleColorsEnabled` (bool, optional): Enable ANSI colors in `console` formatter output.
 
 ## YAML example (with globals)
 
@@ -41,6 +42,7 @@ exclude:
   - "**/generated/**"
 failOn: "error"
 concurrency: 8
+consoleColorsEnabled: true
 rules:
   - message: "This is an error message"
     regex: "regex1"
@@ -61,6 +63,7 @@ rules:
 - RuleSet `exclude`: `**/.git/**`, `**/node_modules/**`, `**/vendor/**` if missing.
 - `failOn`: unset (no failure threshold) if missing.
 - `concurrency`: `GOMAXPROCS` if missing.
+- `consoleColorsEnabled`: `true` if missing.
 
 ## Validation
 
@@ -68,8 +71,10 @@ rules:
 - `rules` is required.
 - `failOn` must be one of the allowed values when set.
 - `concurrency` must be a positive integer when set.
+- `consoleColorsEnabled` must be a boolean when set.
 - Rules are validated per `specs/regex-rules.md`.
 
 ## Notes
 
 - Rule schema, defaults, and path override behavior are defined in `specs/regex-rules.md`.
+- Runtime environment-variable precedence for console colors is defined in `specs/cli-analyze.md`.
