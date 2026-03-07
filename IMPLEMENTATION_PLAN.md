@@ -125,19 +125,19 @@
 ## Phase 13: Error handling + stats
 
 **Goal:** Surface ignore errors and track skipped file counts consistently.
-**Status:** Not started
+**Status:** Complete
 **Paths:** `internal/scan/engine.go`, `internal/ignore/*`
 **Reference pattern:** `internal/scan/engine.go`
 
 ### 13.1 Loader errors
 
-- [ ] Exit analyze with code 1 on ignore file read error.
-- [ ] Bubble invalid ignore pattern errors with source/line.
+- [x] Exit analyze with code 1 on ignore file read error.
+- [x] Bubble invalid ignore pattern errors with source/line.
 
 ### 13.2 Skipped stats integration
 
-- [ ] Count ignored files as skipped.
-- [ ] Ensure existing binary/size skip counts remain correct.
+- [x] Count ignored files as skipped.
+- [x] Ensure existing binary/size skip counts remain correct.
 
 **Definition of Done**
 
@@ -151,22 +151,22 @@
 ## Phase 14: Tests + fixtures
 
 **Goal:** Add automated coverage for ignore files behavior.
-**Status:** Not started
+**Status:** In progress
 **Paths:** `internal/scan/engine_test.go`, `internal/cli/*_test.go`, `internal/config/*_test.go`, `testdata/fixtures`
 **Reference pattern:** `internal/scan/engine_test.go`
 
 ### 14.1 Scan behavior tests
 
-- [ ] Root `.ignore` excludes matching files.
-- [ ] Nested `.reglintignore` + `!` negation re-includes paths.
-- [ ] `--no-ignore-files` scans ignored files.
-- [ ] Invalid ignore pattern errors with `<source>:<line>`.
+- [x] Root `.ignore` excludes matching files.
+- [x] Nested `.reglintignore` + `!` negation re-includes paths.
+- [x] `--no-ignore-files` scans ignored files.
+- [x] Invalid ignore pattern errors with `<source>:<line>`.
 - [ ] Deterministic ordering with same inputs.
 
 ### 14.2 Config + CLI tests
 
-- [ ] Validate ignore file name constraints in config load.
-- [ ] Ensure CLI flag precedence disables ignore support.
+- [x] Validate ignore file name constraints in config load.
+- [x] Ensure CLI flag precedence disables ignore support.
 
 **Definition of Done**
 
@@ -198,7 +198,9 @@
 - 2026-03-07: `go test ./internal/scan -run TestIgnoreMatcherRespectsOrderingAndNegation` - ok
 - 2026-03-07: `go test ./internal/scan -run TestCollectEntriesIgnoreNegationDoesNotOverrideExclude` - ok
 - 2026-03-07: `go test ./internal/scan -run TestCollectEntriesReturnsIgnoreLoadErrors` - ok
+- 2026-03-07: `go test ./internal/scan -run TestCollectEntriesCountsIgnoredFilesAsSkipped` - ok
 - 2026-03-07: `go test ./internal/scan` - ok
+- 2026-03-07: `go test ./internal/scan -run "TestCollectEntriesAllowsNestedReglintIgnoreNegation|TestCollectEntriesNoIgnoreFilesScansIgnoredPaths"` - ok
 
 ## Summary
 
@@ -208,8 +210,8 @@
 | Phase 10: Ignore settings resolution | Complete    |
 | Phase 11: Ignore loader + parser     | Complete    |
 | Phase 12: Ignore matcher + filtering | Complete    |
-| Phase 13: Error handling + stats     | Not started |
-| Phase 14: Tests + fixtures           | Not started |
+| Phase 13: Error handling + stats     | Complete    |
+| Phase 14: Tests + fixtures           | In progress |
 
 **Remaining effort:** Remaining phases pending; ignore-files feature still in progress.
 

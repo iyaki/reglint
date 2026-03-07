@@ -28,13 +28,41 @@ func TestCollectEntriesAppliesIgnoreRules(t *testing.T) {
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
-	if skipped != 0 {
-		t.Fatalf("expected 0 skipped files, got %d", skipped)
+	if skipped != 1 {
+		t.Fatalf("expected 1 skipped file, got %d", skipped)
 	}
 
 	paths := entryPaths(entries)
 	if !reflect.DeepEqual(paths, []string{"keep.txt"}) {
 		t.Fatalf("expected keep.txt only, got %v", paths)
+	}
+}
+
+func TestCollectEntriesCountsIgnoredFilesAsSkipped(t *testing.T) {
+	t.Parallel()
+
+	root := t.TempDir()
+	writeFileWithContent(t, filepath.Join(root, ".ignore"), "skip.txt\n")
+	writeFileWithContent(t, filepath.Join(root, "skip.txt"), "skip")
+
+	request := Request{
+		Roots:            []string{root},
+		Include:          []string{"**/*.txt"},
+		Exclude:          nil,
+		Ignore:           IgnoreSettings{Enabled: true, Files: []string{".ignore"}},
+		MaxFileSizeBytes: 1024,
+		Concurrency:      1,
+	}
+
+	entries, skipped, _, _, err := collectScanEntries(request)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if len(entries) != 0 {
+		t.Fatalf("expected no entries, got %d", len(entries))
+	}
+	if skipped != 1 {
+		t.Fatalf("expected 1 skipped file, got %d", skipped)
 	}
 }
 
@@ -63,6 +91,65 @@ func TestCollectEntriesAllowsIgnoreNegation(t *testing.T) {
 	paths := entryPaths(entries)
 	if !reflect.DeepEqual(paths, []string{"generated/keep.txt"}) {
 		t.Fatalf("expected keep.txt only, got %v", paths)
+	}
+}
+
+func TestCollectEntriesAllowsNestedReglintIgnoreNegation(t *testing.T) {
+	t.Parallel()
+
+	root := t.TempDir()
+	writeFileWithContent(t, filepath.Join(root, ".ignore"), "generated/**\n")
+	writeFileWithContent(t, filepath.Join(root, "generated", ".reglintignore"), "!keep.txt\n")
+	writeFileWithContent(t, filepath.Join(root, "generated", "keep.txt"), "keep")
+	writeFileWithContent(t, filepath.Join(root, "generated", "skip.txt"), "skip")
+
+	request := Request{
+		Roots:            []string{root},
+		Include:          []string{"**/*.txt"},
+		Exclude:          nil,
+		Ignore:           IgnoreSettings{Enabled: true, Files: []string{".ignore", ".reglintignore"}},
+		MaxFileSizeBytes: 1024,
+		Concurrency:      1,
+	}
+
+	entries, err := collectEntriesForTest(request)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	paths := entryPaths(entries)
+	if !reflect.DeepEqual(paths, []string{"generated/keep.txt"}) {
+		t.Fatalf("expected keep.txt only, got %v", paths)
+	}
+}
+
+func TestCollectEntriesNoIgnoreFilesScansIgnoredPaths(t *testing.T) {
+	t.Parallel()
+
+	root := t.TempDir()
+	writeFileWithContent(t, filepath.Join(root, ".ignore"), "skip.txt\n")
+	writeFileWithContent(t, filepath.Join(root, "skip.txt"), "skip")
+
+	request := Request{
+		Roots:            []string{root},
+		Include:          []string{"**/*.txt"},
+		Exclude:          nil,
+		Ignore:           IgnoreSettings{Enabled: false, Files: []string{".ignore"}},
+		MaxFileSizeBytes: 1024,
+		Concurrency:      1,
+	}
+
+	entries, skipped, _, _, err := collectScanEntries(request)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if skipped != 0 {
+		t.Fatalf("expected 0 skipped files, got %d", skipped)
+	}
+
+	paths := entryPaths(entries)
+	if !reflect.DeepEqual(paths, []string{"skip.txt"}) {
+		t.Fatalf("expected skip.txt only, got %v", paths)
 	}
 }
 
