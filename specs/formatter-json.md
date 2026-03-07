@@ -1,6 +1,6 @@
 # JSON Formatter
 
-Status: Partial
+Status: Implemented
 
 ## Overview
 

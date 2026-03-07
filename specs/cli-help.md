@@ -1,6 +1,6 @@
 # CLI Help Flag
 
-Status: Proposed
+Status: Implemented
 
 ## Overview
 
