@@ -112,7 +112,7 @@
 		"Setup lefthook": "/go/bin/lefthook install"
 	},
 	"postStartCommand": {
-		"Refresh opencode available models": "opencode model --refresh"
+		"Refresh opencode available models": "opencode models --refresh"
 	},
 
 	// Use 'forwardPorts' to make a list of ports inside the container available locally.
