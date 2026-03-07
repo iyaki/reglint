@@ -1,0 +1,44 @@
+name: quality
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+
+  govulncheck:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-go@v6
+        with:
+          go-version: "1.25.x"
+      - name: govulncheck
+        if: ${{ hashFiles('**/*.go') != '' }}
+        run: |
+          go install golang.org/x/vuln/cmd/govulncheck@latest
+          govulncheck ./...
+
+  semgrep:
+    runs-on: ubuntu-latest
+
+    container:
+      image: semgrep/semgrep
+
+    # Skip any PR created by dependabot to avoid permission issues:
+    if: (github.actor != 'dependabot[bot]')
+
+    steps:
+      - uses: actions/checkout@v4
+      - run: semgrep ci
+        env:
+          # Connect to Semgrep AppSec Platform through your SEMGREP_APP_TOKEN.
+          # Generate a token from Semgrep AppSec Platform > Settings
+          # and add it to your GitHub secrets.
+          SEMGREP_APP_TOKEN: ${{ secrets.SEMGREP_APP_TOKEN }}
