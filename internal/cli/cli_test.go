@@ -115,7 +115,8 @@ func TestRunShowsHelpForAnalyzeFlag(t *testing.T) {
 		"      --exclude string (default none)  Repeatable exclude glob.\n" +
 		"      --concurrency int (default GOMAXPROCS)  Worker count.\n" +
 		"      --max-file-size int (default 5242880)  Maximum file size in bytes.\n" +
-		"      --fail-on string (default none)  Fail if matches at or above severity.\n"
+		"      --fail-on string (default none)  Fail if matches at or above severity.\n" +
+		"      --no-ignore-files bool (default false)  Disable ignore file loading and matching.\n"
 	if got != want {
 		t.Fatalf("expected %q, got %q", want, got)
 	}

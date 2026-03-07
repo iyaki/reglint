@@ -108,6 +108,16 @@ func analyzeHelpTopic() HelpTopic {
 }
 
 func analyzeHelpFlags() []HelpFlag {
+	flags := analyzeHelpCoreFlags()
+	flags = append(flags, analyzeHelpOutputFlags()...)
+	flags = append(flags, analyzeHelpFilterFlags()...)
+	flags = append(flags, analyzeHelpRuntimeFlags()...)
+	flags = append(flags, analyzeHelpIgnoreFlags()...)
+
+	return flags
+}
+
+func analyzeHelpCoreFlags() []HelpFlag {
 	return []HelpFlag{
 		helpFlag(),
 		{
@@ -124,6 +134,11 @@ func analyzeHelpFlags() []HelpFlag {
 			Default:     defaultFormat,
 			Description: "Comma-separated list of formats.",
 		},
+	}
+}
+
+func analyzeHelpOutputFlags() []HelpFlag {
+	return []HelpFlag{
 		{
 			Long:        "--out-json",
 			Type:        "string",
@@ -136,6 +151,11 @@ func analyzeHelpFlags() []HelpFlag {
 			Default:     "none",
 			Description: "Output path for SARIF results.",
 		},
+	}
+}
+
+func analyzeHelpFilterFlags() []HelpFlag {
+	return []HelpFlag{
 		{
 			Long:        "--include",
 			Type:        "string",
@@ -148,6 +168,11 @@ func analyzeHelpFlags() []HelpFlag {
 			Default:     "none",
 			Description: "Repeatable exclude glob.",
 		},
+	}
+}
+
+func analyzeHelpRuntimeFlags() []HelpFlag {
+	return []HelpFlag{
 		{
 			Long:        "--concurrency",
 			Type:        "int",
@@ -165,6 +190,17 @@ func analyzeHelpFlags() []HelpFlag {
 			Type:        "string",
 			Default:     "none",
 			Description: "Fail if matches at or above severity.",
+		},
+	}
+}
+
+func analyzeHelpIgnoreFlags() []HelpFlag {
+	return []HelpFlag{
+		{
+			Long:        "--no-ignore-files",
+			Type:        "bool",
+			Default:     "false",
+			Description: "Disable ignore file loading and matching.",
 		},
 	}
 }

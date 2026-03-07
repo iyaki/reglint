@@ -3,14 +3,22 @@ package cli
 
 import (
 	"bytes"
+	"errors"
 	"os"
 	"path/filepath"
 	"strings"
+	"sync"
 	"testing"
+
+	"github.com/iyaki/reglint/internal/output"
+	"github.com/iyaki/reglint/internal/rules"
 )
+
+var cwdMutex sync.Mutex
 
 func TestHandleAnalyzeMissingConfig(t *testing.T) {
 	t.Parallel()
+	setAnalyzeCwd(t)
 
 	var output bytes.Buffer
 	code := HandleAnalyze([]string{"--config", filepath.Join(t.TempDir(), "missing.yaml")}, &output)
@@ -25,6 +33,7 @@ func TestHandleAnalyzeMissingConfig(t *testing.T) {
 
 func TestHandleAnalyzeSurfaceRenderErrors(t *testing.T) {
 	t.Parallel()
+	setAnalyzeCwd(t)
 
 	config := "rules:\n  - message: 'hello'\n    regex: 'world'\n"
 	configPath := writeConfig(t, config)
@@ -40,8 +49,39 @@ func TestHandleAnalyzeSurfaceRenderErrors(t *testing.T) {
 	}
 }
 
+func TestHandleAnalyzeSurfaceRegistryErrors(t *testing.T) {
+	t.Parallel()
+	setAnalyzeCwd(t)
+
+	currentRegistry := outputRegistry
+	outputRegistry = func([]rules.Rule) (*output.Registry, error) {
+		return nil, errors.New("registry failed")
+	}
+	t.Cleanup(func() {
+		outputRegistry = currentRegistry
+	})
+
+	rootDir := t.TempDir()
+	writeFile(t, rootDir, "sample.txt", "clean")
+	configPath := writeConfig(t, sampleConfig())
+
+	var output bytes.Buffer
+	code := HandleAnalyze([]string{
+		"--config", configPath,
+		rootDir,
+	}, &output)
+
+	if code != exitCodeError {
+		t.Fatalf("expected exit code %d, got %d", exitCodeError, code)
+	}
+	if !strings.Contains(output.String(), "registry failed") {
+		t.Fatalf("unexpected output: %q", output.String())
+	}
+}
+
 func TestHandleAnalyzeFailOnThreshold(t *testing.T) {
 	t.Parallel()
+	setAnalyzeCwd(t)
 
 	rootDir := t.TempDir()
 	writeFile(t, rootDir, "sample.txt", "token=abc")
@@ -62,8 +102,17 @@ func TestHandleAnalyzeFailOnThreshold(t *testing.T) {
 	}
 }
 
+func TestExitCodeFailOnConstant(t *testing.T) {
+	t.Parallel()
+
+	if exitCodeFailOn != 2 {
+		t.Fatalf("expected exitCodeFailOn to be 2, got %d", exitCodeFailOn)
+	}
+}
+
 func TestHandleAnalyzeNoMatches(t *testing.T) {
 	t.Parallel()
+	setAnalyzeCwd(t)
 
 	rootDir := t.TempDir()
 	writeFile(t, rootDir, "sample.txt", "clean")
@@ -85,6 +134,7 @@ func TestHandleAnalyzeNoMatches(t *testing.T) {
 
 func TestHandleAnalyzeReturnsZeroWhenFailOnUnset(t *testing.T) {
 	t.Parallel()
+	setAnalyzeCwd(t)
 
 	rootDir := t.TempDir()
 	writeFile(t, rootDir, "sample.txt", "token=abc")
@@ -106,6 +156,7 @@ func TestHandleAnalyzeReturnsZeroWhenFailOnUnset(t *testing.T) {
 
 func TestHandleAnalyzeAcceptsShortFlags(t *testing.T) {
 	t.Parallel()
+	setAnalyzeCwd(t)
 
 	rootDir := t.TempDir()
 	writeFile(t, rootDir, "sample.txt", "clean")
@@ -128,6 +179,7 @@ func TestHandleAnalyzeAcceptsShortFlags(t *testing.T) {
 
 func TestHandleAnalyzeReturnsErrorWhenFormatsInvalid(t *testing.T) {
 	t.Parallel()
+	setAnalyzeCwd(t)
 
 	configPath := writeConfig(t, sampleConfig())
 
@@ -175,4 +227,26 @@ func writeFile(t *testing.T, dir, name, contents string) {
 
 func sampleConfig() string {
 	return "rules:\n  - message: \"Found token $0\"\n    regex: \"token=[a-z]+\"\n    severity: \"error\"\n"
+}
+
+func setAnalyzeCwd(t *testing.T) {
+	t.Helper()
+
+	cwdMutex.Lock()
+	t.Cleanup(func() {
+		cwdMutex.Unlock()
+	})
+
+	currentRegistry := outputRegistry
+	current, err := os.Getwd()
+	if err != nil {
+		t.Fatalf("failed to read cwd: %v", err)
+	}
+	if err := os.Chdir(t.TempDir()); err != nil {
+		t.Fatalf("failed to change cwd: %v", err)
+	}
+	t.Cleanup(func() {
+		_ = os.Chdir(current)
+		outputRegistry = currentRegistry
+	})
 }

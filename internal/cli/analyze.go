@@ -41,6 +41,7 @@ type Config struct {
 	ConcurrencySet   bool
 	MaxFileSizeBytes int64
 	FailOnSeverity   string
+	NoIgnoreFiles    bool
 }
 
 type stringSlice []string
@@ -97,6 +98,7 @@ func ParseAnalyzeArgs(args []string) (Config, error) {
 	flagSet.IntVar(&cfg.Concurrency, "concurrency", runtime.GOMAXPROCS(0), "Worker count.")
 	flagSet.Int64Var(&cfg.MaxFileSizeBytes, "max-file-size", defaultMaxFileBytes, "Maximum file size in bytes.")
 	flagSet.StringVar(&cfg.FailOnSeverity, "fail-on", "", "Fail if matches at or above severity.")
+	flagSet.BoolVar(&cfg.NoIgnoreFiles, "no-ignore-files", false, "Disable ignore file loading and matching.")
 
 	if err := flagSet.Parse(args); err != nil {
 		return Config{}, err
@@ -496,6 +498,10 @@ func applyRuleSetOverrides(cfg Config, effective *rules.RuleSet) {
 	}
 	if cfg.FailOnSeverity != "" {
 		effective.FailOn = &cfg.FailOnSeverity
+	}
+	if cfg.NoIgnoreFiles {
+		ignoreFilesDisabled := false
+		effective.IgnoreFilesEnabled = &ignoreFilesDisabled
 	}
 }
 

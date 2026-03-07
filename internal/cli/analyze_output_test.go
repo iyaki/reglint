@@ -8,12 +8,15 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"sync"
 	"testing"
 
 	"github.com/iyaki/reglint/internal/output"
 	"github.com/iyaki/reglint/internal/rules"
 	"github.com/iyaki/reglint/internal/scan"
 )
+
+var analyzeCwdMutex sync.Mutex
 
 func TestWriteJSONOutputRequiresPathForMultipleFormats(t *testing.T) {
 	t.Parallel()
@@ -204,10 +207,22 @@ func (e errorFormatter) Write(scan.Result, io.Writer) error {
 }
 
 func TestRunAnalyzeShortFlags(t *testing.T) {
-	t.Parallel()
+	analyzeCwdMutex.Lock()
+	defer analyzeCwdMutex.Unlock()
 
 	config := "rules:\n  - message: 'hello'\n    regex: 'world'\n"
 	configPath := writeTempConfigFile(t, config)
+
+	current, err := os.Getwd()
+	if err != nil {
+		t.Fatalf("failed to read cwd: %v", err)
+	}
+	if err := os.Chdir(t.TempDir()); err != nil {
+		t.Fatalf("failed to change cwd: %v", err)
+	}
+	t.Cleanup(func() {
+		_ = os.Chdir(current)
+	})
 
 	result, failOn, formats, ruleset, cfg, err := runAnalyze([]string{"-c", configPath, "-f", "console"})
 	if err != nil {
@@ -261,6 +276,40 @@ func TestWriteSARIFFileFailsOnMissingParent(t *testing.T) {
 	t.Parallel()
 
 	path := filepath.Join(t.TempDir(), "missing", "scan.sarif")
+	if err := writeSARIFFile(path, scan.Result{}, sampleRules()); err == nil {
+		t.Fatal("expected error, got nil")
+	}
+}
+
+func TestWriteJSONFileFailsOnReadOnlyDir(t *testing.T) {
+	t.Parallel()
+
+	dir := t.TempDir()
+	if err := os.Chmod(dir, 0o500); err != nil {
+		t.Fatalf("failed to set permissions: %v", err)
+	}
+	t.Cleanup(func() {
+		_ = os.Chmod(dir, 0o700)
+	})
+
+	path := filepath.Join(dir, "scan.json")
+	if err := writeJSONFile(path, scan.Result{}); err == nil {
+		t.Fatal("expected error, got nil")
+	}
+}
+
+func TestWriteSARIFFileFailsOnReadOnlyDir(t *testing.T) {
+	t.Parallel()
+
+	dir := t.TempDir()
+	if err := os.Chmod(dir, 0o500); err != nil {
+		t.Fatalf("failed to set permissions: %v", err)
+	}
+	t.Cleanup(func() {
+		_ = os.Chmod(dir, 0o700)
+	})
+
+	path := filepath.Join(dir, "scan.sarif")
 	if err := writeSARIFFile(path, scan.Result{}, sampleRules()); err == nil {
 		t.Fatal("expected error, got nil")
 	}
@@ -440,11 +489,12 @@ func TestRenderOutputsReturnsErrorWhenResolveFails(t *testing.T) {
 func TestRenderOutputsReturnsErrorWhenFormatterFails(t *testing.T) {
 	t.Parallel()
 
+	currentRegistry := outputRegistry
 	outputRegistry = func([]rules.Rule) (*output.Registry, error) {
 		return output.NewRegistry(errorFormatter{name: "console"})
 	}
 	t.Cleanup(func() {
-		outputRegistry = defaultOutputRegistry
+		outputRegistry = currentRegistry
 	})
 
 	if err := renderOutputs([]string{"console"}, sampleRules(), Config{}, scan.Result{}, &bytes.Buffer{}); err == nil {

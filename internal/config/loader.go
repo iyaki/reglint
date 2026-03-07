@@ -46,6 +46,9 @@ func validateRuleSetFields(ruleSet RuleSet) error {
 	if ruleSet.Concurrency != nil && *ruleSet.Concurrency <= 0 {
 		return fmt.Errorf("concurrency must be positive")
 	}
+	if err := validateIgnoreFiles(ruleSet); err != nil {
+		return err
+	}
 
 	return nil
 }
@@ -97,6 +100,25 @@ func validateStringList(values []string, field string, index int) error {
 		if strings.TrimSpace(value) == "" {
 			return fmt.Errorf("rule %d %s must not contain empty values", index+1, field)
 		}
+	}
+
+	return nil
+}
+
+func validateIgnoreFiles(ruleSet RuleSet) error {
+	seen := map[string]struct{}{}
+	for _, value := range ruleSet.IgnoreFiles {
+		name := strings.TrimSpace(value)
+		if name == "" {
+			return fmt.Errorf("ignoreFiles must not contain empty values")
+		}
+		if strings.ContainsAny(name, "/\\") {
+			return fmt.Errorf("ignoreFiles must contain file names only")
+		}
+		if _, ok := seen[name]; ok {
+			return fmt.Errorf("ignoreFiles must not contain duplicates")
+		}
+		seen[name] = struct{}{}
 	}
 
 	return nil

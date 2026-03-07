@@ -5,10 +5,13 @@ import (
 	"path/filepath"
 	"runtime"
 	"strings"
+	"sync"
 	"testing"
 
 	"github.com/iyaki/reglint/internal/cli"
 )
+
+var parseCwdMutex sync.Mutex
 
 func TestParseAnalyzeDefaults(t *testing.T) {
 	t.Parallel()
@@ -162,6 +165,20 @@ func TestParseAnalyzeInvalidFailOn(t *testing.T) {
 	}
 }
 
+func TestParseAnalyzeNoIgnoreFilesFlag(t *testing.T) {
+	t.Parallel()
+
+	configPath := writeTempConfig(t)
+
+	got, err := cli.ParseAnalyzeArgs([]string{"--config", configPath, "--no-ignore-files"})
+	if err != nil {
+		t.Fatalf("expected no error, got %v", err)
+	}
+	if !got.NoIgnoreFiles {
+		t.Fatal("expected ignore files to be disabled")
+	}
+}
+
 func TestParseAnalyzeRequiresOutPathForMultiFormat(t *testing.T) {
 	t.Parallel()
 
@@ -273,6 +290,17 @@ func TestParseAnalyzeRejectsFormatWithWhitespaceComponent(t *testing.T) {
 	}
 }
 
+func TestParseAnalyzeRejectsEmptyFormatWhenFlagProvided(t *testing.T) {
+	t.Parallel()
+
+	configPath := writeTempConfig(t)
+
+	_, err := cli.ParseAnalyzeArgs([]string{"--config", configPath, "--format", ""})
+	if err == nil {
+		t.Fatal("expected error, got nil")
+	}
+}
+
 func TestParseAnalyzeRequiresConfigFile(t *testing.T) {
 	t.Parallel()
 
@@ -330,6 +358,17 @@ func TestParseAnalyzeRejectsZeroConcurrency(t *testing.T) {
 	}
 }
 
+func TestParseAnalyzeRejectsNegativeConcurrency(t *testing.T) {
+	t.Parallel()
+
+	configPath := writeTempConfig(t)
+
+	_, err := cli.ParseAnalyzeArgs([]string{"--config", configPath, "--concurrency", "-1"})
+	if err == nil {
+		t.Fatal("expected error, got nil")
+	}
+}
+
 func TestParseAnalyzeSetsConcurrencyWhenProvided(t *testing.T) {
 	t.Parallel()
 
@@ -352,6 +391,20 @@ func TestParseAnalyzeAcceptsConcurrencyOne(t *testing.T) {
 	_, err := cli.ParseAnalyzeArgs([]string{"--config", configPath, "--concurrency", "1"})
 	if err != nil {
 		t.Fatalf("expected no error, got %v", err)
+	}
+}
+
+func TestParseAnalyzeDefaultConcurrencyUsesGOMAXPROCS(t *testing.T) {
+	t.Parallel()
+
+	configPath := writeTempConfig(t)
+
+	got, err := cli.ParseAnalyzeArgs([]string{"--config", configPath})
+	if err != nil {
+		t.Fatalf("expected no error, got %v", err)
+	}
+	if got.Concurrency != runtime.GOMAXPROCS(0) {
+		t.Fatalf("expected concurrency %d, got %d", runtime.GOMAXPROCS(0), got.Concurrency)
 	}
 }
 
@@ -409,9 +462,9 @@ func TestParseAnalyzeAllowsWritableOutJSONFile(t *testing.T) {
 	configPath := writeTempConfig(t)
 	outputPath := writableFile(t, "scan.json")
 
-	_, err := cli.ParseAnalyzeArgs([]string{"--config", configPath, "--format", "json", "--out-json", outputPath})
-	if err != nil {
-		t.Fatalf("expected no error, got %v", err)
+	_, parseErr := cli.ParseAnalyzeArgs([]string{"--config", configPath, "--format", "json", "--out-json", outputPath})
+	if parseErr != nil {
+		t.Fatalf("expected no error, got %v", parseErr)
 	}
 }
 
@@ -470,9 +523,9 @@ func TestParseAnalyzeAllowsWritableOutSARIFFile(t *testing.T) {
 	configPath := writeTempConfig(t)
 	outputPath := writableFile(t, "scan.sarif")
 
-	_, err := cli.ParseAnalyzeArgs([]string{"--config", configPath, "--format", "sarif", "--out-sarif", outputPath})
-	if err != nil {
-		t.Fatalf("expected no error, got %v", err)
+	_, parseErr := cli.ParseAnalyzeArgs([]string{"--config", configPath, "--format", "sarif", "--out-sarif", outputPath})
+	if parseErr != nil {
+		t.Fatalf("expected no error, got %v", parseErr)
 	}
 }
 
@@ -502,27 +555,51 @@ func TestParseAnalyzeRejectsOutSARIFWithMissingParent(t *testing.T) {
 
 func TestParseAnalyzeAcceptsOutJSONInCurrentDir(t *testing.T) {
 	t.Parallel()
+	parseCwdMutex.Lock()
+	defer parseCwdMutex.Unlock()
+	current, err := os.Getwd()
+	if err != nil {
+		t.Fatalf("failed to read cwd: %v", err)
+	}
+	if err = os.Chdir(t.TempDir()); err != nil {
+		t.Fatalf("failed to change cwd: %v", err)
+	}
+	t.Cleanup(func() {
+		_ = os.Chdir(current)
+	})
 
 	configPath := writeTempConfig(t)
 	outputPath := "scan.json"
 	cleanupFile(t, outputPath)
 
-	_, err := cli.ParseAnalyzeArgs([]string{"--config", configPath, "--format", "json", "--out-json", outputPath})
-	if err != nil {
-		t.Fatalf("expected no error, got %v", err)
+	_, parseErr := cli.ParseAnalyzeArgs([]string{"--config", configPath, "--format", "json", "--out-json", outputPath})
+	if parseErr != nil {
+		t.Fatalf("expected no error, got %v", parseErr)
 	}
 }
 
 func TestParseAnalyzeAcceptsOutSARIFInCurrentDir(t *testing.T) {
 	t.Parallel()
+	parseCwdMutex.Lock()
+	defer parseCwdMutex.Unlock()
+	current, err := os.Getwd()
+	if err != nil {
+		t.Fatalf("failed to read cwd: %v", err)
+	}
+	if err = os.Chdir(t.TempDir()); err != nil {
+		t.Fatalf("failed to change cwd: %v", err)
+	}
+	t.Cleanup(func() {
+		_ = os.Chdir(current)
+	})
 
 	configPath := writeTempConfig(t)
 	outputPath := "scan.sarif"
 	cleanupFile(t, outputPath)
 
-	_, err := cli.ParseAnalyzeArgs([]string{"--config", configPath, "--format", "sarif", "--out-sarif", outputPath})
-	if err != nil {
-		t.Fatalf("expected no error, got %v", err)
+	_, parseErr := cli.ParseAnalyzeArgs([]string{"--config", configPath, "--format", "sarif", "--out-sarif", outputPath})
+	if parseErr != nil {
+		t.Fatalf("expected no error, got %v", parseErr)
 	}
 }
 

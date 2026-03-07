@@ -194,6 +194,70 @@ func TestLoadRuleSetRejectsInvalidFailOn(t *testing.T) {
 	}
 }
 
+func TestLoadRuleSetRejectsNonPositiveConcurrencyReportsValue(t *testing.T) {
+	t.Parallel()
+
+	path := writeConfigFile(t, "concurrency: 0\nrules:\n  - message: 'hello'\n    regex: 'world'\n")
+
+	_, err := config.LoadRuleSet(path)
+	if err == nil {
+		t.Fatal("expected error, got nil")
+	}
+	if !strings.Contains(err.Error(), "concurrency must be positive") {
+		t.Fatalf("expected concurrency error, got %v", err)
+	}
+}
+
+func TestLoadRuleSetRejectsIgnoreFilesWithEmptyValue(t *testing.T) {
+	t.Parallel()
+
+	path := writeConfigFile(t, "ignoreFiles:\n  - ''\nrules:\n  - message: 'hello'\n    regex: 'world'\n")
+
+	_, err := config.LoadRuleSet(path)
+	if err == nil {
+		t.Fatal("expected error, got nil")
+	}
+}
+
+func TestLoadRuleSetRejectsIgnoreFilesWithSeparators(t *testing.T) {
+	t.Parallel()
+
+	path := writeConfigFile(t, "ignoreFiles:\n  - 'dir/.ignore'\nrules:\n  - message: 'hello'\n    regex: 'world'\n")
+
+	_, err := config.LoadRuleSet(path)
+	if err == nil {
+		t.Fatal("expected error, got nil")
+	}
+}
+
+func TestLoadRuleSetRejectsIgnoreFilesWithDuplicates(t *testing.T) {
+	t.Parallel()
+
+	configContents := "ignoreFiles:\n" +
+		"  - '.ignore'\n" +
+		"  - '.ignore'\n" +
+		"rules:\n" +
+		"  - message: 'hello'\n" +
+		"    regex: 'world'\n"
+	path := writeConfigFile(t, configContents)
+
+	_, err := config.LoadRuleSet(path)
+	if err == nil {
+		t.Fatal("expected error, got nil")
+	}
+}
+
+func TestLoadRuleSetAllowsIgnoreFilesEnabled(t *testing.T) {
+	t.Parallel()
+
+	path := writeConfigFile(t, "ignoreFilesEnabled: false\nrules:\n  - message: 'hello'\n    regex: 'world'\n")
+
+	_, err := config.LoadRuleSet(path)
+	if err != nil {
+		t.Fatalf("expected no error, got %v", err)
+	}
+}
+
 func TestLoadRuleSetRejectsNonPositiveConcurrency(t *testing.T) {
 	t.Parallel()
 

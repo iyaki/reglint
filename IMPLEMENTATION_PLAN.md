@@ -17,20 +17,20 @@
 ## Phase 9: Ignore settings + config schema
 
 **Goal:** Add ignore files settings to RuleSet and CLI configuration handling.
-**Status:** Not started
+**Status:** Complete
 **Paths:** `internal/config/model.go`, `internal/config/rules.go`, `internal/cli/analyze.go`, `internal/cli/help.go`
 **Reference pattern:** `internal/config/model.go`
 
 ### 9.1 RuleSet schema additions
 
-- [ ] Add `ignoreFilesEnabled` and `ignoreFiles` to `config.RuleSet`.
-- [ ] Validate ignore file names (non-empty, no path separators, no duplicates).
-- [ ] Extend `rules.RuleSet` to carry ignore settings for scan requests.
+- [x] Add `ignoreFilesEnabled` and `ignoreFiles` to `config.RuleSet`.
+- [x] Validate ignore file names (non-empty, no path separators, no duplicates).
+- [x] Extend `rules.RuleSet` to carry ignore settings for scan requests.
 
 ### 9.2 Analyze CLI overrides
 
-- [ ] Add `--no-ignore-files` flag to analyze config parsing.
-- [ ] Include `--no-ignore-files` in analyze help output.
+- [x] Add `--no-ignore-files` flag to analyze config parsing.
+- [x] Include `--no-ignore-files` in analyze help output.
 
 **Definition of Done**
 
@@ -189,12 +189,13 @@
 - 2026-03-07: Searched `internal/**/ignore*` - ignore package does not exist yet.
 - 2026-03-07: `git log --oneline -- specs` - reviewed recent spec change history.
 - 2026-03-07: `git log -n 10 --oneline -- specs/ignore-files.md` - reviewed ignore spec change history.
+- 2026-03-07: `go test ./internal/config ./internal/cli` - ok
 
 ## Summary
 
 | Phase                                | Status      |
 | ------------------------------------ | ----------- |
-| Phase 9: Ignore settings + config    | Not started |
+| Phase 9: Ignore settings + config    | Complete    |
 | Phase 10: Ignore settings resolution | Not started |
 | Phase 11: Ignore loader + parser     | Not started |
 | Phase 12: Ignore matcher + filtering | Not started |

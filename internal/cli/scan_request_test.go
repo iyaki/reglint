@@ -12,9 +12,10 @@ func TestBuildScanRequestOverridesIncludeExcludeAndFailOn(t *testing.T) {
 	t.Parallel()
 
 	ruleSet := config.RuleSet{
-		Include: []string{"src/**"},
-		Exclude: []string{"vendor/**"},
-		FailOn:  stringPtr("warning"),
+		Include:            []string{"src/**"},
+		Exclude:            []string{"vendor/**"},
+		FailOn:             stringPtr("warning"),
+		IgnoreFilesEnabled: boolPtr(true),
 		Rules: []config.Rule{
 			{
 				Message: "hello",
@@ -27,6 +28,7 @@ func TestBuildScanRequestOverridesIncludeExcludeAndFailOn(t *testing.T) {
 		Include:          []string{"**/*.go"},
 		Exclude:          []string{"**/generated/**"},
 		FailOnSeverity:   "error",
+		NoIgnoreFiles:    true,
 		Concurrency:      3,
 		MaxFileSizeBytes: 99,
 	}
@@ -113,6 +115,10 @@ func stringPtr(value string) *string {
 }
 
 func intPtr(value int) *int {
+	return &value
+}
+
+func boolPtr(value bool) *bool {
 	return &value
 }
 
