@@ -1,6 +1,6 @@
 # Implementation Plan (ansi-colors)
 
-**Status:** ANSI color scope is largely implemented; docs and color-fixture alignment have started and final quality work remains (4/6 phases complete, Phase 5 in progress)
+**Status:** ANSI color scope is largely implemented; quick-example alignment is complete and final quality work remains (4/6 phases complete, Phase 5 in progress)
 **Last Updated:** 2026-03-08
 **Primary Specs:** `specs/formatter-console.md`, `specs/configuration.md`, `specs/cli-analyze.md` (related: `specs/formatter.md`, `specs/testing-and-validations.md`)
 
@@ -151,7 +151,7 @@
 
 - [x] Decide whether to use additional color golden files or targeted string assertions (selected dedicated color golden file `testdata/golden/console-color.txt`).
 - [x] Update sample config/docs to mention `consoleColorsEnabled` and `NO_COLOR` behavior.
-- [ ] Keep quick examples consistent with actual CLI behavior.
+- [x] Keep quick examples consistent with actual CLI behavior.
 
 **Definition of Done**
 
@@ -240,6 +240,13 @@
 - 2026-03-08: go test ./internal/output - pass.
 - 2026-03-08: go test ./internal/output ./internal/cli ./internal/config - pass.
 - 2026-03-08: git commit -m "Add colorized console golden snapshot coverage" - success (commit `51ac06e`).
+- 2026-03-08: Read specs/README.md, specs/configuration.md, specs/cli-analyze.md, IMPLEMENTATION_PLAN.md - confirmed remaining highest-priority task was quick-example alignment via init template.
+- 2026-03-08: go test ./internal/cli -run TestHandleInitWritesDefaultConfig - fail (expected mismatch before init template update).
+- 2026-03-08: go test ./internal/cli ./cmd/reglint - pass.
+- 2026-03-08: make analyze-example - pass (console output verified with configured defaults).
+- 2026-03-08: make analyze-fail - expected non-zero because analyze exits 2 at failOn threshold.
+- 2026-03-08: go test ./... - pass.
+- 2026-03-08: git commit -m "Include consoleColorsEnabled in init template" - success (commit `8f68114`).
 
 ## Summary
 
@@ -252,13 +259,14 @@
 | Phase 5: Tests, fixtures, and docs alignment  | In progress |
 | Phase 6: Final verification and quality gates | Not started |
 
-**Remaining effort:** Complete remaining Phase 5 quick-example alignment task, then execute Phase 6 final repository-wide quality verification.
+**Remaining effort:** Complete remaining Phase 5 checklist closure, then execute Phase 6 final repository-wide quality verification.
 
 ## Known Existing Work
 
 - Console formatter provides deterministic ordering/grouping/summary plus ANSI severity rendering with fixed mapping and reset behavior in `internal/output/console.go`.
 - Formatter registry + routing is established in `internal/output/registry.go` and `internal/cli/analyze.go`.
 - Analyze runtime resolves console color precedence (`default -> config -> NO_COLOR`) and passes effective settings into the console formatter path.
+- `reglint init` default template now includes `consoleColorsEnabled: true` so generated quickstart configs match documented color defaults.
 - JSON and SARIF formatters already avoid ANSI concerns (`internal/output/json.go`, `internal/output/sarif.go`).
 - Baseline output/CLI/config tests and golden tests already exist and can be extended (`internal/output/golden_test.go`, `testdata/golden/*`).
 
