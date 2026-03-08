@@ -143,7 +143,7 @@
 
 - [ ] Add console tests for enabled ANSI emission and reset behavior.
 - [ ] Add console tests for config-disabled mode (no ANSI).
-- [ ] Add CLI tests for `NO_COLOR` precedence over config.
+- [x] Add CLI tests for `NO_COLOR` precedence over config.
 - [ ] Add config tests for `consoleColorsEnabled` parse/validation behavior.
 - [x] Baseline tests for output/cli/config suites already exist.
 
@@ -247,6 +247,10 @@
 - 2026-03-08: make analyze-fail - expected non-zero because analyze exits 2 at failOn threshold.
 - 2026-03-08: go test ./... - pass.
 - 2026-03-08: git commit -m "Include consoleColorsEnabled in init template" - success (commit `8f68114`).
+- 2026-03-08: Read specs/README.md, specs/cli-analyze.md, specs/formatter-console.md, IMPLEMENTATION_PLAN.md - confirmed highest-priority remaining task was CLI `NO_COLOR` precedence coverage.
+- 2026-03-08: go test ./internal/cli -run 'TestHandleAnalyze(NoColorEnvOverridesConfigEnabledColors|ConfigEnabledColorsWithoutNoColorEnv)' - pass.
+- 2026-03-08: go test ./internal/cli - pass.
+- 2026-03-08: git commit -m "Add CLI NO_COLOR precedence coverage" - success (commit `7c15635`).
 
 ## Summary
 
