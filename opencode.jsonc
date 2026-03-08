@@ -1,7 +1,44 @@
 {
 	"$schema": "https://opencode.ai/config.json",
-	"model": "github-copilot/gpt-5.2-codex",
-	"small_model": "github-copilot/gpt-5-mini",
+	"compaction": {
+		"auto": false,
+		"prune": true,
+		"reserved": 0
+	},
+	"permission": {
+		"bash": {
+			"git commit*-n*": "deny",
+			"git commit*--no-verify*": "deny"
+		},
+		"edit": {
+			".go-arch-lint": "ask",
+			".golangci.yml": "ask",
+			"lefthook.ymll": "ask",
+			"opencode.jsonc": "ask",
+			"logs/*": "deny"
+		}
+	},
+	"agent": {
+		"ralph": {
+			"description": "Hands-off agent for usage with Ralph Loops",
+			"mode": "primary",
+			"model": "github-copilot/gpt-5.3-codex",
+			"reasoningEffort": "xhigh",
+			// "textVerbosity": "low",
+			"tools": {
+				"web-search_*": false
+			},
+			"permission": {
+				"edit": {
+					".go-arch-lint": "deny",
+					".golangci.yml": "deny",
+					"lefthook.ymll": "deny",
+					"opencode.jsonc": "deny",
+					"logs/*": "deny"
+				}
+			}
+		}
+	},
 	"mcp": {
 		"tech-docs": {
 			"type": "remote",
@@ -11,7 +48,8 @@
 		"code-tools": {
 			"type": "local",
 			"command": [
-				"uvx", "--from", "git+https://github.com/oraios/serena",
+				"uvx",
+				"--from", "git+https://github.com/oraios/serena",
 				"serena",
 				"start-mcp-server",
 				"--project-from-cwd",
@@ -22,9 +60,7 @@
 		},
 		"web-search": {
 			"type": "local",
-			"command": [
-				"npx", "-y", "open-websearch@latest"
-			],
+			"command": [ "npx", "-y", "open-websearch@latest" ],
 			"environment": {
 				"MODE": "stdio",
 				"DEFAULT_SEARCH_ENGINE": "duckduckgo"
@@ -47,11 +83,11 @@
 			"enabled": true
 		},
 		"async-bash": {
-				"type": "local",
-				"command": ["uvx", "async-bash-mcp"],
-				"enabled": false
+			"type": "local",
+			"command": [ "uvx", "async-bash-mcp" ],
+			"enabled": false
 		}
-  },
+	},
 	"plugin": [
 		"envsitter-guard@latest",
 		"@slkiser/opencode-quota"

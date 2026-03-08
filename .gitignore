@@ -5,3 +5,4 @@
 report.json
 go-mutesting-report.html
 *.tmp
+/oom

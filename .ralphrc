@@ -1,3 +1,4 @@
 # https://github.com/iyaki/ralph/?tab=readme-ov-file#config-file
 
+RALPH_AGENT=ralph
 RALPH_LOG_FILE=logs/ralph.log
