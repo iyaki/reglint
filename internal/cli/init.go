@@ -80,6 +80,7 @@ func defaultConfigTemplate() string {
 		"  - \"**/.git/**\"\n" +
 		"  - \"**/node_modules/**\"\n" +
 		"  - \"**/vendor/**\"\n" +
+		"consoleColorsEnabled: true\n" +
 		"failOn: \"error\"\n" +
 		"rules:\n" +
 		"  - message: \"Avoid hardcoded token: $1\"\n" +
