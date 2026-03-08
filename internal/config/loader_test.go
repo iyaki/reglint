@@ -258,6 +258,34 @@ func TestLoadRuleSetAllowsIgnoreFilesEnabled(t *testing.T) {
 	}
 }
 
+func TestLoadRuleSetParsesConsoleColorsEnabled(t *testing.T) {
+	t.Parallel()
+
+	path := writeConfigFile(t, "consoleColorsEnabled: false\nrules:\n  - message: 'hello'\n    regex: 'world'\n")
+
+	rules, err := config.LoadRuleSet(path)
+	if err != nil {
+		t.Fatalf("expected no error, got %v", err)
+	}
+	if rules.ConsoleColorsEnabled == nil {
+		t.Fatal("expected consoleColorsEnabled to be set")
+	}
+	if *rules.ConsoleColorsEnabled {
+		t.Fatal("expected consoleColorsEnabled to be false")
+	}
+}
+
+func TestLoadRuleSetRejectsConsoleColorsEnabledNonBoolean(t *testing.T) {
+	t.Parallel()
+
+	path := writeConfigFile(t, "consoleColorsEnabled: 'false'\nrules:\n  - message: 'hello'\n    regex: 'world'\n")
+
+	_, err := config.LoadRuleSet(path)
+	if err == nil {
+		t.Fatal("expected error, got nil")
+	}
+}
+
 func TestLoadRuleSetRejectsNonPositiveConcurrency(t *testing.T) {
 	t.Parallel()
 
@@ -382,6 +410,37 @@ func TestRuleSetToRulesDefaultsConcurrency(t *testing.T) {
 	converted := ruleSet.ToRules()
 	if converted.Concurrency == nil {
 		t.Fatal("expected concurrency default, got nil")
+	}
+}
+
+func TestRuleSetToRulesPropagatesConsoleColorsEnabled(t *testing.T) {
+	t.Parallel()
+
+	consoleColorsEnabled := false
+	ruleSet := config.RuleSet{
+		ConsoleColorsEnabled: &consoleColorsEnabled,
+		Rules:                []config.Rule{{Message: "hello", Regex: "world"}},
+	}
+
+	converted := ruleSet.ToRules()
+	if converted.ConsoleColorsEnabled == nil {
+		t.Fatal("expected consoleColorsEnabled to be propagated")
+	}
+	if *converted.ConsoleColorsEnabled {
+		t.Fatal("expected propagated consoleColorsEnabled to be false")
+	}
+}
+
+func TestRuleSetToRulesLeavesConsoleColorsEnabledUnsetWhenMissing(t *testing.T) {
+	t.Parallel()
+
+	ruleSet := config.RuleSet{
+		Rules: []config.Rule{{Message: "hello", Regex: "world"}},
+	}
+
+	converted := ruleSet.ToRules()
+	if converted.ConsoleColorsEnabled != nil {
+		t.Fatal("expected consoleColorsEnabled to remain unset")
 	}
 }
 

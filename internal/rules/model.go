@@ -7,13 +7,14 @@ const digitBase = 10
 
 // RuleSet represents the top-level rules configuration.
 type RuleSet struct {
-	Rules              []Rule
-	Include            []string
-	Exclude            []string
-	FailOn             *string
-	Concurrency        *int
-	IgnoreFilesEnabled *bool
-	IgnoreFiles        []string
+	Rules                []Rule
+	Include              []string
+	Exclude              []string
+	FailOn               *string
+	Concurrency          *int
+	ConsoleColorsEnabled *bool
+	IgnoreFilesEnabled   *bool
+	IgnoreFiles          []string
 }
 
 // Rule represents a single regex rule entry.

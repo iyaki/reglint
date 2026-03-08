@@ -40,12 +40,13 @@ func (r Rule) toRulesRule() rules.Rule {
 // ToRules converts the parsed config into shared rule models.
 func (ruleSet RuleSet) ToRules() rules.RuleSet {
 	converted := rules.RuleSet{
-		Include:            append([]string{}, []string(ruleSet.Include)...),
-		Exclude:            append([]string{}, []string(ruleSet.Exclude)...),
-		FailOn:             ruleSet.FailOn,
-		Concurrency:        ruleSet.Concurrency,
-		IgnoreFilesEnabled: ruleSet.IgnoreFilesEnabled,
-		IgnoreFiles:        append([]string{}, []string(ruleSet.IgnoreFiles)...),
+		Include:              append([]string{}, []string(ruleSet.Include)...),
+		Exclude:              append([]string{}, []string(ruleSet.Exclude)...),
+		FailOn:               ruleSet.FailOn,
+		Concurrency:          ruleSet.Concurrency,
+		ConsoleColorsEnabled: ruleSet.ConsoleColorsEnabled,
+		IgnoreFilesEnabled:   ruleSet.IgnoreFilesEnabled,
+		IgnoreFiles:          append([]string{}, []string(ruleSet.IgnoreFiles)...),
 	}
 	if len(converted.Include) == 0 {
 		converted.Include = []string{"**/*"}
