@@ -1,6 +1,6 @@
 # Implementation Plan (ansi-colors)
 
-**Status:** ANSI color scope is partially implemented; analyze color resolution is complete and console ANSI rendering remains (3/6 phases complete)
+**Status:** ANSI color scope is largely implemented; console ANSI rendering is complete and docs/fixtures + final quality sweep remain (4/6 phases complete)
 **Last Updated:** 2026-03-08
 **Primary Specs:** `specs/formatter-console.md`, `specs/configuration.md`, `specs/cli-analyze.md` (related: `specs/formatter.md`, `specs/testing-and-validations.md`)
 
@@ -11,9 +11,9 @@
 | Console formatter baseline (ordering, grouping, summary) | `specs/formatter-console.md`, `specs/formatter.md`    | `internal/output/console.go`, `internal/output/formatter.go`, `internal/output/registry.go`                    | `testdata/golden/console.txt`                                 | ✅ Implemented (plain output only)                                    |
 | RuleSet color config schema                              | `specs/configuration.md`                              | `internal/config/model.go`, `internal/config/loader.go`, `internal/config/rules.go`, `internal/rules/model.go` | `internal/cli/init.go`, `testdata/rules/*.yaml`               | ✅ Implemented                                                        |
 | Analyze color resolution and env precedence              | `specs/cli-analyze.md`, `specs/formatter-console.md`  | `internal/cli/analyze.go`, `internal/cli/help.go`                                                              | N/A                                                           | ✅ Implemented                                                        |
-| ANSI severity rendering in console output                | `specs/formatter-console.md`                          | `internal/output/console.go`                                                                                   | `testdata/golden/console.txt` (or dedicated color fixtures)   | Missing                                                               |
+| ANSI severity rendering in console output                | `specs/formatter-console.md`                          | `internal/output/console.go`                                                                                   | `testdata/golden/console.txt` (or dedicated color fixtures)   | ✅ Implemented                                                        |
 | Non-console formatter behavior (must stay ANSI-free)     | `specs/formatter-json.md`, `specs/formatter-sarif.md` | `internal/output/json.go`, `internal/output/sarif.go`                                                          | `testdata/golden/output.json`, `testdata/golden/output.sarif` | ✅ Implemented                                                        |
-| Verification and regression coverage                     | `specs/testing-and-validations.md`                    | `internal/output/*_test.go`, `internal/cli/*_test.go`, `internal/config/*_test.go`                             | `Makefile`, `testdata/golden/*`                               | Partial (CLI precedence coverage added; ANSI rendering tests missing) |
+| Verification and regression coverage                     | `specs/testing-and-validations.md`                    | `internal/output/*_test.go`, `internal/cli/*_test.go`, `internal/config/*_test.go`                             | `Makefile`, `testdata/golden/*`                               | Partial (ANSI rendering tests added; docs/fixtures alignment pending) |
 
 ## Phase 1: Scope verification and delta lock
 
@@ -106,7 +106,7 @@
 ## Phase 4: Console ANSI rendering
 
 **Goal:** Add deterministic ANSI severity highlighting to console output when enabled.
-**Status:** In progress
+**Status:** Complete
 **Paths:** `internal/output/console.go`, `internal/output/console_test.go`, `internal/output/golden_test.go`
 **Reference pattern:** `internal/output/json.go` (stable sorting and conversion pipeline)
 
@@ -117,9 +117,9 @@
 
 ### 4.2 Rendering semantics
 
-- [ ] Apply fixed mapping: `ERROR=31`, `WARN=33`, `NOTICE=36`, `INFO=34`.
-- [ ] Wrap only severity label segment and always reset with `\x1b[0m`.
-- [ ] Emit byte-identical plain output when colors are disabled.
+- [x] Apply fixed mapping: `ERROR=31`, `WARN=33`, `NOTICE=36`, `INFO=34`.
+- [x] Wrap only severity label segment and always reset with `\x1b[0m`.
+- [x] Emit byte-identical plain output when colors are disabled.
 - [x] Current deterministic ordering/grouping behavior is already implemented and must be preserved.
 
 **Definition of Done**
@@ -225,6 +225,12 @@
 - 2026-03-08: make test - pass.
 - 2026-03-08: make lint - pass.
 - 2026-03-08: git commit -m "Resolve analyze console color precedence" - success (commit `171c57d`).
+- 2026-03-08: Read specs/README.md, specs/formatter-console.md, specs/testing-and-validations.md - confirmed Phase 4 ANSI mapping/reset requirements and quality expectations.
+- 2026-03-08: go test ./internal/output ./internal/cli - pass.
+- 2026-03-08: make test-coverage - pass.
+- 2026-03-08: make mutation ARGS="--diff HEAD" - pass.
+- 2026-03-08: go run ./cmd/reglint analyze --config testdata/rules/example.yaml --format console testdata/fixtures - pass (verified ANSI severity labels and reset sequences in console output).
+- 2026-03-08: git commit -m "Render ANSI severity labels in console output" - success (commit `0801fda`).
 
 ## Summary
 
@@ -233,15 +239,15 @@
 | Phase 1: Scope verification and delta lock    | Complete    |
 | Phase 2: RuleSet schema and model propagation | Complete    |
 | Phase 3: Analyze command color resolution     | Complete    |
-| Phase 4: Console ANSI rendering               | In progress |
+| Phase 4: Console ANSI rendering               | Complete    |
 | Phase 5: Tests, fixtures, and docs alignment  | Not started |
 | Phase 6: Final verification and quality gates | Not started |
 
-**Remaining effort:** Implement Phases 4-6; primary gaps are ANSI severity rendering, dedicated output color tests, and docs/fixtures alignment.
+**Remaining effort:** Implement Phases 5-6; primary gaps are docs/fixtures alignment and final repository-wide quality verification.
 
 ## Known Existing Work
 
-- Console formatter already provides deterministic ordering/grouping and summary output in `internal/output/console.go`.
+- Console formatter provides deterministic ordering/grouping/summary plus ANSI severity rendering with fixed mapping and reset behavior in `internal/output/console.go`.
 - Formatter registry + routing is established in `internal/output/registry.go` and `internal/cli/analyze.go`.
 - Analyze runtime resolves console color precedence (`default -> config -> NO_COLOR`) and passes effective settings into the console formatter path.
 - JSON and SARIF formatters already avoid ANSI concerns (`internal/output/json.go`, `internal/output/sarif.go`).
