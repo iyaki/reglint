@@ -1,6 +1,6 @@
 # Implementation Plan (ansi-colors)
 
-**Status:** ANSI color scope is not implemented; baseline formatter pipeline is stable (0/6 phases complete)
+**Status:** ANSI color scope is partially implemented; RuleSet schema/model propagation is complete (1/6 phases complete)
 **Last Updated:** 2026-03-08
 **Primary Specs:** `specs/formatter-console.md`, `specs/configuration.md`, `specs/cli-analyze.md` (related: `specs/formatter.md`, `specs/testing-and-validations.md`)
 
@@ -9,7 +9,7 @@
 | System / Subsystem                                       | Specs                                                 | Modules / Packages                                                                                             | Artifacts                                                     | Status                                                    |
 | -------------------------------------------------------- | ----------------------------------------------------- | -------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------- | --------------------------------------------------------- |
 | Console formatter baseline (ordering, grouping, summary) | `specs/formatter-console.md`, `specs/formatter.md`    | `internal/output/console.go`, `internal/output/formatter.go`, `internal/output/registry.go`                    | `testdata/golden/console.txt`                                 | ✅ Implemented (plain output only)                        |
-| RuleSet color config schema                              | `specs/configuration.md`                              | `internal/config/model.go`, `internal/config/loader.go`, `internal/config/rules.go`, `internal/rules/model.go` | `internal/cli/init.go`, `testdata/rules/*.yaml`               | Missing                                                   |
+| RuleSet color config schema                              | `specs/configuration.md`                              | `internal/config/model.go`, `internal/config/loader.go`, `internal/config/rules.go`, `internal/rules/model.go` | `internal/cli/init.go`, `testdata/rules/*.yaml`               | ✅ Implemented                                            |
 | Analyze color resolution and env precedence              | `specs/cli-analyze.md`, `specs/formatter-console.md`  | `internal/cli/analyze.go`, `internal/cli/help.go`                                                              | N/A                                                           | Missing                                                   |
 | ANSI severity rendering in console output                | `specs/formatter-console.md`                          | `internal/output/console.go`                                                                                   | `testdata/golden/console.txt` (or dedicated color fixtures)   | Missing                                                   |
 | Non-console formatter behavior (must stay ANSI-free)     | `specs/formatter-json.md`, `specs/formatter-sarif.md` | `internal/output/json.go`, `internal/output/sarif.go`                                                          | `testdata/golden/output.json`, `testdata/golden/output.sarif` | ✅ Implemented                                            |
@@ -47,21 +47,21 @@
 ## Phase 2: RuleSet schema and model propagation
 
 **Goal:** Implement `consoleColorsEnabled` in configuration and propagate it into runtime rule models.
-**Status:** Not started
-**Paths:** `internal/config/model.go`, `internal/config/loader.go`, `internal/config/rules.go`, `internal/rules/model.go`, `internal/config/loader_test.go`
+**Status:** Complete
+**Paths:** `internal/config/model.go`, `internal/config/loader.go`, `internal/config/rules.go`, `internal/rules/model.go`, `internal/config/loader_test.go`, `internal/config/rules_interpolate_coverage_test.go`
 **Reference pattern:** `internal/config/model.go` + `internal/config/rules.go` (existing global fields such as `concurrency`, `failOn`)
 
 ### 2.1 Schema fields and defaults
 
-- [ ] Add `consoleColorsEnabled` to `config.RuleSet`.
-- [ ] Add `ConsoleColorsEnabled` to `rules.RuleSet`.
-- [ ] Propagate value through `RuleSet.ToRules()`.
-- [ ] Ensure default behavior is `true` when unset (resolved at runtime boundary).
+- [x] Add `consoleColorsEnabled` to `config.RuleSet`.
+- [x] Add `ConsoleColorsEnabled` to `rules.RuleSet`.
+- [x] Propagate value through `RuleSet.ToRules()`.
+- [x] Ensure default behavior is `true` when unset (resolved at runtime boundary).
 
 ### 2.2 Validation and tests
 
-- [ ] Add/adjust loader tests for boolean acceptance/rejection semantics.
-- [ ] Verify YAML type errors are surfaced as config parse/validation errors.
+- [x] Add/adjust loader tests for boolean acceptance/rejection semantics.
+- [x] Verify YAML type errors are surfaced as config parse/validation errors.
 - [x] Existing loader validation/test scaffolding is present and can be extended.
 
 **Definition of Done**
@@ -211,19 +211,25 @@
 - 2026-03-08: `Read internal/config/model.go` and `internal/rules/model.go` - verified missing color fields in RuleSet models.
 - 2026-03-08: `go test ./internal/output ./internal/cli ./internal/config` - pass (cached).
 - 2026-03-08: `Plan-only gap analysis` - bug fixes discovered: none; files touched: `IMPLEMENTATION_PLAN.md`.
+- 2026-03-08: go test ./internal/config - pass; added coverage for consoleColorsEnabled parsing and RuleSet model propagation.
+- 2026-03-08: go test ./internal/cli ./internal/output ./internal/rules - pass; no regressions from RuleSet model changes.
+- 2026-03-08: make lint - pass.
+- 2026-03-08: make arch - pass.
+- 2026-03-08: make test-coverage - pass; coverage gate satisfied (>90%).
+- 2026-03-08: git commit -m "Add consoleColorsEnabled to ruleset models" - success (commit `3d205ca`).
 
 ## Summary
 
 | Phase                                         | Status      |
 | --------------------------------------------- | ----------- |
 | Phase 1: Scope verification and delta lock    | Complete    |
-| Phase 2: RuleSet schema and model propagation | Not started |
+| Phase 2: RuleSet schema and model propagation | Complete    |
 | Phase 3: Analyze command color resolution     | Not started |
 | Phase 4: Console ANSI rendering               | Not started |
 | Phase 5: Tests, fixtures, and docs alignment  | Not started |
 | Phase 6: Final verification and quality gates | Not started |
 
-**Remaining effort:** Implement Phases 2-6; primary gaps are config schema wiring, runtime precedence (`NO_COLOR`), console ANSI rendering, and dedicated ansi-colors test coverage.
+**Remaining effort:** Implement Phases 3-6; primary gaps are runtime precedence (`NO_COLOR`), console ANSI rendering, and dedicated ansi-colors test coverage.
 
 ## Known Existing Work
 
