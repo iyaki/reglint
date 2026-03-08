@@ -28,6 +28,20 @@ reglint init --out configs/reglint-rules.yaml
 reglint analyze --config configs/reglint-rules.yaml
 ```
 
+Console output uses ANSI severity colors by default. You can disable colors in the rules file or for a single run with `NO_COLOR`.
+
+```yaml
+consoleColorsEnabled: false
+rules:
+  - message: "Found token $0"
+    regex: "token=[a-z]+"
+    severity: "error"
+```
+
+```bash
+NO_COLOR=1 reglint analyze --config reglint-rules.yaml --format console
+```
+
 ## Outputs
 
 - `console` writes to stdout.
