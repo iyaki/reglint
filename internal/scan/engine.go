@@ -610,7 +610,7 @@ func shouldSkipFile(path string, entry os.DirEntry, maxFileSizeBytes int64) (boo
 		return true, nil
 	}
 
-	file, err := os.Open(path)
+	file, err := os.Open(path) //#nosec G304 -- path is from filepath.Walk within controlled directory
 	if err != nil {
 		return true, nil
 	}

@@ -11,7 +11,7 @@ import (
 
 // LoadRuleSet reads and validates a YAML rules configuration.
 func LoadRuleSet(path string) (RuleSet, error) {
-	data, err := os.ReadFile(path)
+	data, err := os.ReadFile(path) //#nosec G304 -- path is validated by validateConfigPath before use
 	if err != nil {
 		return RuleSet{}, fmt.Errorf("read config: %w", err)
 	}

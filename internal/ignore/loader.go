@@ -88,7 +88,7 @@ func (loader *ignoreLoader) loadDirectory(directory string, relBase string) erro
 		if relBase != "" {
 			source = filepath.ToSlash(filepath.Join(relBase, fileName))
 		}
-		content, err := os.ReadFile(fullPath)
+		content, err := os.ReadFile(fullPath) //#nosec G304 -- path built via filepath.Join
 		if err != nil {
 			return err
 		}

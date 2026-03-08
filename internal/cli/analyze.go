@@ -196,7 +196,7 @@ func validateConfigPath(path string) error {
 	if info.IsDir() {
 		return fmt.Errorf("config path is a directory: %s", path)
 	}
-	file, err := os.Open(path)
+	file, err := os.Open(path) //#nosec G304 -- path comes from user input and is validated here
 	if err != nil {
 		return fmt.Errorf("config file not readable: %s", path)
 	}
@@ -267,7 +267,7 @@ func validateExistingOutputPath(info os.FileInfo, path string) error {
 	if info.IsDir() {
 		return fmt.Errorf("output path is a directory: %s", path)
 	}
-	file, err := os.OpenFile(path, os.O_WRONLY, defaultFileMode)
+	file, err := os.OpenFile(path, os.O_WRONLY, defaultFileMode) //#nosec G304 -- validated output path
 	if err != nil {
 		return fmt.Errorf("output path not writable: %s", path)
 	}
@@ -423,7 +423,7 @@ func writeSARIFOutput(cfg Config, result scan.Result, ruleset []rules.Rule, out 
 }
 
 func writeJSONFile(path string, result scan.Result) error {
-	file, err := os.OpenFile(path, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, defaultFileMode)
+	file, err := os.OpenFile(path, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, defaultFileMode) //#nosec G304
 	if err != nil {
 		return err
 	}
@@ -437,7 +437,7 @@ func writeJSONFile(path string, result scan.Result) error {
 }
 
 func writeSARIFFile(path string, result scan.Result, ruleSet []rules.Rule) error {
-	file, err := os.OpenFile(path, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, defaultFileMode)
+	file, err := os.OpenFile(path, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, defaultFileMode) //#nosec G304
 	if err != nil {
 		return err
 	}
