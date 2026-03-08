@@ -1,230 +1,236 @@
-# Implementation Plan (ignore-files)
+# Implementation Plan (ansi-colors)
 
-**Status:** Ignore files support in progress (2/6 phases complete)
-**Last Updated:** 2026-03-07
-**Primary Specs:** `specs/ignore-files.md`, `specs/configuration.md`, `specs/cli-analyze.md`, `specs/data-model.md`
+**Status:** ANSI color scope is not implemented; baseline formatter pipeline is stable (0/6 phases complete)
+**Last Updated:** 2026-03-08
+**Primary Specs:** `specs/formatter-console.md`, `specs/configuration.md`, `specs/cli-analyze.md` (related: `specs/formatter.md`, `specs/testing-and-validations.md`)
 
 ## Quick Reference
 
-| System / Subsystem              | Specs                                                                     | Modules / Packages                                                               | Artifacts | Status |
-| ------------------------------- | ------------------------------------------------------------------------- | -------------------------------------------------------------------------------- | --------- | ------ |
-| CLI analyze flags + config      | `specs/ignore-files.md`, `specs/cli-analyze.md`, `specs/configuration.md` | `internal/cli/analyze.go`, `internal/cli/help.go`, `internal/config/model.go`    | N/A       | —      |
-| RuleSet mapping + scan request  | `specs/ignore-files.md`, `specs/data-model.md`                            | `internal/config/rules.go`, `internal/scan/model.go`                             | N/A       | —      |
-| Ignore settings + matcher       | `specs/ignore-files.md`                                                   | `internal/ignore/*`                                                              | N/A       | —      |
-| Scan entry collection + filters | `specs/ignore-files.md`, `specs/data-model.md`                            | `internal/scan/engine.go`                                                        | N/A       | —      |
-| Tests (ignore behavior)         | `specs/testing-and-validations.md`, `specs/ignore-files.md`               | `internal/scan/*_test.go`, `internal/cli/*_test.go`, `internal/config/*_test.go` | N/A       | —      |
+| System / Subsystem                                       | Specs                                                 | Modules / Packages                                                                                             | Artifacts                                                     | Status                                                    |
+| -------------------------------------------------------- | ----------------------------------------------------- | -------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------- | --------------------------------------------------------- |
+| Console formatter baseline (ordering, grouping, summary) | `specs/formatter-console.md`, `specs/formatter.md`    | `internal/output/console.go`, `internal/output/formatter.go`, `internal/output/registry.go`                    | `testdata/golden/console.txt`                                 | ✅ Implemented (plain output only)                        |
+| RuleSet color config schema                              | `specs/configuration.md`                              | `internal/config/model.go`, `internal/config/loader.go`, `internal/config/rules.go`, `internal/rules/model.go` | `internal/cli/init.go`, `testdata/rules/*.yaml`               | Missing                                                   |
+| Analyze color resolution and env precedence              | `specs/cli-analyze.md`, `specs/formatter-console.md`  | `internal/cli/analyze.go`, `internal/cli/help.go`                                                              | N/A                                                           | Missing                                                   |
+| ANSI severity rendering in console output                | `specs/formatter-console.md`                          | `internal/output/console.go`                                                                                   | `testdata/golden/console.txt` (or dedicated color fixtures)   | Missing                                                   |
+| Non-console formatter behavior (must stay ANSI-free)     | `specs/formatter-json.md`, `specs/formatter-sarif.md` | `internal/output/json.go`, `internal/output/sarif.go`                                                          | `testdata/golden/output.json`, `testdata/golden/output.sarif` | ✅ Implemented                                            |
+| Verification and regression coverage                     | `specs/testing-and-validations.md`                    | `internal/output/*_test.go`, `internal/cli/*_test.go`, `internal/config/*_test.go`                             | `Makefile`, `testdata/golden/*`                               | Partial (baseline tests exist; ansi-colors tests missing) |
 
-## Phase 9: Ignore settings + config schema
+## Phase 1: Scope verification and delta lock
 
-**Goal:** Add ignore files settings to RuleSet and CLI configuration handling.
+**Goal:** Lock exact ansi-colors requirements and confirmed gaps before code changes.
 **Status:** Complete
-**Paths:** `internal/config/model.go`, `internal/config/rules.go`, `internal/cli/analyze.go`, `internal/cli/help.go`
-**Reference pattern:** `internal/config/model.go`
+**Paths:** `specs/formatter-console.md`, `specs/configuration.md`, `specs/cli-analyze.md`, `internal/output/console.go`, `internal/cli/analyze.go`, `internal/config/*.go`, `internal/rules/model.go`
+**Reference pattern:** `internal/output/json.go` (deterministic formatting pipeline)
 
-### 9.1 RuleSet schema additions
+### 1.1 Spec and history verification
 
-- [x] Add `ignoreFilesEnabled` and `ignoreFiles` to `config.RuleSet`.
-- [x] Validate ignore file names (non-empty, no path separators, no duplicates).
-- [x] Extend `rules.RuleSet` to carry ignore settings for scan requests.
+- [x] Verified ansi-colors requirements exist in formatter/config/analyze specs.
+- [x] Verified recent scope change commit (`8fefbff`) and affected spec files.
+- [ ] Clarify ambiguous empty env-var bullet in `specs/formatter-console.md` before implementation.
 
-### 9.2 Analyze CLI overrides
+### 1.2 Code gap verification
 
-- [x] Add `--no-ignore-files` flag to analyze config parsing.
-- [x] Include `--no-ignore-files` in analyze help output.
-
-**Definition of Done**
-
-- RuleSet YAML accepts `ignoreFilesEnabled` and `ignoreFiles`.
-- `reglint analyze --help` shows `--no-ignore-files`.
-- Invalid ignore file names or duplicates error during config load.
-
-**Risks/Dependencies**
-
-- Ensure config validation errors are surfaced before scanning begins.
-
-## Phase 10: Ignore settings resolution
-
-**Goal:** Resolve effective ignore settings with default, RuleSet, and CLI overrides.
-**Status:** Complete
-**Paths:** `internal/cli/analyze.go`, `internal/rules/model.go`, `internal/scan/model.go`
-**Reference pattern:** `internal/cli/analyze.go`
-
-### 10.1 Effective settings model
-
-- [x] Add `IgnoreSettings` to scan request model.
-- [x] Provide defaults (`enabled=true`, `files=['.ignore', '.reglintignore']`).
-
-### 10.2 Precedence logic
-
-- [x] Apply RuleSet overrides for `ignoreFilesEnabled` and `ignoreFiles`.
-- [x] Apply `--no-ignore-files` to disable ignore support.
+- [x] Verified no production usage of `NO_COLOR` in `internal/**` runtime code.
+- [x] Verified no `consoleColorsEnabled` fields in config/rules models.
+- [x] Verified console formatter emits plain severity labels without ANSI SGR codes.
+- [x] Verified JSON/SARIF formatters are unaffected by ANSI-color scope.
 
 **Definition of Done**
 
-- Scan requests carry resolved ignore settings.
-- CLI flags override config as per spec precedence.
+- Verification commands and file reads are logged in the Verification Log.
+- Gap list is actionable and scoped to config + CLI + output + tests.
 
 **Risks/Dependencies**
 
-- Must preserve existing include/exclude override semantics.
+- Spec ambiguity at `specs/formatter-console.md` around a blank env-var name may cause implementation churn if unresolved.
 
-## Phase 11: Ignore file loader + parser
+## Phase 2: RuleSet schema and model propagation
 
-**Goal:** Load, parse, and normalize ignore rules in deterministic order.
-**Status:** Complete
-**Paths:** `internal/ignore/loader.go`, `internal/ignore/parser.go`, `internal/ignore/matcher.go`
-**Reference pattern:** `internal/scan/engine.go`
+**Goal:** Implement `consoleColorsEnabled` in configuration and propagate it into runtime rule models.
+**Status:** Not started
+**Paths:** `internal/config/model.go`, `internal/config/loader.go`, `internal/config/rules.go`, `internal/rules/model.go`, `internal/config/loader_test.go`
+**Reference pattern:** `internal/config/model.go` + `internal/config/rules.go` (existing global fields such as `concurrency`, `failOn`)
 
-### 11.1 Ignore loader
+### 2.1 Schema fields and defaults
 
-- [x] Walk directories in lexical order per scan root.
-- [x] Discover ignore files using ordered `IgnoreSettings.Files`.
-- [x] Normalize line endings and read UTF-8 text.
+- [ ] Add `consoleColorsEnabled` to `config.RuleSet`.
+- [ ] Add `ConsoleColorsEnabled` to `rules.RuleSet`.
+- [ ] Propagate value through `RuleSet.ToRules()`.
+- [ ] Ensure default behavior is `true` when unset (resolved at runtime boundary).
 
-### 11.2 Ignore parser
+### 2.2 Validation and tests
 
-- [x] Parse blank lines and comments with escaped `#` and `!`.
-- [x] Support negated rules, anchored `/`, trailing `/` directory-only.
-- [x] Build `IgnoreRule` with base dir, source path, line number, pattern.
+- [ ] Add/adjust loader tests for boolean acceptance/rejection semantics.
+- [ ] Verify YAML type errors are surfaced as config parse/validation errors.
+- [x] Existing loader validation/test scaffolding is present and can be extended.
 
 **Definition of Done**
 
-- Parser reports invalid patterns with `<source>:<line>`.
-- Loader preserves deterministic rule order.
+- `go test ./internal/config` passes.
+- `consoleColorsEnabled` is available on the effective rules model used by analyze.
+- Files touched are limited to config/rules model + tests.
 
 **Risks/Dependencies**
 
-- Must keep matching rules independent of OS path separator.
+- Backward compatibility for existing configs must be preserved (field remains optional).
 
-## Phase 12: Ignore matcher + path filtering
+## Phase 3: Analyze command color resolution
 
-**Goal:** Apply ignore rules during scan entry collection.
-**Status:** Complete
-**Paths:** `internal/scan/engine.go`, `internal/ignore/matcher.go`
-**Reference pattern:** `internal/scan/engine.go`
+**Goal:** Resolve effective console color settings with config + environment precedence and wire to output.
+**Status:** Not started
+**Paths:** `internal/cli/analyze.go`, `internal/cli/scan_request_test.go`, `internal/cli/analyze_test.go`, `internal/cli/analyze_output_test.go`
+**Reference pattern:** `internal/cli/analyze.go` precedence helpers (`resolveFailOn`, ignore-files resolution)
 
-### 12.1 Matcher semantics
+### 3.1 Effective setting resolution
 
-- [x] Implement ordered rule evaluation (last match wins).
-- [x] Ensure negation un-ignores only when include/exclude allowed.
+- [ ] Introduce runtime color setting in analyze execution path.
+- [ ] Apply precedence: default `true` -> RuleSet `consoleColorsEnabled` -> `NO_COLOR` non-empty forces `false`.
+- [ ] Record setting source if needed for parity with spec data model (`default|config|env`).
 
-### 12.2 File selection precedence
+### 3.2 Output-path integration
 
-- [x] Apply include -> exclude -> ignore evaluation order per spec.
-- [x] Ensure ignored files are excluded from scan entries.
+- [ ] Pass resolved color setting only to console formatter path.
+- [ ] Keep JSON/SARIF output paths and payloads unchanged.
+- [x] Existing output routing by formatter name is in place and tested.
 
 **Definition of Done**
 
-- Ignore matcher yields deterministic results for same inputs.
-- Scan results exclude ignored paths while preserving include/exclude logic.
+- `go test ./internal/cli` passes with new precedence tests.
+- Manual checks validate `NO_COLOR=1` disables ANSI in `--format console`.
+- Files touched are limited to analyze runtime + tests.
 
 **Risks/Dependencies**
 
-- Shared usage of doublestar must match scan glob semantics.
+- Env-dependent tests must isolate process env to avoid cross-test leakage.
 
-## Phase 13: Error handling + stats
+## Phase 4: Console ANSI rendering
 
-**Goal:** Surface ignore errors and track skipped file counts consistently.
-**Status:** Complete
-**Paths:** `internal/scan/engine.go`, `internal/ignore/*`
-**Reference pattern:** `internal/scan/engine.go`
+**Goal:** Add deterministic ANSI severity highlighting to console output when enabled.
+**Status:** Not started
+**Paths:** `internal/output/console.go`, `internal/output/console_test.go`, `internal/output/golden_test.go`
+**Reference pattern:** `internal/output/json.go` (stable sorting and conversion pipeline)
 
-### 13.1 Loader errors
+### 4.1 Formatter API adjustments
 
-- [x] Exit analyze with code 1 on ignore file read error.
-- [x] Bubble invalid ignore pattern errors with source/line.
+- [ ] Introduce `ConsoleColorSettings` in output layer (enabled flag, optional source metadata).
+- [ ] Wire settings into `ConsoleFormatter` without breaking registry contract.
 
-### 13.2 Skipped stats integration
+### 4.2 Rendering semantics
 
-- [x] Count ignored files as skipped.
-- [x] Ensure existing binary/size skip counts remain correct.
+- [ ] Apply fixed mapping: `ERROR=31`, `WARN=33`, `NOTICE=36`, `INFO=34`.
+- [ ] Wrap only severity label segment and always reset with `\x1b[0m`.
+- [ ] Emit byte-identical plain output when colors are disabled.
+- [x] Current deterministic ordering/grouping behavior is already implemented and must be preserved.
 
 **Definition of Done**
 
-- `filesSkipped` includes ignored + unreadable/large/binary files.
-- Errors stop the run with a clear message.
+- `go test ./internal/output` passes.
+- Console output contains ANSI SGR only when enabled.
+- No ANSI sequences appear in disabled mode snapshots/assertions.
 
 **Risks/Dependencies**
 
-- Avoid leaking ignore file contents in error output.
+- Golden snapshot strategy must avoid brittle absolute-path assertions while validating color codes.
 
-## Phase 14: Tests + fixtures
+## Phase 5: Tests, fixtures, and docs alignment
 
-**Goal:** Add automated coverage for ignore files behavior.
-**Status:** In progress
-**Paths:** `internal/scan/engine_test.go`, `internal/cli/*_test.go`, `internal/config/*_test.go`, `testdata/fixtures`
-**Reference pattern:** `internal/scan/engine_test.go`
+**Goal:** Add explicit ansi-colors coverage and keep docs/examples aligned.
+**Status:** Not started
+**Paths:** `internal/output/*_test.go`, `internal/cli/*_test.go`, `internal/config/*_test.go`, `testdata/golden/*`, `testdata/rules/*`, `README.md`
+**Reference pattern:** `internal/output/golden_test.go`
 
-### 14.1 Scan behavior tests
+### 5.1 Automated coverage
 
-- [x] Root `.ignore` excludes matching files.
-- [x] Nested `.reglintignore` + `!` negation re-includes paths.
-- [x] `--no-ignore-files` scans ignored files.
-- [x] Invalid ignore pattern errors with `<source>:<line>`.
-- [x] Deterministic ordering with same inputs.
+- [ ] Add console tests for enabled ANSI emission and reset behavior.
+- [ ] Add console tests for config-disabled mode (no ANSI).
+- [ ] Add CLI tests for `NO_COLOR` precedence over config.
+- [ ] Add config tests for `consoleColorsEnabled` parse/validation behavior.
+- [x] Baseline tests for output/cli/config suites already exist.
 
-### 14.2 Config + CLI tests
+### 5.2 Fixture and documentation updates
 
-- [x] Validate ignore file name constraints in config load.
-- [x] Ensure CLI flag precedence disables ignore support.
+- [ ] Decide whether to use additional color golden files or targeted string assertions.
+- [ ] Update sample config/docs to mention `consoleColorsEnabled` and `NO_COLOR` behavior.
+- [ ] Keep quick examples consistent with actual CLI behavior.
 
 **Definition of Done**
 
-- Tests cover all spec verifications.
-- Coverage stays above 90% for touched packages.
+- `go test ./internal/output ./internal/cli ./internal/config` passes.
+- README/examples and test fixtures reflect implemented behavior.
+- Files touched are confined to tests/fixtures/docs relevant to ansi-colors.
 
 **Risks/Dependencies**
 
-- File system ordering tests must account for deterministic sorting.
+- Documentation can drift if runtime precedence changes during implementation.
+
+## Phase 6: Final verification and quality gates
+
+**Goal:** Verify end-to-end behavior and clear quality gates for merge readiness.
+**Status:** Not started
+**Paths:** repository-wide (`internal/**`, `testdata/**`, `README.md`, `Makefile`)
+**Reference pattern:** `specs/testing-and-validations.md`
+
+### 6.1 Verification commands
+
+- [ ] `go test ./...`
+- [ ] `make test`
+- [ ] `make lint`
+- [ ] `make quality`
+- [ ] Manual CLI checks for color enabled/disabled behavior.
+
+### 6.2 Regression checks
+
+- [ ] Confirm JSON and SARIF outputs remain ANSI-free.
+- [ ] Confirm console ordering/summary remains deterministic.
+- [x] Baseline package tests currently pass before ansi-colors changes.
+
+**Definition of Done**
+
+- All commands above pass.
+- Verification Log includes final command outputs/results.
+- No unrelated subsystem regressions are introduced.
+
+**Risks/Dependencies**
+
+- Mutation testing (`make mutation`) is expensive; run only at final stage per project guidance.
 
 ## Verification Log
 
-- 2026-03-07: Read `specs/README.md` - verified spec index and scope references.
-- 2026-03-07: Read `specs/ignore-files.md` - documented ignore file requirements and data model.
-- 2026-03-07: Read `specs/configuration.md`, `specs/cli-analyze.md`, `specs/data-model.md`, `specs/testing-and-validations.md` - confirmed related schema and validation expectations.
-- 2026-03-07: Read `internal/scan/engine.go` - verified include/exclude filtering exists, no ignore support yet.
-- 2026-03-07: Read `internal/scan/model.go` - scan request had no ignore settings before Phase 10 work.
-- 2026-03-07: Read `internal/config/model.go` and `internal/config/rules.go` - ignore settings already present in RuleSet.
-- 2026-03-07: Read `internal/cli/analyze.go` and `internal/cli/help.go` - ignore flags were already present in CLI.
-- 2026-03-07: Searched `internal/**/ignore*` - ignore package does not exist yet.
-- 2026-03-07: `git log --oneline -- specs` - reviewed recent spec change history.
-- 2026-03-07: `git log -n 10 --oneline -- specs/ignore-files.md` - reviewed ignore spec change history.
-- 2026-03-07: `go test ./internal/config ./internal/cli` - ok
-- 2026-03-07: `go test ./internal/cli -run TestBuildScanRequestResolvesIgnoreSettings` - ok
-- 2026-03-07: `go test ./internal/ignore` - ok
-- 2026-03-07: `go test ./internal/ignore` - ok
-- 2026-03-07: `go test ./internal/scan -run TestCollectEntriesAppliesIgnoreRules` - ok
-- 2026-03-07: `go test ./internal/scan -run TestCollectEntriesAllowsIgnoreNegation` - ok
-- 2026-03-07: `go test ./internal/scan -run TestIgnoreMatcherRespectsOrderingAndNegation` - ok
-- 2026-03-07: `go test ./internal/scan -run TestCollectEntriesIgnoreNegationDoesNotOverrideExclude` - ok
-- 2026-03-07: `go test ./internal/scan -run TestCollectEntriesReturnsIgnoreLoadErrors` - ok
-- 2026-03-07: `go test ./internal/scan -run TestCollectEntriesCountsIgnoredFilesAsSkipped` - ok
-- 2026-03-07: `go test ./internal/scan` - ok
-- 2026-03-07: `go test ./internal/scan -run "TestCollectEntriesAllowsNestedReglintIgnoreNegation|TestCollectEntriesNoIgnoreFilesScansIgnoredPaths"` - ok
-- 2026-03-07: `go test ./internal/scan -run TestSortMatchesOrdersByRootForSameFilePath` - ok
-- 2026-03-07: `go test ./internal/scan` - ok
-- 2026-03-07: `go test ./internal/scan -run TestRunUsesConcurrencyForFileReads` - ok
-- 2026-03-07: `go test ./internal/scan` - ok
+- 2026-03-08: `Read specs/README.md` - confirmed primary and related specs for ansi-colors scope; files touched: `specs/README.md`.
+- 2026-03-08: `Read specs/formatter-console.md` - captured ANSI mapping, reset, and precedence requirements; noted ambiguous blank env-var bullet; files touched: `specs/formatter-console.md`.
+- 2026-03-08: `Read specs/configuration.md` - confirmed `consoleColorsEnabled` schema/default requirements; files touched: `specs/configuration.md`.
+- 2026-03-08: `Read specs/cli-analyze.md` - confirmed `NO_COLOR` precedence and console-only scope; files touched: `specs/cli-analyze.md`.
+- 2026-03-08: `git log --oneline -- specs` - identified recent specs history and ansi-colors commit (`8fefbff`).
+- 2026-03-08: `git log --oneline -- specs/formatter-console.md` - verified scope-specific spec history.
+- 2026-03-08: `git log --oneline -- specs/configuration.md` - verified scope-specific spec history.
+- 2026-03-08: `git log --oneline -- specs/cli-analyze.md` - verified scope-specific spec history.
+- 2026-03-08: `git show --name-only --oneline 8fefbff` - confirmed impacted specs: `specs/cli-analyze.md`, `specs/configuration.md`, `specs/formatter-console.md`.
+- 2026-03-08: `grep "NO_COLOR|consoleColorsEnabled|ConsoleColorsEnabled|\\x1b\\[" (internal, *.go)` - no production implementation found for ansi-colors settings.
+- 2026-03-08: `Read internal/output/console.go` - verified deterministic plain-text severity rendering with no ANSI sequences.
+- 2026-03-08: `Read internal/cli/analyze.go` - verified no runtime resolution for `consoleColorsEnabled` or `NO_COLOR`.
+- 2026-03-08: `Read internal/config/model.go` and `internal/rules/model.go` - verified missing color fields in RuleSet models.
+- 2026-03-08: `go test ./internal/output ./internal/cli ./internal/config` - pass (cached).
+- 2026-03-08: `Plan-only gap analysis` - bug fixes discovered: none; files touched: `IMPLEMENTATION_PLAN.md`.
 
 ## Summary
 
-| Phase                                | Status   |
-| ------------------------------------ | -------- |
-| Phase 9: Ignore settings + config    | Complete |
-| Phase 10: Ignore settings resolution | Complete |
-| Phase 11: Ignore loader + parser     | Complete |
-| Phase 12: Ignore matcher + filtering | Complete |
-| Phase 13: Error handling + stats     | Complete |
-| Phase 14: Tests + fixtures           | Complete |
+| Phase                                         | Status      |
+| --------------------------------------------- | ----------- |
+| Phase 1: Scope verification and delta lock    | Complete    |
+| Phase 2: RuleSet schema and model propagation | Not started |
+| Phase 3: Analyze command color resolution     | Not started |
+| Phase 4: Console ANSI rendering               | Not started |
+| Phase 5: Tests, fixtures, and docs alignment  | Not started |
+| Phase 6: Final verification and quality gates | Not started |
 
-**Remaining effort:** Ignore-files phases complete; verify overall project scope before new work.
+**Remaining effort:** Implement Phases 2-6; primary gaps are config schema wiring, runtime precedence (`NO_COLOR`), console ANSI rendering, and dedicated ansi-colors test coverage.
 
 ## Known Existing Work
 
-- Include/exclude filtering is implemented in `internal/scan/engine.go` via `matchesPath` and `evaluateFile`.
-- Default include/exclude and concurrency rules are handled in `internal/config/rules.go`.
-- Scan request model is in `internal/scan/model.go` with stats tracking for skipped files.
-- Binary/oversize skip handling and skipped-file counting are implemented in `internal/scan/engine.go`.
+- Console formatter already provides deterministic ordering/grouping and summary output in `internal/output/console.go`.
+- Formatter registry + routing is established in `internal/output/registry.go` and `internal/cli/analyze.go`.
+- JSON and SARIF formatters already avoid ANSI concerns (`internal/output/json.go`, `internal/output/sarif.go`).
+- Baseline output/CLI/config tests and golden tests already exist and can be extended (`internal/output/golden_test.go`, `testdata/golden/*`).
 
 ## Manual Deployment Tasks
 
