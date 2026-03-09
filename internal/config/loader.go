@@ -16,6 +16,10 @@ func LoadRuleSet(path string) (RuleSet, error) {
 		return RuleSet{}, fmt.Errorf("read config: %w", err)
 	}
 
+	if err := validateOptionalBooleanField(data, "consoleColorsEnabled"); err != nil {
+		return RuleSet{}, err
+	}
+
 	var ruleSet RuleSet
 	if err := yaml.Unmarshal(data, &ruleSet); err != nil {
 		return RuleSet{}, fmt.Errorf("parse config: %w", err)
@@ -26,6 +30,24 @@ func LoadRuleSet(path string) (RuleSet, error) {
 	}
 
 	return ruleSet, nil
+}
+
+func validateOptionalBooleanField(data []byte, fieldName string) error {
+	var raw map[string]any
+	if err := yaml.Unmarshal(data, &raw); err != nil {
+		return fmt.Errorf("parse config: %w", err)
+	}
+
+	value, exists := raw[fieldName]
+	if !exists {
+		return nil
+	}
+
+	if _, ok := value.(bool); !ok {
+		return fmt.Errorf("%s must be a boolean", fieldName)
+	}
+
+	return nil
 }
 
 func validateRuleSet(ruleSet RuleSet) error {

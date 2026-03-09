@@ -275,6 +275,23 @@ func TestLoadRuleSetParsesConsoleColorsEnabled(t *testing.T) {
 	}
 }
 
+func TestLoadRuleSetParsesConsoleColorsEnabledTrue(t *testing.T) {
+	t.Parallel()
+
+	path := writeConfigFile(t, "consoleColorsEnabled: true\nrules:\n  - message: 'hello'\n    regex: 'world'\n")
+
+	rules, err := config.LoadRuleSet(path)
+	if err != nil {
+		t.Fatalf("expected no error, got %v", err)
+	}
+	if rules.ConsoleColorsEnabled == nil {
+		t.Fatal("expected consoleColorsEnabled to be set")
+	}
+	if !*rules.ConsoleColorsEnabled {
+		t.Fatal("expected consoleColorsEnabled to be true")
+	}
+}
+
 func TestLoadRuleSetRejectsConsoleColorsEnabledNonBoolean(t *testing.T) {
 	t.Parallel()
 
@@ -283,6 +300,20 @@ func TestLoadRuleSetRejectsConsoleColorsEnabledNonBoolean(t *testing.T) {
 	_, err := config.LoadRuleSet(path)
 	if err == nil {
 		t.Fatal("expected error, got nil")
+	}
+}
+
+func TestLoadRuleSetRejectsConsoleColorsEnabledNull(t *testing.T) {
+	t.Parallel()
+
+	path := writeConfigFile(t, "consoleColorsEnabled: null\nrules:\n  - message: 'hello'\n    regex: 'world'\n")
+
+	_, err := config.LoadRuleSet(path)
+	if err == nil {
+		t.Fatal("expected error, got nil")
+	}
+	if !strings.Contains(err.Error(), "consoleColorsEnabled must be a boolean") {
+		t.Fatalf("expected consoleColorsEnabled validation error, got %v", err)
 	}
 }
 
