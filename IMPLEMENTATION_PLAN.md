@@ -1,6 +1,6 @@
 # Implementation Plan (baseline)
 
-**Status:** Baseline feature set is partially implemented in runtime code (Discovery complete, 6/8 phases complete; Phase 7 in progress)
+**Status:** Baseline feature set is implemented with release-readiness verification in progress (Discovery complete, 7/8 phases complete; Phase 8 in progress)
 **Last Updated:** 2026-03-09
 **Primary Specs:** `specs/cli-analyze-baseline.md`, `specs/cli-analyze.md`, `specs/configuration.md` (related: `specs/testing-and-validations.md`, `specs/cli-help.md`, `specs/cli.md`, `specs/core-architecture.md`, `specs/formatter.md`)
 
@@ -239,7 +239,7 @@
 ## Phase 8: Final quality gates and release readiness
 
 **Goal:** Validate baseline implementation against repository quality gates and manual behavior checks.
-**Status:** Not started
+**Status:** In progress
 **Paths:** repository-wide (`internal/**`, `cmd/**`, `testdata/**`, `README.md`, `Makefile`)
 **Reference pattern:** `specs/testing-and-validations.md`
 
@@ -256,7 +256,7 @@
 - [ ] `reglint analyze --config <rules> --baseline <file> <path>` (compare mode).
 - [ ] `reglint analyze --config <rules> --baseline <file> --write-baseline <path>` (write mode).
 - [ ] `reglint analyze --help` includes baseline flags.
-- [ ] JSON/SARIF outputs remain ANSI-free and schema-stable after baseline filtering.
+- [x] JSON/SARIF outputs remain ANSI-free and schema-stable after baseline filtering.
 
 **Definition of Done**
 
@@ -343,6 +343,15 @@
 - 2026-03-09: make lint - fail (cyclomatic complexity in new write-mode integration test).
 - 2026-03-09: make lint - pass.
 - 2026-03-09: git commit -m "Add write-mode baseline integration coverage" -- cmd/reglint/main_test.go - success.
+- 2026-03-09: go test ./cmd/reglint -run "TestRunAnalyzeBaselineCompareJSONOutputRemainsANSIFreeAndSchemaStable|TestRunAnalyzeBaselineCompareSARIFOutputRemainsANSIFreeAndSchemaStable" - pass.
+- 2026-03-09: go test ./cmd/reglint - pass.
+- 2026-03-09: go test ./... - pass.
+- 2026-03-09: make test - pass.
+- 2026-03-09: make lint - pass.
+- 2026-03-09: go run ./cmd/reglint analyze --config testdata/rules/fail.yaml --baseline testdata/baseline/valid-equal.json testdata/fixtures - pass (No matches found; Summary matches=0).
+- 2026-03-09: go run ./cmd/reglint analyze --config testdata/rules/fail.yaml --baseline testdata/baseline/valid-equal.json --format json testdata/fixtures - pass (schemaVersion=1; matches empty).
+- 2026-03-09: git commit -m "Add baseline compare output contract integration tests" -- cmd/reglint/main_test.go - success.
+- 2026-03-09: Update IMPLEMENTATION_PLAN.md - marked Phase 8 in progress and completed JSON/SARIF ANSI-free schema-stability verification task.
 
 ## Summary
 
@@ -355,9 +364,9 @@
 | Phase 5: Analyze runtime integration (compare/write modes + exit semantics) | Complete    |
 | Phase 6: Help text, docs, and fixture alignment                             | Complete    |
 | Phase 7: End-to-end tests and regression coverage                           | Complete    |
-| Phase 8: Final quality gates and release readiness                          | Not started |
+| Phase 8: Final quality gates and release readiness                          | In progress |
 
-**Remaining effort:** Complete Phase 8.
+**Remaining effort:** Complete remaining Phase 8 automated/manual verification tasks and finalize release readiness.
 
 ## Known Existing Work
 
@@ -376,6 +385,7 @@
 - `cmd/reglint/main_test.go` now includes baseline increase/decrease integration coverage to verify regression-only excess reporting and non-failing decrease behavior.
 - `cmd/reglint/main_test.go` now includes baseline CLI-overrides-RuleSet precedence coverage and invalid baseline JSON/schema/duplicate validation coverage with single-line error assertions.
 - `cmd/reglint/main_test.go` now includes write-mode integration coverage for missing effective path validation, ignore-existing-baseline overwrite behavior, and guaranteed exit code `0` with `--fail-on` in write mode.
+- `cmd/reglint/main_test.go` now includes baseline-compare integration coverage asserting JSON and SARIF outputs remain ANSI-free and schema-stable after suppression.
 
 ## Manual Deployment Tasks
 
