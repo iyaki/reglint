@@ -19,6 +19,9 @@ components:
   scan:
     in:
       - internal/scan/**
+  baseline:
+    in:
+      - internal/baseline/**
   ignore:
     in:
       - internal/ignore/**
@@ -45,6 +48,10 @@ deps:
       - io
       - ignore
     anyVendorDeps: true
+  baseline:
+    mayDependOn:
+      - scan
+    anyVendorDeps: false
   ignore:
     anyProjectDeps: true
     anyVendorDeps: true
