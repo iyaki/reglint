@@ -1,6 +1,6 @@
 # Implementation Plan (ansi-colors)
 
-**Status:** ANSI color scope is largely implemented; config-disabled CLI and config-loader bool validation coverage are explicit and final quality work remains (4/6 phases complete, Phase 5 in progress)
+**Status:** ANSI color scope is largely implemented; explicit console ANSI reset coverage is now in place and final quality work remains (4/6 phases complete, Phase 5 in progress)
 **Last Updated:** 2026-03-09
 **Primary Specs:** `specs/formatter-console.md`, `specs/configuration.md`, `specs/cli-analyze.md` (related: `specs/formatter.md`, `specs/testing-and-validations.md`)
 
@@ -141,7 +141,7 @@
 
 ### 5.1 Automated coverage
 
-- [ ] Add console tests for enabled ANSI emission and reset behavior.
+- [x] Add console tests for enabled ANSI emission and reset behavior.
 - [ ] Add console tests for config-disabled mode (no ANSI).
 - [x] Add CLI tests for `NO_COLOR` precedence over config and config-disabled behavior with `NO_COLOR` unset.
 - [x] Add config tests for `consoleColorsEnabled` parse/validation behavior.
@@ -261,6 +261,10 @@
 - 2026-03-09: go test ./internal/output ./internal/cli ./internal/config - pass.
 - 2026-03-09: GOFLAGS=-count=1 make test-coverage - pass.
 - 2026-03-09: GOFLAGS=-count=1 git commit -m "Validate consoleColorsEnabled boolean parsing" - success (commit `53c11c7`).
+- 2026-03-09: Read specs/README.md, specs/formatter-console.md, specs/testing-and-validations.md, IMPLEMENTATION_PLAN.md - confirmed highest-priority single remaining task was explicit console ANSI reset behavior coverage.
+- 2026-03-09: go test ./internal/output -run TestWriteConsoleWithSettingsResetsANSIColorPerSeverityLabel - pass.
+- 2026-03-09: go test ./internal/output - pass.
+- 2026-03-09: git commit -m "Add console ANSI reset coverage" - success (commit `f42626e`).
 
 ## Summary
 
@@ -282,6 +286,7 @@
 - Analyze runtime resolves console color precedence (`default -> config -> NO_COLOR`) and passes effective settings into the console formatter path.
 - CLI coverage now explicitly verifies `consoleColorsEnabled: false` disables ANSI when `NO_COLOR` is unset (`internal/cli/analyze_handle_test.go`).
 - Config coverage now explicitly verifies `consoleColorsEnabled: true|false` parsing and rejects non-boolean values including `null` (`internal/config/loader_test.go`, `internal/config/loader.go`).
+- Console output coverage now explicitly verifies one ANSI reset per colored severity label and no ANSI bleed into path lines (`internal/output/console_test.go`).
 - `reglint init` default template now includes `consoleColorsEnabled: true` so generated quickstart configs match documented color defaults.
 - JSON and SARIF formatters already avoid ANSI concerns (`internal/output/json.go`, `internal/output/sarif.go`).
 - Baseline output/CLI/config tests and golden tests already exist and can be extended (`internal/output/golden_test.go`, `testdata/golden/*`).
