@@ -173,6 +173,78 @@ func TestRunAnalyzeWritesJSONFileForMultiFormat(t *testing.T) {
 	}
 }
 
+func TestRunAnalyzeConsoleUsesANSIColorsByDefault(t *testing.T) {
+	t.Setenv("NO_COLOR", "")
+
+	rootDir := t.TempDir()
+	configDir := t.TempDir()
+	writeFixture(t, rootDir, "sample.txt", "token=abc")
+	configPath := writeRuleConfigWithPreamble(t, configDir, "")
+
+	var output bytes.Buffer
+	code := run([]string{
+		"analyze",
+		"--config", configPath,
+		"--format", "console",
+		rootDir,
+	}, &output)
+
+	if code != 0 {
+		t.Fatalf("expected exit code 0, got %d", code)
+	}
+	if !strings.Contains(output.String(), "\x1b[31mERROR\x1b[0m") {
+		t.Fatalf("expected ANSI-colored error label, got %q", output.String())
+	}
+}
+
+func TestRunAnalyzeConsoleDisablesANSIWithNoColorEnv(t *testing.T) {
+	t.Setenv("NO_COLOR", "1")
+
+	rootDir := t.TempDir()
+	configDir := t.TempDir()
+	writeFixture(t, rootDir, "sample.txt", "token=abc")
+	configPath := writeRuleConfigWithPreamble(t, configDir, "")
+
+	var output bytes.Buffer
+	code := run([]string{
+		"analyze",
+		"--config", configPath,
+		"--format", "console",
+		rootDir,
+	}, &output)
+
+	if code != 0 {
+		t.Fatalf("expected exit code 0, got %d", code)
+	}
+	if strings.Contains(output.String(), "\x1b[") {
+		t.Fatalf("expected NO_COLOR to disable ANSI output, got %q", output.String())
+	}
+}
+
+func TestRunAnalyzeConsoleDisablesANSIWhenConfigDisabled(t *testing.T) {
+	t.Setenv("NO_COLOR", "")
+
+	rootDir := t.TempDir()
+	configDir := t.TempDir()
+	writeFixture(t, rootDir, "sample.txt", "token=abc")
+	configPath := writeRuleConfigWithPreamble(t, configDir, "consoleColorsEnabled: false\n")
+
+	var output bytes.Buffer
+	code := run([]string{
+		"analyze",
+		"--config", configPath,
+		"--format", "console",
+		rootDir,
+	}, &output)
+
+	if code != 0 {
+		t.Fatalf("expected exit code 0, got %d", code)
+	}
+	if strings.Contains(output.String(), "\x1b[") {
+		t.Fatalf("expected config to disable ANSI output, got %q", output.String())
+	}
+}
+
 func TestRunAnalyzeExitCodeFailOn(t *testing.T) {
 	t.Parallel()
 
@@ -296,10 +368,22 @@ func writeFixture(t *testing.T, dir, name, content string) string {
 func writeRuleConfig(t *testing.T, dir, failOn string) string {
 	t.Helper()
 
-	config := "rules:\n  - message: \"Found token $0\"\n    regex: \"token=[a-z]+\"\n    severity: \"error\"\n"
+	preamble := ""
 	if failOn != "" {
-		config = "failOn: \"" + failOn + "\"\n" + config
+		preamble = "failOn: \"" + failOn + "\"\n"
 	}
+
+	return writeRuleConfigWithPreamble(t, dir, preamble)
+}
+
+func writeRuleConfigWithPreamble(t *testing.T, dir, preamble string) string {
+	t.Helper()
+
+	config := preamble +
+		"rules:\n" +
+		"  - message: \"Found token $0\"\n" +
+		"    regex: \"token=[a-z]+\"\n" +
+		"    severity: \"error\"\n"
 	path := filepath.Join(dir, "rules.yaml")
 	if err := os.WriteFile(path, []byte(config), 0o600); err != nil {
 		t.Fatalf("failed to write config: %v", err)
