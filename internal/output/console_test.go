@@ -194,6 +194,43 @@ func TestWriteConsoleWithSettingsDisabledMatchesPlainOutput(t *testing.T) {
 	}
 }
 
+func TestWriteConsoleWithSettingsConfigDisabledModeHasNoANSI(t *testing.T) {
+	t.Parallel()
+
+	result := scan.Result{
+		Matches: []scan.Match{
+			{Message: "Error msg", Severity: "error", FilePath: "a/file.go", Line: 1, Column: 1},
+			{Message: "Warn msg", Severity: "warning", FilePath: "a/file.go", Line: 2, Column: 1},
+			{Message: "Notice msg", Severity: "notice", FilePath: "a/file.go", Line: 3, Column: 1},
+			{Message: "Info msg", Severity: "info", FilePath: "a/file.go", Line: 4, Column: 1},
+		},
+		Stats: scan.Stats{FilesScanned: 1, Matches: 4},
+	}
+
+	var buffer bytes.Buffer
+	settings := ConsoleColorSettings{Enabled: false, Source: ConsoleColorSourceConfig}
+	if err := WriteConsoleWithSettings(result, settings, &buffer); err != nil {
+		t.Fatalf("unexpected disabled output error: %v", err)
+	}
+
+	consoleOutput := buffer.String()
+	if strings.Contains(consoleOutput, "\x1b[") {
+		t.Fatalf("expected no ANSI sequences in config-disabled mode, got:\n%s", consoleOutput)
+	}
+
+	expectedLines := []string{
+		"- ERROR 1:1 Error msg",
+		"- WARN  2:1 Warn msg",
+		"- NOTICE 3:1 Notice msg",
+		"- INFO  4:1 Info msg",
+	}
+	for _, expected := range expectedLines {
+		if !strings.Contains(consoleOutput, expected) {
+			t.Fatalf("expected %q in config-disabled output, got:\n%s", expected, consoleOutput)
+		}
+	}
+}
+
 func TestWriteConsoleWithSettingsUsesDefaultsWhenSourceMissing(t *testing.T) {
 	t.Parallel()
 
