@@ -1,20 +1,20 @@
 # Implementation Plan (baseline)
 
-**Status:** Baseline feature set is not implemented in runtime code (Discovery complete, 1/8 phases complete)
+**Status:** Baseline feature set is partially implemented in runtime code (Discovery complete, 1/8 phases complete; Phase 3 in progress)
 **Last Updated:** 2026-03-09
 **Primary Specs:** `specs/cli-analyze-baseline.md`, `specs/cli-analyze.md`, `specs/configuration.md` (related: `specs/testing-and-validations.md`, `specs/cli-help.md`, `specs/cli.md`, `specs/core-architecture.md`, `specs/formatter.md`)
 
 ## Quick Reference
 
-| System / Subsystem                                                         | Specs                                                                                              | Modules / Packages                                                                                             | Artifacts                         | Status                                                   |
-| -------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------- | --------------------------------- | -------------------------------------------------------- |
-| Baseline domain model, loader, comparator, writer                          | `specs/cli-analyze-baseline.md`, `specs/core-architecture.md`                                      | `internal/baseline/*`                                                                                          | `testdata/baseline/*.json`        | Missing (no package/files found)                         |
-| Analyze baseline flags and control flow (`--baseline`, `--write-baseline`) | `specs/cli-analyze.md`, `specs/cli.md`                                                             | `internal/cli/analyze.go`, `cmd/reglint/main.go`                                                               | CLI integration tests             | Missing (flags and flow not present)                     |
-| RuleSet baseline config field and propagation                              | `specs/configuration.md`, `specs/cli-analyze.md`                                                   | `internal/config/model.go`, `internal/config/loader.go`, `internal/config/rules.go`, `internal/rules/model.go` | `testdata/rules/*.yaml`           | Missing (`baseline` field absent)                        |
-| Help output coverage for baseline flags                                    | `specs/cli-help.md`, `specs/cli-analyze.md`                                                        | `internal/cli/help.go`, `internal/cli/cli_test.go`                                                             | Help snapshot assertions in tests | Missing (help text does not include baseline flags)      |
-| Scan + formatter deterministic pipeline dependency                         | `specs/data-model.md`, `specs/formatter.md`, `specs/formatter-json.md`, `specs/formatter-sarif.md` | `internal/scan/engine.go`, `internal/output/*.go`                                                              | `testdata/golden/*`               | ✅ Implemented (reusable baseline dependency)            |
-| Existing analyze routing, fail-on behavior, and output selection           | `specs/cli-analyze.md`                                                                             | `internal/cli/analyze.go`, `internal/cli/analyze_output_test.go`, `cmd/reglint/main_test.go`                   | Existing CLI tests                | ✅ Implemented (baseline extension point)                |
-| Ignore-file precedence pattern (config -> CLI override)                    | `specs/ignore-files.md`                                                                            | `internal/cli/analyze.go`, `internal/scan/ignore_rules.go`, `internal/ignore/*`                                | Ignore behavior tests             | ✅ Implemented (reference pattern for precedence design) |
+| System / Subsystem                                                         | Specs                                                                                              | Modules / Packages                                                                                             | Artifacts                         | Status                                                          |
+| -------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------- | --------------------------------- | --------------------------------------------------------------- |
+| Baseline domain model, loader, comparator, writer                          | `specs/cli-analyze-baseline.md`, `specs/core-architecture.md`                                      | `internal/baseline/*`                                                                                          | `testdata/baseline/*.json`        | In progress (model + loader implemented; compare/write pending) |
+| Analyze baseline flags and control flow (`--baseline`, `--write-baseline`) | `specs/cli-analyze.md`, `specs/cli.md`                                                             | `internal/cli/analyze.go`, `cmd/reglint/main.go`                                                               | CLI integration tests             | Missing (flags and flow not present)                            |
+| RuleSet baseline config field and propagation                              | `specs/configuration.md`, `specs/cli-analyze.md`                                                   | `internal/config/model.go`, `internal/config/loader.go`, `internal/config/rules.go`, `internal/rules/model.go` | `testdata/rules/*.yaml`           | Missing (`baseline` field absent)                               |
+| Help output coverage for baseline flags                                    | `specs/cli-help.md`, `specs/cli-analyze.md`                                                        | `internal/cli/help.go`, `internal/cli/cli_test.go`                                                             | Help snapshot assertions in tests | Missing (help text does not include baseline flags)             |
+| Scan + formatter deterministic pipeline dependency                         | `specs/data-model.md`, `specs/formatter.md`, `specs/formatter-json.md`, `specs/formatter-sarif.md` | `internal/scan/engine.go`, `internal/output/*.go`                                                              | `testdata/golden/*`               | ✅ Implemented (reusable baseline dependency)                   |
+| Existing analyze routing, fail-on behavior, and output selection           | `specs/cli-analyze.md`                                                                             | `internal/cli/analyze.go`, `internal/cli/analyze_output_test.go`, `cmd/reglint/main_test.go`                   | Existing CLI tests                | ✅ Implemented (baseline extension point)                       |
+| Ignore-file precedence pattern (config -> CLI override)                    | `specs/ignore-files.md`                                                                            | `internal/cli/analyze.go`, `internal/scan/ignore_rules.go`, `internal/ignore/*`                                | Ignore behavior tests             | ✅ Implemented (reference pattern for precedence design)        |
 
 ## Phase 1: Scope verification and plan reset
 
@@ -47,7 +47,7 @@
 ## Phase 2: RuleSet schema and baseline path propagation
 
 **Goal:** Add baseline path support in config models and enforce schema validation.
-**Status:** Not started
+**Status:** In progress
 **Paths:** `internal/config/model.go`, `internal/config/loader.go`, `internal/config/loader_test.go`, `internal/config/rules.go`, `internal/rules/model.go`
 **Reference pattern:** `internal/config/model.go` and `internal/config/rules.go` existing global field propagation (`failOn`, `concurrency`, `consoleColorsEnabled`)
 
@@ -82,9 +82,9 @@
 
 ### 3.1 Data model and validation
 
-- [ ] Define `BaselineEntry`, `BaselineDocument`, `BaselineComparison`, and generation result structs.
-- [ ] Enforce `schemaVersion == 1`, required `entries`, and positive `count`.
-- [ ] Enforce unique `(filePath, message)` keys and relative normalized `filePath` without traversal.
+- [x] Define `BaselineEntry`, `BaselineDocument`, `BaselineComparison`, and generation result structs.
+- [x] Enforce `schemaVersion == 1`, required `entries`, and positive `count`.
+- [x] Enforce unique `(filePath, message)` keys and relative normalized `filePath` without traversal.
 
 ### 3.2 Comparison service
 
@@ -286,6 +286,12 @@
 - 2026-03-09: `Read internal/output/console.go`, `internal/output/json.go`, `internal/output/sarif.go`, `internal/scan/engine.go` - verified deterministic scan/output path exists and is reusable for baseline integration; tests run: none; bug fixes discovered: none; files touched: listed files.
 - 2026-03-09: `git status --short` - working tree verified before plan rewrite; tests run: none; bug fixes discovered: none; files touched: none.
 - 2026-03-09: `Plan-only update` - replaced stale ansi-colors plan with baseline gap plan; tests run: none; bug fixes discovered: stale/out-of-sync implementation plan corrected; files touched: `IMPLEMENTATION_PLAN.md`.
+- 2026-03-09: go test ./internal/baseline - pass.
+- 2026-03-09: go test ./internal/config ./internal/rules - pass.
+- 2026-03-09: make lint - pass.
+- 2026-03-09: make arch - pass.
+- 2026-03-09: git show --name-only --oneline 2589fe9 - baseline model + loader + loader tests committed with arch component registration.
+- 2026-03-09: Update IMPLEMENTATION_PLAN.md - marked Phase 3 as in progress with 3.1 complete and refreshed remaining effort.
 
 ## Summary
 
@@ -293,14 +299,14 @@
 | --------------------------------------------------------------------------- | ----------- |
 | Phase 1: Scope verification and plan reset                                  | Complete    |
 | Phase 2: RuleSet schema and baseline path propagation                       | Not started |
-| Phase 3: Baseline package implementation (`internal/baseline`)              | Not started |
+| Phase 3: Baseline package implementation (`internal/baseline`)              | In progress |
 | Phase 4: Analyze CLI flags, precedence, and path resolution                 | Not started |
 | Phase 5: Analyze runtime integration (compare/write modes + exit semantics) | Not started |
 | Phase 6: Help text, docs, and fixture alignment                             | Not started |
 | Phase 7: End-to-end tests and regression coverage                           | Not started |
 | Phase 8: Final quality gates and release readiness                          | Not started |
 
-**Remaining effort:** Implement Phases 2-8; baseline functionality is currently absent from runtime code, config schema, CLI help, and tests.
+**Remaining effort:** Implement Phase 2, complete remaining Phase 3 work (comparator + writer), and implement Phases 4-8.
 
 ## Known Existing Work
 
@@ -310,6 +316,7 @@
 - `internal/cli/help.go` and `internal/cli/cli_test.go` already provide deterministic help rendering patterns that baseline flags can extend.
 - `internal/config/loader.go` + `internal/config/loader_test.go` already provide strong schema validation scaffolding for additional RuleSet fields.
 - `cmd/reglint/main_test.go` already contains command-level integration tests that can be extended for baseline behavior.
+- `internal/baseline/model.go` and `internal/baseline/loader.go` now provide baseline document structures and strict load/validation behavior.
 
 ## Manual Deployment Tasks
 
