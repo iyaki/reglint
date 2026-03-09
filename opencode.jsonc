@@ -15,7 +15,8 @@
 			".golangci.yml": "ask",
 			"lefthook.ymll": "ask",
 			"opencode.jsonc": "ask",
-			"logs/*": "deny"
+			"logs/*": "deny",
+			"/tmp/*": "allow"
 		}
 	},
 	"agent": {
