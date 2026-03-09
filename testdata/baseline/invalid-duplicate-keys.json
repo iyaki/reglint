@@ -1,0 +1,15 @@
+{
+	"schemaVersion": 1,
+	"entries": [
+		{
+			"filePath": "sample.txt",
+			"message": "Found token token=abc",
+			"count": 1
+		},
+		{
+			"filePath": "sample.txt",
+			"message": "Found token token=abc",
+			"count": 2
+		}
+	]
+}

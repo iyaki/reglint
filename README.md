@@ -42,6 +42,38 @@ rules:
 NO_COLOR=1 reglint analyze --config reglint-rules.yaml --format console
 ```
 
+## Baseline
+
+Use baseline compare mode to suppress known findings keyed by `(filePath, message)` with count-based tolerance.
+
+```bash
+reglint analyze --config testdata/rules/fail.yaml --baseline testdata/baseline/valid-equal.json testdata/fixtures
+```
+
+This command exits `0` because the fixture match is already covered by the baseline.
+
+You can also set a default baseline in config and run without `--baseline`:
+
+```bash
+reglint analyze --config testdata/rules/baseline.yaml testdata/fixtures
+```
+
+To regenerate a baseline from full current findings:
+
+```bash
+reglint analyze --config testdata/rules/fail.yaml --baseline testdata/baseline/generated.json --write-baseline testdata/fixtures
+```
+
+This command exits `0` on successful write, even when matches exist.
+
+To see baseline validation behavior with invalid data:
+
+```bash
+reglint analyze --config testdata/rules/fail.yaml --baseline testdata/baseline/invalid-duplicate-keys.json testdata/fixtures
+```
+
+This command exits `1` with a single baseline validation error.
+
 ## Outputs
 
 - `console` writes to stdout.

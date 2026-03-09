@@ -300,6 +300,69 @@ func TestRunAnalyzeUsesTestdataFailConfig(t *testing.T) {
 	}
 }
 
+func TestRunAnalyzeUsesBaselineFixtureForCompareMode(t *testing.T) {
+	t.Parallel()
+
+	configPath := filepath.Join("..", "..", "testdata", "rules", "fail.yaml")
+	baselinePath := filepath.Join("..", "..", "testdata", "baseline", "valid-equal.json")
+	fixturesPath := filepath.Join("..", "..", "testdata", "fixtures")
+
+	var output bytes.Buffer
+	code := run([]string{
+		"analyze",
+		"--config", configPath,
+		"--baseline", baselinePath,
+		fixturesPath,
+	}, &output)
+
+	if code != 0 {
+		t.Fatalf("expected exit code 0, got %d", code)
+	}
+	if !strings.Contains(output.String(), "No matches found.") {
+		t.Fatalf("expected suppressed output, got %q", output.String())
+	}
+}
+
+func TestRunAnalyzeUsesRuleSetBaselineFixture(t *testing.T) {
+	t.Parallel()
+
+	configPath := filepath.Join("..", "..", "testdata", "rules", "baseline.yaml")
+	fixturesPath := filepath.Join("..", "..", "testdata", "fixtures")
+
+	var output bytes.Buffer
+	code := run([]string{"analyze", "--config", configPath, fixturesPath}, &output)
+
+	if code != 0 {
+		t.Fatalf("expected exit code 0, got %d", code)
+	}
+	if !strings.Contains(output.String(), "No matches found.") {
+		t.Fatalf("expected suppressed output, got %q", output.String())
+	}
+}
+
+func TestRunAnalyzeRejectsInvalidBaselineFixture(t *testing.T) {
+	t.Parallel()
+
+	configPath := filepath.Join("..", "..", "testdata", "rules", "fail.yaml")
+	baselinePath := filepath.Join("..", "..", "testdata", "baseline", "invalid-duplicate-keys.json")
+	fixturesPath := filepath.Join("..", "..", "testdata", "fixtures")
+
+	var output bytes.Buffer
+	code := run([]string{
+		"analyze",
+		"--config", configPath,
+		"--baseline", baselinePath,
+		fixturesPath,
+	}, &output)
+
+	if code != 1 {
+		t.Fatalf("expected exit code 1, got %d", code)
+	}
+	if !strings.Contains(output.String(), "duplicate baseline entry") {
+		t.Fatalf("expected baseline validation error, got %q", output.String())
+	}
+}
+
 func TestRunUsesProvidedOutputWriter(t *testing.T) {
 	t.Parallel()
 
