@@ -3,6 +3,7 @@ package cli_test
 import (
 	"os"
 	"path/filepath"
+	"reflect"
 	"runtime"
 	"strings"
 	"testing"
@@ -176,6 +177,24 @@ func TestParseAnalyzeNoIgnoreFilesFlag(t *testing.T) {
 	}
 }
 
+func TestParseAnalyzeBaselineFlags(t *testing.T) {
+	t.Parallel()
+
+	configPath := writeTempConfig(t)
+
+	got, err := cli.ParseAnalyzeArgs([]string{
+		"--config", configPath,
+		"--baseline", "testdata/baseline.json",
+		"--write-baseline",
+	})
+	if err != nil {
+		t.Fatalf("expected no error, got %v", err)
+	}
+
+	assertConfigStringField(t, got, "BaselinePath", "testdata/baseline.json")
+	assertConfigBoolField(t, got, "WriteBaseline", true)
+}
+
 func TestParseAnalyzeRequiresOutPathForMultiFormat(t *testing.T) {
 	t.Parallel()
 
@@ -240,6 +259,44 @@ func assertDefaultConfig(t *testing.T, got cli.Config, configPath string) {
 	}
 	if got.OutJSON != "" || got.OutSARIF != "" {
 		t.Fatalf("expected empty output paths, got out-json=%q out-sarif=%q", got.OutJSON, got.OutSARIF)
+	}
+	assertConfigStringField(t, got, "BaselinePath", "")
+	assertConfigStringField(t, got, "RuleSetBaselinePath", "")
+	assertConfigStringField(t, got, "EffectiveBaselinePath", "")
+	assertConfigBoolField(t, got, "WriteBaseline", false)
+}
+
+func assertConfigStringField(t *testing.T, cfg cli.Config, fieldName, want string) {
+	t.Helper()
+
+	value := reflect.ValueOf(cfg)
+	field := value.FieldByName(fieldName)
+	if !field.IsValid() {
+		t.Fatalf("expected config to include %s field", fieldName)
+	}
+	if field.Kind() != reflect.String {
+		t.Fatalf("expected config field %s to be string, got %s", fieldName, field.Kind())
+	}
+
+	if field.String() != want {
+		t.Fatalf("expected config field %s=%q, got %q", fieldName, want, field.String())
+	}
+}
+
+func assertConfigBoolField(t *testing.T, cfg cli.Config, fieldName string, want bool) {
+	t.Helper()
+
+	value := reflect.ValueOf(cfg)
+	field := value.FieldByName(fieldName)
+	if !field.IsValid() {
+		t.Fatalf("expected config to include %s field", fieldName)
+	}
+	if field.Kind() != reflect.Bool {
+		t.Fatalf("expected config field %s to be bool, got %s", fieldName, field.Kind())
+	}
+
+	if field.Bool() != want {
+		t.Fatalf("expected config field %s=%t, got %t", fieldName, want, field.Bool())
 	}
 }
 
