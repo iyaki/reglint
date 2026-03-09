@@ -122,6 +122,20 @@ func TestWriteSARIFOrdersAndMapsResults(t *testing.T) {
 	assertSARIFResultLevel(t, got.Runs[0].Results[2], "warning")
 }
 
+func TestWriteSARIFDoesNotEmitANSIControlSequences(t *testing.T) {
+	t.Parallel()
+
+	ruleSet := sarifSampleRules()
+	result := sarifSampleResult()
+
+	var buffer bytes.Buffer
+	if err := WriteSARIF(result, ruleSet, &buffer); err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	assertNoANSIControlSequences(t, buffer.Bytes())
+}
+
 func sarifSampleRules() []rules.Rule {
 	return []rules.Rule{
 		{

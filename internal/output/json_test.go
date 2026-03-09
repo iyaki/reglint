@@ -224,6 +224,31 @@ func TestWriteJSONUsesScanRootForAbsolutePath(t *testing.T) {
 	}
 }
 
+func TestWriteJSONDoesNotEmitANSIControlSequences(t *testing.T) {
+	t.Parallel()
+
+	result := scan.Result{
+		Matches: []scan.Match{
+			{
+				Message:   "Found token",
+				Severity:  "error",
+				FilePath:  "src/main.go",
+				Line:      3,
+				Column:    7,
+				MatchText: "token=abc",
+			},
+		},
+		Stats: scan.Stats{FilesScanned: 1, FilesSkipped: 0, Matches: 1, DurationMs: 4},
+	}
+
+	var buffer bytes.Buffer
+	if err := WriteJSON(result, &buffer); err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	assertNoANSIControlSequences(t, buffer.Bytes())
+}
+
 func sampleMatches() []scan.Match {
 	return []scan.Match{
 		{
