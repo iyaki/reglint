@@ -1,6 +1,6 @@
 # Implementation Plan (ansi-colors)
 
-**Status:** ANSI color scope is largely implemented; config-disabled CLI coverage is now explicit and final quality work remains (4/6 phases complete, Phase 5 in progress)
+**Status:** ANSI color scope is largely implemented; config-disabled CLI and config-loader bool validation coverage are explicit and final quality work remains (4/6 phases complete, Phase 5 in progress)
 **Last Updated:** 2026-03-09
 **Primary Specs:** `specs/formatter-console.md`, `specs/configuration.md`, `specs/cli-analyze.md` (related: `specs/formatter.md`, `specs/testing-and-validations.md`)
 
@@ -144,7 +144,7 @@
 - [ ] Add console tests for enabled ANSI emission and reset behavior.
 - [ ] Add console tests for config-disabled mode (no ANSI).
 - [x] Add CLI tests for `NO_COLOR` precedence over config and config-disabled behavior with `NO_COLOR` unset.
-- [ ] Add config tests for `consoleColorsEnabled` parse/validation behavior.
+- [x] Add config tests for `consoleColorsEnabled` parse/validation behavior.
 - [x] Baseline tests for output/cli/config suites already exist.
 
 ### 5.2 Fixture and documentation updates
@@ -255,6 +255,12 @@
 - 2026-03-09: go test ./internal/cli -run TestHandleAnalyzeConfigDisabledColorsWithoutNoColorEnv - pass.
 - 2026-03-09: go test ./internal/cli - pass.
 - 2026-03-09: git commit -m "Add analyze coverage for config-disabled colors" - success (commit `685a16e`).
+- 2026-03-09: Read specs/README.md, specs/configuration.md, specs/testing-and-validations.md, IMPLEMENTATION_PLAN.md - confirmed highest-priority single remaining task was config parse/validation coverage for `consoleColorsEnabled`.
+- 2026-03-09: go test ./internal/config -run 'TestLoadRuleSetParsesConsoleColorsEnabledTrue|TestLoadRuleSetRejectsConsoleColorsEnabledNull' - fail (null value accepted unexpectedly; added strict bool validation in loader).
+- 2026-03-09: go test ./internal/config - pass.
+- 2026-03-09: go test ./internal/output ./internal/cli ./internal/config - pass.
+- 2026-03-09: GOFLAGS=-count=1 make test-coverage - pass.
+- 2026-03-09: GOFLAGS=-count=1 git commit -m "Validate consoleColorsEnabled boolean parsing" - success (commit `53c11c7`).
 
 ## Summary
 
@@ -275,6 +281,7 @@
 - Formatter registry + routing is established in `internal/output/registry.go` and `internal/cli/analyze.go`.
 - Analyze runtime resolves console color precedence (`default -> config -> NO_COLOR`) and passes effective settings into the console formatter path.
 - CLI coverage now explicitly verifies `consoleColorsEnabled: false` disables ANSI when `NO_COLOR` is unset (`internal/cli/analyze_handle_test.go`).
+- Config coverage now explicitly verifies `consoleColorsEnabled: true|false` parsing and rejects non-boolean values including `null` (`internal/config/loader_test.go`, `internal/config/loader.go`).
 - `reglint init` default template now includes `consoleColorsEnabled: true` so generated quickstart configs match documented color defaults.
 - JSON and SARIF formatters already avoid ANSI concerns (`internal/output/json.go`, `internal/output/sarif.go`).
 - Baseline output/CLI/config tests and golden tests already exist and can be extended (`internal/output/golden_test.go`, `testdata/golden/*`).
