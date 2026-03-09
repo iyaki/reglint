@@ -323,6 +323,92 @@ func TestRunAnalyzeUsesBaselineFixtureForCompareMode(t *testing.T) {
 	}
 }
 
+func TestRunAnalyzeBaselineIncreaseReportsOnlyExcessRegressions(t *testing.T) {
+	t.Parallel()
+
+	rootDir := t.TempDir()
+	configDir := t.TempDir()
+	writeFixture(t, rootDir, "sample.txt", "token=abc\ntoken=abc\n")
+	configPath := writeRuleConfig(t, configDir, "")
+
+	baselinePath := filepath.Join(t.TempDir(), "baseline.json")
+	baselinePayload := []byte(`{
+		"schemaVersion": 1,
+		"entries": [
+			{
+				"filePath": "sample.txt",
+				"message": "Found token token=abc",
+				"count": 1
+			}
+		]
+	}`)
+	if err := os.WriteFile(baselinePath, baselinePayload, 0o600); err != nil {
+		t.Fatalf("failed to write baseline fixture: %v", err)
+	}
+
+	var output bytes.Buffer
+	code := run([]string{
+		"analyze",
+		"--config", configPath,
+		"--baseline", baselinePath,
+		"--fail-on", "warning",
+		rootDir,
+	}, &output)
+
+	if code != 2 {
+		t.Fatalf("expected exit code 2, got %d", code)
+	}
+	if got := strings.Count(output.String(), "Found token token=abc"); got != 1 {
+		t.Fatalf("expected one regression output, got %d in %q", got, output.String())
+	}
+	if !strings.Contains(output.String(), "matches=1") {
+		t.Fatalf("expected one regression in summary, got %q", output.String())
+	}
+}
+
+func TestRunAnalyzeBaselineDecreaseDoesNotFailOnSuppressedKey(t *testing.T) {
+	t.Parallel()
+
+	rootDir := t.TempDir()
+	configDir := t.TempDir()
+	writeFixture(t, rootDir, "sample.txt", "token=abc\n")
+	configPath := writeRuleConfig(t, configDir, "")
+
+	baselinePath := filepath.Join(t.TempDir(), "baseline.json")
+	baselinePayload := []byte(`{
+		"schemaVersion": 1,
+		"entries": [
+			{
+				"filePath": "sample.txt",
+				"message": "Found token token=abc",
+				"count": 2
+			}
+		]
+	}`)
+	if err := os.WriteFile(baselinePath, baselinePayload, 0o600); err != nil {
+		t.Fatalf("failed to write baseline fixture: %v", err)
+	}
+
+	var output bytes.Buffer
+	code := run([]string{
+		"analyze",
+		"--config", configPath,
+		"--baseline", baselinePath,
+		"--fail-on", "warning",
+		rootDir,
+	}, &output)
+
+	if code != 0 {
+		t.Fatalf("expected exit code 0, got %d", code)
+	}
+	if !strings.Contains(output.String(), "No matches found.") {
+		t.Fatalf("expected suppressed output, got %q", output.String())
+	}
+	if !strings.Contains(output.String(), "matches=0") {
+		t.Fatalf("expected zero regressions in summary, got %q", output.String())
+	}
+}
+
 func TestRunAnalyzeUsesRuleSetBaselineFixture(t *testing.T) {
 	t.Parallel()
 
