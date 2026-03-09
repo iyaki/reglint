@@ -216,9 +216,9 @@
 
 ### 7.2 Precedence and validation matrix
 
-- [ ] RuleSet baseline path works when CLI flag is unset.
-- [ ] CLI baseline overrides RuleSet baseline.
-- [ ] Invalid baseline JSON/schema/duplicates fail with exit code `1` and one error message.
+- [x] RuleSet baseline path works when CLI flag is unset.
+- [x] CLI baseline overrides RuleSet baseline.
+- [x] Invalid baseline JSON/schema/duplicates fail with exit code `1` and one error message.
 
 ### 7.3 Write-mode matrix
 
@@ -332,6 +332,11 @@
 - 2026-03-09: git commit -m "Add baseline count-delta analyze integration tests" -- cmd/reglint/main_test.go - fail (pre-commit lint: lll in cmd/reglint/main_test.go).
 - 2026-03-09: git commit -m "Add baseline count-delta analyze integration tests" -- cmd/reglint/main_test.go - success.
 - 2026-03-09: Update IMPLEMENTATION_PLAN.md - marked Phase 7 as in progress and completed 7.1 baseline behavior matrix.
+- 2026-03-09: go test ./cmd/reglint -run "TestRunAnalyzeCLIBaselineOverridesRuleSetBaseline|TestRunAnalyzeRejectsInvalidBaselineJSONWithSingleErrorMessage|TestRunAnalyzeRejectsInvalidBaselineSchemaVersionWithSingleErrorMessage|TestRunAnalyzeRejectsInvalidBaselineFixture" - pass.
+- 2026-03-09: go test ./cmd/reglint - pass.
+- 2026-03-09: go test ./... - pass.
+- 2026-03-09: make lint - pass.
+- 2026-03-09: git commit -m "Add baseline precedence and validation integration coverage" -- cmd/reglint/main_test.go - success.
 
 ## Summary
 
@@ -346,7 +351,7 @@
 | Phase 7: End-to-end tests and regression coverage                           | In progress |
 | Phase 8: Final quality gates and release readiness                          | Not started |
 
-**Remaining effort:** Complete Phase 7.2-7.3 and Phase 8.
+**Remaining effort:** Complete Phase 7.3 and Phase 8.
 
 ## Known Existing Work
 
@@ -363,6 +368,7 @@
 - `README.md` now documents baseline compare/write usage and expected exit-code behavior with executable fixture examples.
 - `testdata/baseline/valid-equal.json`, `testdata/baseline/invalid-duplicate-keys.json`, and `testdata/rules/baseline.yaml` now provide deterministic fixtures for baseline compare, RuleSet baseline resolution, and validation-failure scenarios.
 - `cmd/reglint/main_test.go` now includes baseline increase/decrease integration coverage to verify regression-only excess reporting and non-failing decrease behavior.
+- `cmd/reglint/main_test.go` now includes baseline CLI-overrides-RuleSet precedence coverage and invalid baseline JSON/schema/duplicate validation coverage with single-line error assertions.
 
 ## Manual Deployment Tasks
 
