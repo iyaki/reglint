@@ -1,21 +1,21 @@
 # Implementation Plan (git-integration)
 
-**Status:** Git integration implementation in progress (Phases 9-11 complete; Phase 12 in progress, 3/6 phases complete)
+**Status:** Git integration implementation in progress (Phases 9-11 complete; Phase 12 in progress with 12.1 candidate selection complete, 3/6 phases complete)
 **Last Updated:** 2026-03-10
 **Primary Specs:** `specs/git-integration.md` (related: `specs/cli-analyze.md`, `specs/configuration.md`, `specs/data-model.md`, `specs/ignore-files.md`, `specs/testing-and-validations.md`, `specs/core-architecture.md`)
 
 ## Quick Reference
 
-| System / Subsystem                                                                                       | Specs                                                                                              | Modules / Packages                                                                                             | Artifacts                                                   | Status                                                                                             |
-| -------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------- | -------------------------------------------------------------------------------------------------- |
-| RuleSet Git schema and validation (`git.mode`, `git.diff`, `git.addedLinesOnly`, `git.gitignoreEnabled`) | `specs/configuration.md`, `specs/git-integration.md`, `specs/testing-and-validations.md`           | `internal/config/model.go`, `internal/config/loader.go`, `internal/config/rules.go`, `internal/rules/model.go` | `testdata/rules/*.yaml`, `internal/config/*_test.go`        | ✅ Implemented (schema, shared conversion/defaults, cross-field validation, and fixtures complete) |
-| Analyze Git flags and effective settings resolution                                                      | `specs/cli-analyze.md`, `specs/cli-help.md`, `specs/git-integration.md`                            | `internal/cli/analyze.go`, `internal/cli/help.go`, `internal/cli/cli.go`                                       | `internal/cli/*_test.go`, `cmd/reglint/main_test.go`        | ✅ Implemented (Git flags, help output, precedence, validation, and scan request threading)        |
-| Git adapter and hook provider                                                                            | `specs/git-integration.md`, `specs/core-architecture.md`                                           | `internal/git/*`, `internal/hooks/*`                                                                           | package tests under `internal/git` and `internal/hooks`     | Not implemented (`internal/git` and `internal/hooks` missing)                                      |
-| Scan request Git constraints and line/file scoping                                                       | `specs/data-model.md`, `specs/cli-analyze.md`, `specs/git-integration.md`                          | `internal/scan/model.go`, `internal/scan/engine.go`                                                            | `internal/scan/*_test.go`                                   | In progress (`scan.Request.git` contract added; engine scoping still pending in Phase 13)          |
-| Ignore-file engine foundation (`.ignore`, `.reglintignore`)                                              | `specs/ignore-files.md`                                                                            | `internal/ignore/*`, `internal/scan/ignore_rules.go`                                                           | `internal/ignore/*_test.go`, `internal/scan/ignore_test.go` | ✅ Implemented (reusable precedence foundation for Git mode)                                       |
-| Deterministic scan ordering and formatter contracts                                                      | `specs/data-model.md`, `specs/formatter.md`, `specs/formatter-json.md`, `specs/formatter-sarif.md` | `internal/scan/engine.go`, `internal/output/*`                                                                 | golden/output tests                                         | ✅ Implemented                                                                                     |
-| Baseline compare/write behavior (related analyze flow)                                                   | `specs/cli-analyze-baseline.md`, `specs/cli-analyze.md`                                            | `internal/baseline/*`, `internal/cli/analyze.go`                                                               | `testdata/baseline/*`, baseline tests                       | ✅ Implemented                                                                                     |
-| Git-focused docs and fixtures                                                                            | `specs/cli-analyze.md`, `specs/testing-and-validations.md`                                         | `README.md`, `testdata/rules/*`, `testdata/fixtures/*`                                                         | git-mode fixtures/examples                                  | Not implemented                                                                                    |
+| System / Subsystem                                                                                       | Specs                                                                                              | Modules / Packages                                                                                             | Artifacts                                                   | Status                                                                                               |
+| -------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------- | ---------------------------------------------------------------------------------------------------- |
+| RuleSet Git schema and validation (`git.mode`, `git.diff`, `git.addedLinesOnly`, `git.gitignoreEnabled`) | `specs/configuration.md`, `specs/git-integration.md`, `specs/testing-and-validations.md`           | `internal/config/model.go`, `internal/config/loader.go`, `internal/config/rules.go`, `internal/rules/model.go` | `testdata/rules/*.yaml`, `internal/config/*_test.go`        | ✅ Implemented (schema, shared conversion/defaults, cross-field validation, and fixtures complete)   |
+| Analyze Git flags and effective settings resolution                                                      | `specs/cli-analyze.md`, `specs/cli-help.md`, `specs/git-integration.md`                            | `internal/cli/analyze.go`, `internal/cli/help.go`, `internal/cli/cli.go`                                       | `internal/cli/*_test.go`, `cmd/reglint/main_test.go`        | ✅ Implemented (Git flags, help output, precedence, validation, and scan request threading)          |
+| Git adapter and hook provider                                                                            | `specs/git-integration.md`, `specs/core-architecture.md`                                           | `internal/git/*`, `internal/hooks/*`                                                                           | package tests under `internal/git` and `internal/hooks`     | In progress (`internal/git` has capability checks and candidate selection; `internal/hooks` missing) |
+| Scan request Git constraints and line/file scoping                                                       | `specs/data-model.md`, `specs/cli-analyze.md`, `specs/git-integration.md`                          | `internal/scan/model.go`, `internal/scan/engine.go`                                                            | `internal/scan/*_test.go`                                   | In progress (`scan.Request.git` contract added; engine scoping still pending in Phase 13)            |
+| Ignore-file engine foundation (`.ignore`, `.reglintignore`)                                              | `specs/ignore-files.md`                                                                            | `internal/ignore/*`, `internal/scan/ignore_rules.go`                                                           | `internal/ignore/*_test.go`, `internal/scan/ignore_test.go` | ✅ Implemented (reusable precedence foundation for Git mode)                                         |
+| Deterministic scan ordering and formatter contracts                                                      | `specs/data-model.md`, `specs/formatter.md`, `specs/formatter-json.md`, `specs/formatter-sarif.md` | `internal/scan/engine.go`, `internal/output/*`                                                                 | golden/output tests                                         | ✅ Implemented                                                                                       |
+| Baseline compare/write behavior (related analyze flow)                                                   | `specs/cli-analyze-baseline.md`, `specs/cli-analyze.md`                                            | `internal/baseline/*`, `internal/cli/analyze.go`                                                               | `testdata/baseline/*`, baseline tests                       | ✅ Implemented                                                                                       |
+| Git-focused docs and fixtures                                                                            | `specs/cli-analyze.md`, `specs/testing-and-validations.md`                                         | `README.md`, `testdata/rules/*`, `testdata/fixtures/*`                                                         | git-mode fixtures/examples                                  | Not implemented                                                                                      |
 
 ## Phase 9: Scope lock and stale-plan reset
 
@@ -106,14 +106,14 @@
 ## Phase 12: Git adapter and hook infrastructure
 
 **Goal:** Introduce Git runtime services and deterministic hook contracts.
-**Status:** In progress (12.1 capability checks complete)
+**Status:** In progress (12.1 capability checks and candidate selection complete)
 **Paths:** `internal/git/*.go`, `internal/hooks/*.go`, `internal/cli/analyze.go`, `internal/git/*_test.go`, `internal/hooks/*_test.go`
 **Reference pattern:** deterministic root-scoped rule loading in `internal/scan/ignore_rules.go`
 
 ### 12.1 Git adapter services
 
 - [x] Implement Git capability checks (binary availability and repository context) gated by mode.
-- [ ] Implement staged file selection and diff-target file selection with normalized root-relative slash paths.
+- [x] Implement staged file selection and diff-target file selection with normalized root-relative slash paths.
 - [ ] Implement added-line extraction (`addedLinesByFile`) from Git diff/staging output.
 
 ### 12.2 Hook model integration
@@ -222,6 +222,12 @@
 - 2026-03-10: `make security` - passed.
 - 2026-03-10: `go test ./...` - passed.
 - 2026-03-10: `git commit -m "Add Git capability checks for enabled analyze modes"` - committed Phase 12.1 capability checks as `06b7ea1`.
+- 2026-03-10: `go test ./internal/git -run "TestSelectCandidateFiles"` - failed (RED expected; candidate selection API not implemented yet).
+- 2026-03-10: `go test ./internal/git -run "TestSelectCandidateFiles|TestCheckCapabilities"` - passed after implementing staged/diff candidate selection.
+- 2026-03-10: `make lint` - failed first (revive/mnd issues in new git selection code), then passed after fixes.
+- 2026-03-10: `go test ./internal/git` - passed.
+- 2026-03-10: `make test` - passed.
+- 2026-03-10: `git commit -m "Add Git candidate file selection for staged and diff modes"` - committed Phase 12.1 candidate selection as `2df82a4`.
 
 ## Summary
 
@@ -234,7 +240,7 @@
 | Phase 13: Scan engine and ignore precedence integration     | Not started |
 | Phase 14: Integration verification, docs, and quality gates | Not started |
 
-**Remaining effort:** Complete remaining Phase 12 items (candidate selection, added-lines extraction, and hook contracts), then Phases 13-14.
+**Remaining effort:** Complete remaining Phase 12 items (added-lines extraction and hook contracts), then Phases 13-14.
 
 ## Known Existing Work
 
@@ -243,6 +249,7 @@
 - `internal/cli/analyze.go` already has robust precedence patterns (baseline path resolution and ignore toggles) that should be reused for Git settings precedence.
 - `internal/cli/help.go` and `internal/cli/cli_test.go` already enforce strict help snapshots and should be extended (not replaced) for Git flags.
 - `internal/baseline/*` and `internal/output/*` already implement baseline compare/write behavior and stable formatter schemas that Git integration must not alter.
+- `internal/git/adapter.go` and `internal/git/selection.go` now provide capability checks and deterministic staged/diff candidate-file selection for Git-enabled runs.
 
 ## Manual Deployment Tasks
 
