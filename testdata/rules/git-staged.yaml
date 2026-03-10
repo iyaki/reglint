@@ -1,0 +1,7 @@
+git:
+  mode: "staged"
+  gitignoreEnabled: true
+rules:
+  - message: "Found token $0"
+    regex: "token=[a-z]+"
+    severity: "error"

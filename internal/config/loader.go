@@ -92,11 +92,75 @@ func validateRuleSetFields(ruleSet RuleSet) error {
 	if ruleSet.Baseline != nil && strings.TrimSpace(*ruleSet.Baseline) == "" {
 		return fmt.Errorf("baseline must be a non-empty string")
 	}
+	if err := validateGitSettings(ruleSet.Git); err != nil {
+		return err
+	}
 	if err := validateIgnoreFiles(ruleSet); err != nil {
 		return err
 	}
 
 	return nil
+}
+
+func validateGitSettings(git *GitSettings) error {
+	if git == nil {
+		return nil
+	}
+
+	mode, err := validateGitMode(git.Mode)
+	if err != nil {
+		return err
+	}
+	if err := validateGitDiff(mode, git.Diff); err != nil {
+		return err
+	}
+	if err := validateGitAddedLinesOnly(mode, git.AddedLinesOnly); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func validateGitMode(modeValue *string) (string, error) {
+	mode := "off"
+	if modeValue == nil {
+		return mode, nil
+	}
+
+	mode = *modeValue
+	if mode == "off" || mode == "staged" || mode == "diff" {
+		return mode, nil
+	}
+
+	return "", fmt.Errorf("git.mode must be one of off, staged, diff")
+}
+
+func validateGitDiff(mode string, diffValue *string) error {
+	if diffValue != nil {
+		if strings.TrimSpace(*diffValue) == "" {
+			return fmt.Errorf("git.diff must be a non-empty string")
+		}
+		if mode != "diff" {
+			return fmt.Errorf("git.diff is valid only when git.mode=diff")
+		}
+	}
+
+	if mode == "diff" && diffValue == nil {
+		return fmt.Errorf("git.mode=diff requires git.diff")
+	}
+
+	return nil
+}
+
+func validateGitAddedLinesOnly(mode string, addedLinesOnly *bool) error {
+	if addedLinesOnly == nil || !*addedLinesOnly {
+		return nil
+	}
+	if mode == "staged" || mode == "diff" {
+		return nil
+	}
+
+	return fmt.Errorf("git.addedLinesOnly=true is valid only when git.mode=staged|diff")
 }
 
 func validateRules(rules []Rule) error {

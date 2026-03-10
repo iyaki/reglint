@@ -191,6 +191,99 @@ func TestLoadRuleSetParsesGitSettings(t *testing.T) {
 	assertGitSettings(t, ruleSet.Git)
 }
 
+func TestLoadRuleSetRejectsInvalidGitMode(t *testing.T) {
+	t.Parallel()
+
+	path := writeConfigFile(t, "git:\n  mode: 'invalid'\nrules:\n  - message: 'hello'\n    regex: 'world'\n")
+
+	_, err := config.LoadRuleSet(path)
+	if err == nil {
+		t.Fatal("expected error, got nil")
+	}
+	if !strings.Contains(err.Error(), "git.mode must be one of off, staged, diff") {
+		t.Fatalf("expected git.mode validation error, got %v", err)
+	}
+}
+
+func TestLoadRuleSetRejectsEmptyGitDiff(t *testing.T) {
+	t.Parallel()
+
+	path := writeConfigFile(t, "git:\n  mode: 'diff'\n  diff: ''\nrules:\n  - message: 'hello'\n    regex: 'world'\n")
+
+	_, err := config.LoadRuleSet(path)
+	if err == nil {
+		t.Fatal("expected error, got nil")
+	}
+	if !strings.Contains(err.Error(), "git.diff must be a non-empty string") {
+		t.Fatalf("expected git.diff validation error, got %v", err)
+	}
+}
+
+func TestLoadRuleSetRejectsGitDiffOutsideDiffMode(t *testing.T) {
+	t.Parallel()
+
+	configContents := "git:\n" +
+		"  mode: 'staged'\n" +
+		"  diff: 'HEAD~1..HEAD'\n" +
+		"rules:\n" +
+		"  - message: 'hello'\n" +
+		"    regex: 'world'\n"
+	path := writeConfigFile(t, configContents)
+
+	_, err := config.LoadRuleSet(path)
+	if err == nil {
+		t.Fatal("expected error, got nil")
+	}
+	if !strings.Contains(err.Error(), "git.diff is valid only when git.mode=diff") {
+		t.Fatalf("expected git.diff cross-field validation error, got %v", err)
+	}
+}
+
+func TestLoadRuleSetRejectsGitModeDiffWithoutDiff(t *testing.T) {
+	t.Parallel()
+
+	path := writeConfigFile(t, "git:\n  mode: 'diff'\nrules:\n  - message: 'hello'\n    regex: 'world'\n")
+
+	_, err := config.LoadRuleSet(path)
+	if err == nil {
+		t.Fatal("expected error, got nil")
+	}
+	if !strings.Contains(err.Error(), "git.mode=diff requires git.diff") {
+		t.Fatalf("expected git.mode diff requirement error, got %v", err)
+	}
+}
+
+func TestLoadRuleSetRejectsGitAddedLinesOnlyWithoutGitMode(t *testing.T) {
+	t.Parallel()
+
+	path := writeConfigFile(t, "git:\n  addedLinesOnly: true\nrules:\n  - message: 'hello'\n    regex: 'world'\n")
+
+	_, err := config.LoadRuleSet(path)
+	if err == nil {
+		t.Fatal("expected error, got nil")
+	}
+	if !strings.Contains(err.Error(), "git.addedLinesOnly=true is valid only when git.mode=staged|diff") {
+		t.Fatalf("expected git.addedLinesOnly validation error, got %v", err)
+	}
+}
+
+func TestLoadRuleSetAllowsGitAddedLinesOnlyWithStagedMode(t *testing.T) {
+	t.Parallel()
+
+	configContents := "git:\n" +
+		"  mode: 'staged'\n" +
+		"  addedLinesOnly: true\n" +
+		"rules:\n" +
+		"  - message: 'hello'\n" +
+		"    regex: 'world'\n"
+	path := writeConfigFile(t, configContents)
+
+	_, err := config.LoadRuleSet(path)
+	if err != nil {
+		t.Fatalf("expected no error, got %v", err)
+	}
+}
+
 func TestLoadRuleSetRejectsEmptyBaseline(t *testing.T) {
 	t.Parallel()
 

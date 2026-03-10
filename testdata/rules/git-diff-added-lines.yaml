@@ -1,0 +1,9 @@
+git:
+  mode: "diff"
+  diff: "HEAD~1..HEAD"
+  addedLinesOnly: true
+  gitignoreEnabled: false
+rules:
+  - message: "Found token $0"
+    regex: "token=[a-z]+"
+    severity: "warning"
