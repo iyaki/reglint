@@ -170,7 +170,7 @@
 
 - [x] Add integration tests for `git-mode=off|staged|diff` success/error paths.
 - [x] Add tests for `--git-diff` implied mode, invalid diff targets, and missing Git binary handling.
-- [ ] Add tests for added-lines-only output behavior and ignore precedence conflicts.
+- [x] Add tests for added-lines-only output behavior and ignore precedence conflicts.
 
 ### 14.2 Docs and final quality checks
 
@@ -254,6 +254,10 @@
 - 2026-03-10: `go test ./cmd/reglint` - passed.
 - 2026-03-10: `go test ./...` - passed.
 - 2026-03-10: `git commit -m "Add command-level coverage for implied and failure Git diff flows"` - committed Phase 14.1 implied-mode/error matrix tests as `f10f3fa`.
+- 2026-03-10: `go test ./cmd/reglint -run "TestRunAnalyzeGitModeStaged(AddedLinesOnlyReportsOnlyAddedLines|IgnoreConflictPrefersIgnoreOverGitignore|IgnoreConflictPrefersReglintignoreOverIgnoreAndGitignore)$"` - failed first (RED): added-lines-only integration test returned zero matches due Git diff path prefixes.
+- 2026-03-10: `go test ./cmd/reglint -run "TestRunAnalyzeGitModeStaged(AddedLinesOnlyReportsOnlyAddedLines|IgnoreConflictPrefersIgnoreOverGitignore|IgnoreConflictPrefersReglintignoreOverIgnoreAndGitignore)$"` - passed after normalizing Git diff output paths for added-lines extraction.
+- 2026-03-10: `go test ./...` - passed.
+- 2026-03-10: `git commit -m "Normalize Git added-line paths and add command coverage"` - committed Phase 14.1 added-lines/ignore-precedence matrix tests and added-lines path normalization as `1a2c754`.
 
 ## Summary
 
