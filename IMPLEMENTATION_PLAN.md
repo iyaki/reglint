@@ -169,7 +169,7 @@
 ### 14.1 Git behavior matrix coverage
 
 - [x] Add integration tests for `git-mode=off|staged|diff` success/error paths.
-- [ ] Add tests for `--git-diff` implied mode, invalid diff targets, and missing Git binary handling.
+- [x] Add tests for `--git-diff` implied mode, invalid diff targets, and missing Git binary handling.
 - [ ] Add tests for added-lines-only output behavior and ignore precedence conflicts.
 
 ### 14.2 Docs and final quality checks
@@ -250,6 +250,10 @@
 - 2026-03-10: `go test ./cmd/reglint -run "TestRunAnalyzeGitMode"` - passed after adding Git mode integration matrix tests (`off`, `staged`, `diff` success/error paths).
 - 2026-03-10: `go test ./cmd/reglint` - passed.
 - 2026-03-10: `go test ./...` - passed.
+- 2026-03-10: `go test ./cmd/reglint -run "TestRunAnalyzeGit(ModeStagedWithoutGitBinaryReturnsError|DiffFlagImpliesDiffModeAndScopesCandidates|DiffFlagInvalidTargetReturnsError)"` - passed.
+- 2026-03-10: `go test ./cmd/reglint` - passed.
+- 2026-03-10: `go test ./...` - passed.
+- 2026-03-10: `git commit -m "Add command-level coverage for implied and failure Git diff flows"` - committed Phase 14.1 implied-mode/error matrix tests as `f10f3fa`.
 
 ## Summary
 
