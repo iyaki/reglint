@@ -25,6 +25,16 @@ type e2EProcessResult struct {
 	Stderr   string
 }
 
+type e2EScenario struct {
+	ID           string
+	Tier         string
+	Name         string
+	Fixture      string
+	Command      []string
+	Env          map[string]string
+	ExpectedExit int
+}
+
 var (
 	e2eBinaryBuildOnce sync.Once
 	e2eBinaryPath      string
@@ -71,6 +81,144 @@ func (h *e2EHarness) run(workDir string, args []string, env map[string]string) (
 	}
 
 	return e2EProcessResult{}, fmt.Errorf("execute binary %q: %w", h.binaryPath, err)
+}
+
+func (h *e2EHarness) mustRunScenario(t *testing.T, scenario e2EScenario) e2EProcessResult {
+	t.Helper()
+
+	result, err := h.run(scenario.Fixture, scenario.Command, scenario.Env)
+	if err != nil {
+		t.Fatalf("%s", h.scenarioFailureDiagnostic(scenario, e2EProcessResult{}, fmt.Sprintf("run scenario: %v", err)))
+	}
+
+	if result.ExitCode != scenario.ExpectedExit {
+		t.Fatalf(
+			"%s",
+			h.scenarioFailureDiagnostic(
+				scenario,
+				result,
+				fmt.Sprintf("expected exit code %d, got %d", scenario.ExpectedExit, result.ExitCode),
+			),
+		)
+	}
+
+	return result
+}
+
+func (h *e2EHarness) assertScenarioStdoutContains(
+	t *testing.T,
+	scenario e2EScenario,
+	result e2EProcessResult,
+	want string,
+) {
+	t.Helper()
+
+	if strings.Contains(result.Stdout, want) {
+		return
+	}
+
+	t.Fatalf(
+		"%s",
+		h.scenarioFailureDiagnostic(
+			scenario,
+			result,
+			fmt.Sprintf("expected stdout to contain %q", want),
+		),
+	)
+}
+
+func (h *e2EHarness) assertScenarioStderrEmpty(t *testing.T, scenario e2EScenario, result e2EProcessResult) {
+	t.Helper()
+
+	if result.Stderr == "" {
+		return
+	}
+
+	t.Fatalf(
+		"%s",
+		h.scenarioFailureDiagnostic(
+			scenario,
+			result,
+			fmt.Sprintf("expected empty stderr, got %q", result.Stderr),
+		),
+	)
+}
+
+func (h *e2EHarness) assertScenarioPathExists(
+	t *testing.T,
+	scenario e2EScenario,
+	result e2EProcessResult,
+	path string,
+) {
+	t.Helper()
+
+	if _, err := os.Stat(path); err == nil {
+		return
+	}
+
+	t.Fatalf(
+		"%s",
+		h.scenarioFailureDiagnostic(
+			scenario,
+			result,
+			fmt.Sprintf("expected path to exist: %s", path),
+		),
+	)
+}
+
+func (h *e2EHarness) scenarioFailureDiagnostic(scenario e2EScenario, result e2EProcessResult, reason string) string {
+	lines := []string{
+		"e2e scenario assertion failed:",
+		"  reason: " + reason,
+		"  scenario: " + scenario.ID,
+		"  tier: " + scenario.Tier,
+		"  name: " + scenario.Name,
+		"  fixture: " + scenario.Fixture,
+		"  replay: " + h.scenarioReplayCommand(scenario),
+		fmt.Sprintf("  exitCode: %d", result.ExitCode),
+		fmt.Sprintf("  stdout: %q", result.Stdout),
+		fmt.Sprintf("  stderr: %q", result.Stderr),
+	}
+
+	return strings.Join(lines, "\n")
+}
+
+func (h *e2EHarness) scenarioReplayCommand(scenario e2EScenario) string {
+	envKeys := make([]string, 0, len(scenario.Env))
+	for key := range scenario.Env {
+		envKeys = append(envKeys, key)
+	}
+	sort.Strings(envKeys)
+
+	parts := make([]string, 0, 1+len(scenario.Command))
+	parts = append(parts, shellQuote(h.binaryPath))
+	for _, part := range scenario.Command {
+		parts = append(parts, shellQuote(part))
+	}
+	invocation := strings.Join(parts, " ")
+
+	if len(envKeys) > 0 {
+		envPairs := make([]string, 0, len(envKeys))
+		for _, key := range envKeys {
+			envPairs = append(envPairs, key+"="+shellQuote(scenario.Env[key]))
+		}
+
+		invocation = strings.Join(envPairs, " ") + " " + invocation
+	}
+
+	if scenario.Fixture == "" {
+		return invocation
+	}
+
+	return "(cd " + shellQuote(scenario.Fixture) + " && " + invocation + ")"
+}
+
+func shellQuote(value string) string {
+	if value == "" {
+		return "''"
+	}
+
+	return "'" + strings.ReplaceAll(value, "'", "'\"'\"'") + "'"
 }
 
 func e2eBinaryBuildInvocations() int {
