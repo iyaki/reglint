@@ -1,6 +1,6 @@
 # Implementation Plan (git-integration)
 
-**Status:** Git integration implementation in progress (Phases 9-13 complete; 5/6 phases complete)
+**Status:** Git integration implementation in progress (Phase 14 in progress; 5/6 phases complete)
 **Last Updated:** 2026-03-10
 **Primary Specs:** `specs/git-integration.md` (related: `specs/cli-analyze.md`, `specs/configuration.md`, `specs/data-model.md`, `specs/ignore-files.md`, `specs/testing-and-validations.md`, `specs/core-architecture.md`)
 
@@ -162,13 +162,13 @@
 ## Phase 14: Integration verification, docs, and quality gates
 
 **Goal:** Close remaining gaps with end-to-end coverage, docs alignment, and quality gate evidence.
-**Status:** Not started
+**Status:** In progress
 **Paths:** `cmd/reglint/main_test.go`, `internal/cli/*_test.go`, `internal/scan/*_test.go`, `testdata/rules/*`, `testdata/fixtures/*`, `README.md`, `Makefile`
 **Reference pattern:** existing command-level integration harness in `cmd/reglint/main_test.go`
 
 ### 14.1 Git behavior matrix coverage
 
-- [ ] Add integration tests for `git-mode=off|staged|diff` success/error paths.
+- [x] Add integration tests for `git-mode=off|staged|diff` success/error paths.
 - [ ] Add tests for `--git-diff` implied mode, invalid diff targets, and missing Git binary handling.
 - [ ] Add tests for added-lines-only output behavior and ignore precedence conflicts.
 
@@ -246,6 +246,10 @@
 - 2026-03-10: `go test ./...` - passed.
 - 2026-03-10: `make test` - passed.
 - 2026-03-10: `git commit -m "Apply Git candidate and added-line scan scoping"` - committed Phase 13 scan-engine and CLI integration updates as `3671290`.
+- 2026-03-10: `go test ./cmd/reglint -run "TestRunAnalyzeGitMode"` - failed first due `t.Setenv` with `t.Parallel`; updated test to run non-parallel for env override.
+- 2026-03-10: `go test ./cmd/reglint -run "TestRunAnalyzeGitMode"` - passed after adding Git mode integration matrix tests (`off`, `staged`, `diff` success/error paths).
+- 2026-03-10: `go test ./cmd/reglint` - passed.
+- 2026-03-10: `go test ./...` - passed.
 
 ## Summary
 
@@ -256,7 +260,7 @@
 | Phase 11: Analyze CLI flags and settings precedence         | Complete    |
 | Phase 12: Git adapter and hook infrastructure               | Complete    |
 | Phase 13: Scan engine and ignore precedence integration     | Complete    |
-| Phase 14: Integration verification, docs, and quality gates | Not started |
+| Phase 14: Integration verification, docs, and quality gates | In progress |
 
 **Remaining effort:** Complete Phase 14.
 
