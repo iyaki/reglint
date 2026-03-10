@@ -1,6 +1,6 @@
 # Implementation Plan (git-integration)
 
-**Status:** Git integration implementation in progress (Phases 9-11 complete; Phase 12 not started, 3/6 phases complete)
+**Status:** Git integration implementation in progress (Phases 9-11 complete; Phase 12 in progress, 3/6 phases complete)
 **Last Updated:** 2026-03-10
 **Primary Specs:** `specs/git-integration.md` (related: `specs/cli-analyze.md`, `specs/configuration.md`, `specs/data-model.md`, `specs/ignore-files.md`, `specs/testing-and-validations.md`, `specs/core-architecture.md`)
 
@@ -106,13 +106,13 @@
 ## Phase 12: Git adapter and hook infrastructure
 
 **Goal:** Introduce Git runtime services and deterministic hook contracts.
-**Status:** Not started
+**Status:** In progress (12.1 capability checks complete)
 **Paths:** `internal/git/*.go`, `internal/hooks/*.go`, `internal/cli/analyze.go`, `internal/git/*_test.go`, `internal/hooks/*_test.go`
 **Reference pattern:** deterministic root-scoped rule loading in `internal/scan/ignore_rules.go`
 
 ### 12.1 Git adapter services
 
-- [ ] Implement Git capability checks (binary availability and repository context) gated by mode.
+- [x] Implement Git capability checks (binary availability and repository context) gated by mode.
 - [ ] Implement staged file selection and diff-target file selection with normalized root-relative slash paths.
 - [ ] Implement added-line extraction (`addedLinesByFile`) from Git diff/staging output.
 
@@ -213,9 +213,15 @@
 - 2026-03-10: `go test ./internal/cli -run "TestBuildScanRequestUsesRuleSetGitSettingsWithoutCLIOverrides|TestBuildScanRequestCLIOverridesRuleSetGitSettings|TestBuildScanRequestGitDiffForcesDiffMode|TestBuildScanRequestGitModeOffReturnsNilGitRequest"` - passed.
 - 2026-03-10: `go test ./internal/cli -run "TestPrepareAnalyzeConfigUsesRuleSetGitSettings|TestPrepareAnalyzeConfigCLIOverridesRuleSetGitSettings|TestPrepareAnalyzeConfigGitDiffForcesDiffMode|TestPrepareAnalyzeConfigRejectsDiffModeWithoutDiffTarget|TestPrepareAnalyzeConfigRejectsAddedLinesOnlyWithOffMode"` - passed.
 - 2026-03-10: `go test ./internal/cli -run "TestHandleAnalyzeRejectsGitModeDiffWithoutGitDiff|TestHandleAnalyzeRejectsGitAddedLinesOnlyWithGitModeOff"` - passed.
-- 2026-03-10: `go test ./internal/cli ./cmd/reglint` - passed.
+- 2026-03-10: `go test ./internal/git -run TestCheckCapabilitiesModeOffIsNoOp` - failed (RED): missing `internal/git` implementation and capability contracts.
+- 2026-03-10: `go test ./internal/git -run "TestCheckCapabilities"` - passed after implementing `internal/git/adapter.go` capability checks.
+- 2026-03-10: `go test ./internal/cli -run "TestRunAnalyzeChecksGitCapabilitiesWhenModeEnabled|TestRunAnalyzeSkipsGitCapabilitiesWhenModeOff"` - passed after wiring capability checks into analyze flow.
+- 2026-03-10: `go test ./internal/cli ./internal/git` - passed.
 - 2026-03-10: `make lint` - passed.
+- 2026-03-10: `make arch` - passed.
+- 2026-03-10: `make security` - passed.
 - 2026-03-10: `go test ./...` - passed.
+- 2026-03-10: `git commit -m "Add Git capability checks for enabled analyze modes"` - committed Phase 12.1 capability checks as `06b7ea1`.
 
 ## Summary
 
@@ -224,11 +230,11 @@
 | Phase 9: Scope lock and stale-plan reset                    | Complete    |
 | Phase 10: RuleSet and shared model contracts                | Complete    |
 | Phase 11: Analyze CLI flags and settings precedence         | Complete    |
-| Phase 12: Git adapter and hook infrastructure               | Not started |
+| Phase 12: Git adapter and hook infrastructure               | In progress |
 | Phase 13: Scan engine and ignore precedence integration     | Not started |
 | Phase 14: Integration verification, docs, and quality gates | Not started |
 
-**Remaining effort:** Implement Phases 12-14 (adapter/hooks, scan integration, integration coverage, and docs/quality verification).
+**Remaining effort:** Complete remaining Phase 12 items (candidate selection, added-lines extraction, and hook contracts), then Phases 13-14.
 
 ## Known Existing Work
 
