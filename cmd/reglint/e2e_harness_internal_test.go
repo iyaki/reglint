@@ -333,6 +333,28 @@ func newE2ESmoke005Scenario(moduleRoot string) e2EScenario {
 	}
 }
 
+func newE2ESmoke006Scenario(moduleRoot string) e2EScenario {
+	fixturePath := moduleRoot
+	configPath := filepath.Join(moduleRoot, "testdata", "rules", "example.yaml")
+	scanPath := filepath.Join("testdata", "e2e-fixtures", "path with spaces")
+	reportedPath := filepath.Join(moduleRoot, "testdata", "e2e-fixtures", "path with spaces", "sample file.txt") + ":1"
+
+	return e2EScenario{
+		ID:           "E2E-SMOKE-006",
+		Tier:         "smoke",
+		Name:         "path containing spaces reports correctly",
+		Fixture:      fixturePath,
+		Command:      []string{"analyze", "--config", configPath, scanPath},
+		ExpectedExit: 0,
+		Assertions: []e2EAssertion{
+			{Type: e2EAssertionStdoutContains, Value: "Found token token=abc"},
+			{Type: e2EAssertionStdoutContains, Value: "sample file.txt"},
+			{Type: e2EAssertionStdoutContains, Value: reportedPath},
+			{Type: e2EAssertionStdoutRegex, Value: `(?m)^Summary: files=1 skipped=0 matches=1 durationMs=[0-9]+$`},
+		},
+	}
+}
+
 func assertRegexMatch(value, pattern, streamName string) error {
 	if pattern == "" {
 		return fmt.Errorf("%s regex pattern is required", streamName)
