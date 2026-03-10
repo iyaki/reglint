@@ -15,7 +15,7 @@
 | Ignore-file engine foundation (`.ignore`, `.reglintignore`)                                              | `specs/ignore-files.md`                                                                            | `internal/ignore/*`, `internal/scan/ignore_rules.go`                                                           | `internal/ignore/*_test.go`, `internal/scan/ignore_test.go`      | ✅ Implemented (reusable precedence foundation for Git mode)                                                              |
 | Deterministic scan ordering and formatter contracts                                                      | `specs/data-model.md`, `specs/formatter.md`, `specs/formatter-json.md`, `specs/formatter-sarif.md` | `internal/scan/engine.go`, `internal/output/*`                                                                 | golden/output tests                                              | ✅ Implemented                                                                                                            |
 | Baseline compare/write behavior (related analyze flow)                                                   | `specs/cli-analyze-baseline.md`, `specs/cli-analyze.md`                                            | `internal/baseline/*`, `internal/cli/analyze.go`                                                               | `testdata/baseline/*`, baseline tests                            | ✅ Implemented                                                                                                            |
-| Git-focused docs and fixtures                                                                            | `specs/cli-analyze.md`, `specs/testing-and-validations.md`                                         | `README.md`, `testdata/rules/*`, `testdata/fixtures/*`                                                         | git-mode fixtures/examples                                       | Not implemented                                                                                                           |
+| Git-focused docs and fixtures                                                                            | `specs/cli-analyze.md`, `specs/testing-and-validations.md`                                         | `README.md`, `testdata/rules/*`, `testdata/fixtures/*`                                                         | git-mode fixtures/examples                                       | In progress (README Git examples/exit behavior added; fixture additions pending)                                          |
 
 ## Phase 9: Scope lock and stale-plan reset
 
@@ -174,7 +174,7 @@
 
 ### 14.2 Docs and final quality checks
 
-- [ ] Add README examples for Git mode usage and expected exit behavior.
+- [x] Add README examples for Git mode usage and expected exit behavior.
 - [ ] Ensure analyze help/output tests remain deterministic after Git flag additions.
 - [ ] Run and log `go test ./...`, `make test`, `make lint`, and `make quality`.
 
@@ -258,6 +258,8 @@
 - 2026-03-10: `go test ./cmd/reglint -run "TestRunAnalyzeGitModeStaged(AddedLinesOnlyReportsOnlyAddedLines|IgnoreConflictPrefersIgnoreOverGitignore|IgnoreConflictPrefersReglintignoreOverIgnoreAndGitignore)$"` - passed after normalizing Git diff output paths for added-lines extraction.
 - 2026-03-10: `go test ./...` - passed.
 - 2026-03-10: `git commit -m "Normalize Git added-line paths and add command coverage"` - committed Phase 14.1 added-lines/ignore-precedence matrix tests and added-lines path normalization as `1a2c754`.
+- 2026-03-10: `go test ./cmd/reglint -run "TestRunAnalyzeGitMode(OffDoesNotRequireGit|StagedScansOnlyStagedFiles|DiffScansOnlyChangedFiles)$"` - passed.
+- 2026-03-10: `git commit -m "Document Git-scoped analyze usage and exits"` - passed (commit `99bcb00`).
 
 ## Summary
 
@@ -281,6 +283,7 @@
 - `internal/baseline/*` and `internal/output/*` already implement baseline compare/write behavior and stable formatter schemas that Git integration must not alter.
 - `internal/git/adapter.go`, `internal/git/selection.go`, `internal/git/added_lines.go`, and `internal/git/hook_provider.go` now provide capability checks, deterministic staged/diff candidate-file selection, added-line extraction, and Git hook-provider behavior for Git-enabled runs.
 - `internal/hooks/scan_hooks.go` now provides deterministic hook contracts/registry execution for capabilities checks, candidate scoping, ignore augmentation, and post-match filtering.
+- `README.md` now includes a dedicated Git-scoped usage section covering `--git-mode`, `--git-diff` implied mode, `--git-added-lines-only`, `--no-gitignore`, and expected Git-enabled exit behavior.
 
 ## Manual Deployment Tasks
 
