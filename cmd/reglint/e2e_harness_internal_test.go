@@ -294,6 +294,24 @@ func newE2ESmoke003Scenario(moduleRoot string) e2EScenario {
 	}
 }
 
+func newE2ESmoke004Scenario(moduleRoot string) e2EScenario {
+	fixturePath := moduleRoot
+
+	return e2EScenario{
+		ID:           "E2E-SMOKE-004",
+		Tier:         "smoke",
+		Name:         "no findings exits zero",
+		Fixture:      fixturePath,
+		Command:      []string{"analyze", "--config", "testdata/rules/example.yaml", "testdata/e2e-fixtures/no-findings"},
+		ExpectedExit: 0,
+		Assertions: []e2EAssertion{
+			{Type: e2EAssertionStdoutContains, Value: "No matches found."},
+			{Type: e2EAssertionStdoutRegex, Value: `(?m)^Summary: files=1 skipped=0 matches=0 durationMs=[0-9]+$`},
+			{Type: e2EAssertionStdoutNotContains, Value: "Found token token="},
+		},
+	}
+}
+
 func assertRegexMatch(value, pattern, streamName string) error {
 	if pattern == "" {
 		return fmt.Errorf("%s regex pattern is required", streamName)
