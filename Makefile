@@ -1,7 +1,7 @@
 
 
 
-.PHONY: help quality all format lint test coverage test-coverage test-race test-flaky mutation test-mutation \
+.PHONY: help quality all format lint test coverage test-coverage test-race test-flaky test-e2e-smoke mutation test-mutation \
 	security arch build run analyze-example analyze-fail
 
 GLOBAL_TARGETS ?=
@@ -18,6 +18,7 @@ help:
 	"  make test            Run tests with coverage gate" \
 	"  make test-race       Run tests with race detector" \
 	"  make test-flaky      Run tests repeatedly to detect flakes" \
+	"  make test-e2e-smoke  Run compiled-binary e2e smoke scenarios" \
 	"  make coverage        Run coverage gate only" \
 	"  make mutation        Run mutation testing (final stage)" \
 	"  make security        Run govulncheck and gosec" \
@@ -55,6 +56,9 @@ test-race:
 
 test-flaky:
 	go test -count=$(FLAKY_COUNT) -shuffle=on ./...
+
+test-e2e-smoke:
+	go test -count=1 ./cmd/reglint -run '^TestE2ESmoke'
 
 test-mutation:
 	gremlins unleash $(ARGS)
