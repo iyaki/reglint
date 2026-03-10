@@ -42,7 +42,7 @@ coverage: test-coverage
 
 test-coverage:
 	@coverprofile="$$(mktemp -t quality-cover.XXXXXX)"; \
-	go test -coverprofile="$$coverprofile" -covermode=atomic -coverpkg=./... ./...; \
+	go test -count=1 -coverprofile="$$coverprofile" -covermode=atomic -coverpkg=./... ./...; \
 	total="$$(go tool cover -func="$$coverprofile" | awk '/^total:/{gsub(/%/,"",$$3); print $$3}')"; \
 	rm -f "$$coverprofile"; \
 	if ! awk -v total="$$total" -v minimum="90" 'BEGIN {exit !(total >= minimum)}'; then \
