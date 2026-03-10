@@ -794,6 +794,30 @@ func TestRunAnalyzeGitModeOffDoesNotRequireGit(t *testing.T) {
 	}
 }
 
+func TestRunAnalyzeGitModeStagedWithoutGitBinaryReturnsError(t *testing.T) {
+	rootDir := t.TempDir()
+	configDir := t.TempDir()
+	writeFixture(t, rootDir, "sample.txt", "token=abc")
+	configPath := writeRuleConfig(t, configDir, "")
+
+	t.Setenv("PATH", "")
+
+	var output bytes.Buffer
+	code := run([]string{
+		"analyze",
+		"--config", configPath,
+		"--git-mode", "staged",
+		rootDir,
+	}, &output)
+
+	if code != 1 {
+		t.Fatalf("expected exit code 1, got %d", code)
+	}
+	if !strings.Contains(output.String(), "git mode staged requires git executable") {
+		t.Fatalf("expected missing git executable error, got %q", output.String())
+	}
+}
+
 func TestRunAnalyzeGitModeStagedOutsideRepositoryReturnsError(t *testing.T) {
 	t.Parallel()
 	ensureGitAvailable(t)
@@ -895,6 +919,45 @@ func TestRunAnalyzeGitModeDiffScansOnlyChangedFiles(t *testing.T) {
 	}
 }
 
+func TestRunAnalyzeGitDiffFlagImpliesDiffModeAndScopesCandidates(t *testing.T) {
+	t.Parallel()
+	ensureGitAvailable(t)
+
+	repoDir := t.TempDir()
+	initGitRepo(t, repoDir)
+
+	writeFixture(t, repoDir, "changed.txt", "clean\n")
+	writeFixture(t, repoDir, "unchanged.txt", "token=abc\n")
+	runGit(t, repoDir, "add", ".")
+	runGit(t, repoDir, "commit", "-m", "initial")
+
+	writeFixture(t, repoDir, "changed.txt", "token=xyz\n")
+
+	configDir := t.TempDir()
+	configPath := writeRuleConfig(t, configDir, "")
+
+	var output bytes.Buffer
+	code := run([]string{
+		"analyze",
+		"--config", configPath,
+		"--format", "json",
+		"--git-diff", "HEAD",
+		repoDir,
+	}, &output)
+
+	if code != 0 {
+		t.Fatalf("expected exit code 0, got %d with output %q", code, output.String())
+	}
+
+	got := decodeJSONResult(t, output.Bytes())
+	if len(got.Matches) != 1 {
+		t.Fatalf("expected 1 match for implied diff-only scan, got %d", len(got.Matches))
+	}
+	if got.Matches[0].FilePath != "changed.txt" {
+		t.Fatalf("expected changed.txt match, got %q", got.Matches[0].FilePath)
+	}
+}
+
 func TestRunAnalyzeGitModeDiffInvalidTargetReturnsError(t *testing.T) {
 	t.Parallel()
 	ensureGitAvailable(t)
@@ -913,6 +976,35 @@ func TestRunAnalyzeGitModeDiffInvalidTargetReturnsError(t *testing.T) {
 		"analyze",
 		"--config", configPath,
 		"--git-mode", "diff",
+		"--git-diff", "DOES_NOT_EXIST",
+		repoDir,
+	}, &output)
+
+	if code != 1 {
+		t.Fatalf("expected exit code 1, got %d", code)
+	}
+	if !strings.Contains(output.String(), "git mode diff failed to resolve changed files for target \"DOES_NOT_EXIST\"") {
+		t.Fatalf("expected invalid diff target error, got %q", output.String())
+	}
+}
+
+func TestRunAnalyzeGitDiffFlagInvalidTargetReturnsError(t *testing.T) {
+	t.Parallel()
+	ensureGitAvailable(t)
+
+	repoDir := t.TempDir()
+	initGitRepo(t, repoDir)
+	writeFixture(t, repoDir, "sample.txt", "token=abc\n")
+	runGit(t, repoDir, "add", "sample.txt")
+	runGit(t, repoDir, "commit", "-m", "initial")
+
+	configDir := t.TempDir()
+	configPath := writeRuleConfig(t, configDir, "")
+
+	var output bytes.Buffer
+	code := run([]string{
+		"analyze",
+		"--config", configPath,
 		"--git-diff", "DOES_NOT_EXIST",
 		repoDir,
 	}, &output)
