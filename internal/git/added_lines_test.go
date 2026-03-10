@@ -59,7 +59,7 @@ func TestSelectAddedLinesStagedUsesCachedDiffAndParsesHunks(t *testing.T) {
 	if gotDir != "/tmp/repo" {
 		t.Fatalf("expected command dir %q, got %q", "/tmp/repo", gotDir)
 	}
-	wantArgs := []string{"diff", "--cached", "--unified=0", "--no-color", "--diff-filter=ACMR"}
+	wantArgs := []string{"diff", "--cached", "--unified=0", "--no-color", "--no-prefix", "--diff-filter=ACMR"}
 	if !reflect.DeepEqual(gotArgs, wantArgs) {
 		t.Fatalf("expected args %v, got %v", wantArgs, gotArgs)
 	}

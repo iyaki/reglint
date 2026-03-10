@@ -56,6 +56,7 @@ func runAddedLinesCommand(request CandidateSelectionRequest, mode string) (strin
 			"--cached",
 			"--unified=0",
 			"--no-color",
+			"--no-prefix",
 			"--diff-filter=ACMR",
 		)
 		if err != nil {
@@ -74,6 +75,7 @@ func runAddedLinesCommand(request CandidateSelectionRequest, mode string) (strin
 			"diff",
 			"--unified=0",
 			"--no-color",
+			"--no-prefix",
 			"--diff-filter=ACMR",
 			target,
 		)

@@ -1017,6 +1017,127 @@ func TestRunAnalyzeGitDiffFlagInvalidTargetReturnsError(t *testing.T) {
 	}
 }
 
+func TestRunAnalyzeGitModeStagedAddedLinesOnlyReportsOnlyAddedLines(t *testing.T) {
+	t.Parallel()
+	ensureGitAvailable(t)
+
+	repoDir := t.TempDir()
+	initGitRepo(t, repoDir)
+
+	writeFixture(t, repoDir, "sample.txt", "token=old\nclean\n")
+	runGit(t, repoDir, "add", "sample.txt")
+	runGit(t, repoDir, "commit", "-m", "initial")
+
+	writeFixture(t, repoDir, "sample.txt", "token=old\nclean\ntoken=new\n")
+	runGit(t, repoDir, "add", "sample.txt")
+
+	configDir := t.TempDir()
+	configPath := writeRuleConfig(t, configDir, "")
+
+	var output bytes.Buffer
+	code := run([]string{
+		"analyze",
+		"--config", configPath,
+		"--format", "json",
+		"--git-mode", "staged",
+		"--git-added-lines-only",
+		repoDir,
+	}, &output)
+
+	if code != 0 {
+		t.Fatalf("expected exit code 0, got %d with output %q", code, output.String())
+	}
+
+	got := decodeJSONResult(t, output.Bytes())
+	if len(got.Matches) != 1 {
+		t.Fatalf("expected 1 added-line match, got %d", len(got.Matches))
+	}
+	if got.Matches[0].FilePath != "sample.txt" {
+		t.Fatalf("expected sample.txt match, got %q", got.Matches[0].FilePath)
+	}
+	if got.Matches[0].Line != 3 {
+		t.Fatalf("expected added-line match on line 3, got line %d", got.Matches[0].Line)
+	}
+}
+
+func TestRunAnalyzeGitModeStagedIgnoreConflictPrefersIgnoreOverGitignore(t *testing.T) {
+	t.Parallel()
+	ensureGitAvailable(t)
+
+	repoDir := t.TempDir()
+	initGitRepo(t, repoDir)
+
+	if err := os.MkdirAll(filepath.Join(repoDir, "generated"), os.ModePerm); err != nil {
+		t.Fatalf("failed to create generated directory: %v", err)
+	}
+	writeFixture(t, repoDir, ".gitignore", "generated/**\n")
+	writeFixture(t, repoDir, ".ignore", "!generated/keep.txt\n")
+	writeFixture(t, repoDir, "generated/keep.txt", "token=abc\n")
+	runGit(t, repoDir, "add", "-f", "generated/keep.txt")
+
+	configDir := t.TempDir()
+	configPath := writeRuleConfig(t, configDir, "")
+
+	var output bytes.Buffer
+	code := run([]string{
+		"analyze",
+		"--config", configPath,
+		"--format", "json",
+		"--git-mode", "staged",
+		repoDir,
+	}, &output)
+
+	if code != 0 {
+		t.Fatalf("expected exit code 0, got %d with output %q", code, output.String())
+	}
+
+	got := decodeJSONResult(t, output.Bytes())
+	if len(got.Matches) != 1 {
+		t.Fatalf("expected 1 match when .ignore overrides .gitignore, got %d", len(got.Matches))
+	}
+	if got.Matches[0].FilePath != "generated/keep.txt" {
+		t.Fatalf("expected generated/keep.txt match, got %q", got.Matches[0].FilePath)
+	}
+}
+
+func TestRunAnalyzeGitModeStagedIgnoreConflictPrefersReglintignoreOverIgnoreAndGitignore(t *testing.T) {
+	t.Parallel()
+	ensureGitAvailable(t)
+
+	repoDir := t.TempDir()
+	initGitRepo(t, repoDir)
+
+	if err := os.MkdirAll(filepath.Join(repoDir, "generated"), os.ModePerm); err != nil {
+		t.Fatalf("failed to create generated directory: %v", err)
+	}
+	writeFixture(t, repoDir, ".gitignore", "generated/**\n")
+	writeFixture(t, repoDir, ".ignore", "!generated/keep.txt\n")
+	writeFixture(t, repoDir, ".reglintignore", "generated/keep.txt\n")
+	writeFixture(t, repoDir, "generated/keep.txt", "token=abc\n")
+	runGit(t, repoDir, "add", "-f", "generated/keep.txt")
+
+	configDir := t.TempDir()
+	configPath := writeRuleConfig(t, configDir, "")
+
+	var output bytes.Buffer
+	code := run([]string{
+		"analyze",
+		"--config", configPath,
+		"--format", "json",
+		"--git-mode", "staged",
+		repoDir,
+	}, &output)
+
+	if code != 0 {
+		t.Fatalf("expected exit code 0, got %d with output %q", code, output.String())
+	}
+
+	got := decodeJSONResult(t, output.Bytes())
+	if len(got.Matches) != 0 {
+		t.Fatalf("expected 0 matches when .reglintignore overrides .ignore and .gitignore, got %d", len(got.Matches))
+	}
+}
+
 func TestRunUsesProvidedOutputWriter(t *testing.T) {
 	t.Parallel()
 
