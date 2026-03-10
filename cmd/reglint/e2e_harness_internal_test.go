@@ -460,6 +460,34 @@ func newE2EFull004Scenario(moduleRoot string) e2EScenario {
 	}
 }
 
+func newE2EFull005Scenario(moduleRoot string) e2EScenario {
+	fixturePath := moduleRoot
+	configPath := filepath.Join(moduleRoot, "testdata", "rules", "example.yaml")
+	scanPath := filepath.Join("testdata", "fixtures")
+
+	return e2EScenario{
+		ID:           "E2E-FULL-005",
+		Tier:         "full",
+		Name:         "sarif-only format writes to stdout when out path is unset",
+		Fixture:      fixturePath,
+		Command:      []string{"analyze", "--config", configPath, "--format", "sarif", scanPath},
+		ExpectedExit: 0,
+		Assertions: []e2EAssertion{
+			{Type: e2EAssertionStdoutNotContains, Value: "Summary:"},
+			{Type: e2EAssertionSARIFFieldEquals, Field: "$schema", Expected: "https://json.schemastore.org/sarif-2.1.0.json"},
+			{Type: e2EAssertionSARIFFieldEquals, Field: "version", Expected: "2.1.0"},
+			{Type: e2EAssertionSARIFFieldEquals, Field: "runs.0.columnKind", Expected: "unicodeCodePoints"},
+			{Type: e2EAssertionSARIFFieldEquals, Field: "runs.0.results.0.ruleId", Expected: "RC0001"},
+			{Type: e2EAssertionSARIFFieldEquals, Field: "runs.0.results.0.level", Expected: "error"},
+			{
+				Type:     e2EAssertionSARIFFieldEquals,
+				Field:    "runs.0.results.0.locations.0.physicalLocation.artifactLocation.uri",
+				Expected: "sample.txt",
+			},
+		},
+	}
+}
+
 func assertRegexMatch(value, pattern, streamName string) error {
 	if pattern == "" {
 		return fmt.Errorf("%s regex pattern is required", streamName)
