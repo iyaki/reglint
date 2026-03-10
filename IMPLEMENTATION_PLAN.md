@@ -175,7 +175,7 @@
 ### 14.2 Docs and final quality checks
 
 - [x] Add README examples for Git mode usage and expected exit behavior.
-- [ ] Ensure analyze help/output tests remain deterministic after Git flag additions.
+- [x] Ensure analyze help/output tests remain deterministic after Git flag additions.
 - [ ] Run and log `go test ./...`, `make test`, `make lint`, and `make quality`.
 
 **Definition of Done**
@@ -260,6 +260,12 @@
 - 2026-03-10: `git commit -m "Normalize Git added-line paths and add command coverage"` - committed Phase 14.1 added-lines/ignore-precedence matrix tests and added-lines path normalization as `1a2c754`.
 - 2026-03-10: `go test ./cmd/reglint -run "TestRunAnalyzeGitMode(OffDoesNotRequireGit|StagedScansOnlyStagedFiles|DiffScansOnlyChangedFiles)$"` - passed.
 - 2026-03-10: `git commit -m "Document Git-scoped analyze usage and exits"` - passed (commit `99bcb00`).
+- 2026-03-10: `go run ./cmd/reglint --help` - passed.
+- 2026-03-10: `go run ./cmd/reglint analyze --help` - passed.
+- 2026-03-10: `go run ./cmd/reglint analyse --help` - passed.
+- 2026-03-10: `go test ./cmd/reglint -run "TestRunShowsRootHelpForLongFlag|TestRunShowsRootHelpForShortFlag|TestRunShowsAnalyzeHelpForLongFlag|TestRunShowsAnalyseHelpForShortFlag|TestRunUnknownCommandWithHelpFlag"` - passed.
+- 2026-03-10: `go test ./internal/cli -run "TestRunShowsHelpForRootFlag|TestRunShowsHelpForAnalyzeFlag|TestRunShowsHelpForAnalyseFlag|TestRunUnknownCommandWithHelpFlag"` - passed.
+- 2026-03-10: `go test ./cmd/reglint` - passed.
 
 ## Summary
 
