@@ -74,6 +74,50 @@ reglint analyze --config testdata/rules/fail.yaml --baseline testdata/baseline/i
 
 This command exits `1` with a single baseline validation error.
 
+## Git-Scoped Scans
+
+Git mode is optional and defaults to `off`, so regular scans do not require Git:
+
+```bash
+reglint analyze --config reglint-rules.yaml
+```
+
+Scan only staged files:
+
+```bash
+reglint analyze --config reglint-rules.yaml --git-mode staged
+```
+
+Scan files from a diff target:
+
+```bash
+reglint analyze --config reglint-rules.yaml --git-mode diff --git-diff HEAD~1..HEAD
+```
+
+Passing `--git-diff` without `--git-mode` implies `--git-mode diff`:
+
+```bash
+reglint analyze --config reglint-rules.yaml --git-diff HEAD~1..HEAD
+```
+
+Report only matches on added lines in the selected Git scope:
+
+```bash
+reglint analyze --config reglint-rules.yaml --git-mode diff --git-diff HEAD~1..HEAD --git-added-lines-only
+```
+
+Disable `.gitignore` filtering for one run:
+
+```bash
+reglint analyze --config reglint-rules.yaml --git-mode staged --no-gitignore
+```
+
+Expected exit behavior in Git-enabled runs:
+
+- Missing Git executable, non-repository context, or invalid diff target exits `1` with a single error message.
+- Empty changed-file sets are valid and complete successfully.
+- Successful Git-scoped scans follow normal exit rules (`0` or `2` based on `--fail-on`).
+
 ## Outputs
 
 - `console` writes to stdout.
