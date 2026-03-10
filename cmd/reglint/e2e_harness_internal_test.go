@@ -355,6 +355,27 @@ func newE2ESmoke006Scenario(moduleRoot string) e2EScenario {
 	}
 }
 
+func newE2EFull001Scenario(moduleRoot string) e2EScenario {
+	fixturePath := moduleRoot
+	configPath := filepath.Join(moduleRoot, "testdata", "rules", "fail.yaml")
+	baselinePath := filepath.Join(moduleRoot, "testdata", "baseline", "valid-equal.json")
+	scanPath := filepath.Join("testdata", "fixtures")
+
+	return e2EScenario{
+		ID:           "E2E-FULL-001",
+		Tier:         "full",
+		Name:         "baseline compare suppresses non-regressions",
+		Fixture:      fixturePath,
+		Command:      []string{"analyze", "--config", configPath, "--baseline", baselinePath, scanPath},
+		ExpectedExit: 0,
+		Assertions: []e2EAssertion{
+			{Type: e2EAssertionStdoutContains, Value: "No matches found."},
+			{Type: e2EAssertionStdoutRegex, Value: `(?m)^Summary: files=1 skipped=0 matches=0 durationMs=[0-9]+$`},
+			{Type: e2EAssertionStdoutNotContains, Value: "Found token token=abc"},
+		},
+	}
+}
+
 func assertRegexMatch(value, pattern, streamName string) error {
 	if pattern == "" {
 		return fmt.Errorf("%s regex pattern is required", streamName)
