@@ -1,6 +1,6 @@
 # Implementation Plan (e2e-tests)
 
-**Status:** E2E spec and reference integration tests exist; compiled-binary e2e harness, `make test-e2e*` targets, and CI tier gates are not implemented (Phase 15 complete; 1/6 phases complete).
+**Status:** E2E spec and reference integration tests exist; compiled-binary e2e harness foundation is now in place, while scenario catalog/assertion engine, `make test-e2e*` targets, and CI tier gates remain outstanding (Phase 15 complete, Phase 16 in progress; 1/6 phases complete).
 **Last Updated:** 2026-03-10
 **Primary Specs:** `specs/e2e-test-suite.md` (related: `specs/testing-and-validations.md`, `specs/cli-analyze.md`, `specs/cli-init.md`, `specs/formatter-json.md`, `specs/formatter-sarif.md`, `specs/git-integration.md`, `specs/core-architecture.md`)
 
@@ -11,7 +11,7 @@
 | Canonical e2e scenario catalog and tier policy                             | `specs/e2e-test-suite.md`, `specs/testing-and-validations.md`, `specs/cli-analyze.md` | `specs/`                                                                                         | Scenario IDs `E2E-SMOKE-*`, `E2E-FULL-*`                       | ✅ Implemented (spec-only)                                  |
 | Existing command-level behavior coverage (in-process, not compiled binary) | `specs/cli.md`, `specs/cli-analyze.md`, `specs/cli-init.md`                           | `cmd/reglint/main_test.go`, `internal/cli/*_test.go`                                             | CLI contract tests for baseline, git, format, help, exit codes | ✅ Implemented                                              |
 | File-handling and deterministic ordering reference tests                   | `specs/testing-and-validations.md`, `specs/e2e-test-suite.md`                         | `internal/scan/engine_test.go`, `internal/scan/ignore_test.go`, `internal/output/golden_test.go` | Binary/oversized/unreadable handling tests, golden outputs     | ✅ Implemented                                              |
-| Compiled-binary e2e scenario harness                                       | `specs/e2e-test-suite.md`                                                             | `cmd/reglint/` (new e2e harness tests)                                                           | Scenario runner, replay command diagnostics                    | Missing                                                     |
+| Compiled-binary e2e scenario harness                                       | `specs/e2e-test-suite.md`                                                             | `cmd/reglint/e2e_harness_internal_test.go`, `cmd/reglint/e2e_harness_test.go`                    | Binary build-once harness + process result capture             | Partial (foundation implemented)                            |
 | PR smoke and nightly/manual full make targets                              | `specs/e2e-test-suite.md`, `specs/testing-and-validations.md`                         | `Makefile`                                                                                       | `make test-e2e-smoke`, `make test-e2e`                         | Missing                                                     |
 | CI gate policy for e2e tiers                                               | `specs/e2e-test-suite.md`, `specs/testing-and-validations.md`                         | `.github/workflows/*.yml`                                                                        | PR smoke e2e job, nightly scheduled full e2e job               | Missing                                                     |
 | Scenario-specific fixture workspaces for path/permission/git edge cases    | `specs/e2e-test-suite.md`                                                             | `testdata/fixtures/`, `testdata/rules/`, `testdata/baseline/`, `testdata/golden/`                | Stable fixture matrix for 21 scenarios                         | Partial (base fixtures exist; dedicated e2e matrix missing) |
@@ -48,15 +48,15 @@
 ## Phase 16: Compiled-binary harness foundation
 
 **Goal:** Create deterministic e2e scenario runner that executes the built `reglint` binary and reports replayable diagnostics.
-**Status:** Not started
-**Paths:** `cmd/reglint/` (new e2e harness tests), `testdata/fixtures/**`, `testdata/rules/**`, `testdata/baseline/**`
+**Status:** In progress
+**Paths:** `cmd/reglint/e2e_harness_internal_test.go`, `cmd/reglint/e2e_harness_test.go`, `testdata/fixtures/**`, `testdata/rules/**`, `testdata/baseline/**`
 **Reference pattern:** helper/test setup style in `cmd/reglint/main_test.go`
 
 ### 16.1 Binary execution harness
 
 - [x] Verified build entrypoint already exists via `make build` (`Makefile` -> `bin/reglint`).
-- [ ] Add harness that builds binary once per run and executes per-scenario commands via process boundary.
-- [ ] Capture and assert exit code, stdout, stderr, and output artifacts per scenario.
+- [x] Add harness that builds binary once per run and executes per-scenario commands via process boundary.
+- [x] Capture and assert exit code, stdout, stderr, and output artifacts per scenario.
 - [ ] Emit scenario ID + fixture path + replay command on every failure.
 
 ### 16.2 Scenario model and assertion engine
@@ -210,19 +210,24 @@
 - 2026-03-10: `Read cmd/reglint/main_test.go` and `grep "NO_COLOR|--git-mode|--write-baseline" cmd/reglint/main_test.go` - verified broad in-process command-level coverage exists for many e2e behaviors but not compiled-binary scenario harness; tests run: none; bug fixes discovered: none; files touched: `cmd/reglint/main_test.go`.
 - 2026-03-10: `Read internal/scan/engine_test.go`, `Read internal/cli/analyze_output_test.go`, and `Read internal/output/golden_test.go` - verified lower-level references exist for file handling, deterministic ordering, and formatter contracts; tests run: none; bug fixes discovered: none; files touched: listed test files.
 - 2026-03-10: Plan-only update - replaced stale scope with this `e2e-tests` implementation plan and current verified gaps; tests run: none; bug fixes discovered: stale planning scope corrected; files touched: `IMPLEMENTATION_PLAN.md`.
+- 2026-03-10: go test ./cmd/reglint -run TestE2EHarness - failed with undefined harness symbols before implementation (expected RED stage).
+- 2026-03-10: go test ./cmd/reglint -run TestE2EHarness - passed after adding compiled-binary harness foundation.
+- 2026-03-10: make build && go test ./cmd/reglint -run TestE2E - passed (build succeeds and harness-focused tests pass).
+- 2026-03-10: gremlins unleash --diff HEAD - passed on rerun after a transient mutation-tool panic during commit hook.
+- 2026-03-10: go test ./cmd/reglint - passed full `cmd/reglint` package tests after harness addition.
 
 ## Summary
 
 | Phase                                                       | Status      |
 | ----------------------------------------------------------- | ----------- |
 | Phase 15: Scope lock and stale-plan reset                   | Complete    |
-| Phase 16: Compiled-binary harness foundation                | Not started |
+| Phase 16: Compiled-binary harness foundation                | In progress |
 | Phase 17: Smoke tier implementation (PR gate)               | Not started |
 | Phase 18: Full matrix implementation (nightly/manual)       | Not started |
 | Phase 19: Developer tooling and CI gate wiring              | Not started |
 | Phase 20: Verification evidence and documentation alignment | Not started |
 
-**Remaining effort:** Implement compiled-binary e2e harness, wire 21 scenario IDs across smoke/full tiers, add `make test-e2e-smoke` and `make test-e2e`, add PR/nightly CI gates, and capture execution evidence.
+**Remaining effort:** Complete Phase 16 by adding typed scenario definitions, deterministic assertion primitives, and scenario-level replay diagnostics; then wire 21 scenario IDs across smoke/full tiers, add `make test-e2e-smoke` and `make test-e2e`, add PR/nightly CI gates, and capture execution evidence.
 
 ## Known Existing Work
 
@@ -232,6 +237,7 @@
 - `internal/scan/ignore_test.go` already covers ignore precedence and git candidate-scope ordering; use this as canonical precedence behavior.
 - `internal/output/golden_test.go` and `testdata/golden/*` already enforce deterministic formatter output ordering.
 - `Makefile` already provides `make build`, `make test`, and `make quality`; e2e targets can follow existing target style.
+- `cmd/reglint/e2e_harness_internal_test.go` and `cmd/reglint/e2e_harness_test.go` now provide a compiled-binary build-once harness with process-boundary exit/stdout/stderr assertions and output-artifact checks.
 
 ## Manual Deployment Tasks
 
