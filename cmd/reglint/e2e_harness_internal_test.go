@@ -312,6 +312,27 @@ func newE2ESmoke004Scenario(moduleRoot string) e2EScenario {
 	}
 }
 
+func newE2ESmoke005Scenario(moduleRoot string) e2EScenario {
+	fixturePath := filepath.Join(moduleRoot, "testdata", "fixtures")
+	configPath := filepath.Join(moduleRoot, "testdata", "rules", "example.yaml")
+
+	return e2EScenario{
+		ID:           "E2E-SMOKE-005",
+		Tier:         "smoke",
+		Name:         "NO_COLOR disables ANSI output",
+		Fixture:      fixturePath,
+		Command:      []string{"analyze", "--config", configPath, "."},
+		Env:          map[string]string{"NO_COLOR": "1"},
+		ExpectedExit: 0,
+		Assertions: []e2EAssertion{
+			{Type: e2EAssertionStdoutContains, Value: "Found token token=abc"},
+			{Type: e2EAssertionStdoutContains, Value: "sample.txt:1"},
+			{Type: e2EAssertionStdoutRegex, Value: `(?m)^Summary: files=1 skipped=0 matches=1 durationMs=[0-9]+$`},
+			{Type: e2EAssertionStdoutNotContains, Value: "\x1b["},
+		},
+	}
+}
+
 func assertRegexMatch(value, pattern, streamName string) error {
 	if pattern == "" {
 		return fmt.Errorf("%s regex pattern is required", streamName)
