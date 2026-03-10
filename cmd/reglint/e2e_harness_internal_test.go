@@ -2,13 +2,17 @@ package main
 
 import (
 	"bytes"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"os"
 	"os/exec"
 	"path/filepath"
+	"reflect"
+	"regexp"
 	"runtime"
 	"sort"
+	"strconv"
 	"strings"
 	"sync"
 	"sync/atomic"
@@ -33,6 +37,62 @@ type e2EScenario struct {
 	Command      []string
 	Env          map[string]string
 	ExpectedExit int
+	Assertions   []e2EAssertion
+}
+
+type e2EAssertion struct {
+	Type     string
+	Value    string
+	Path     string
+	Field    string
+	Expected any
+}
+
+type e2EAssertionEvaluator func(
+	h *e2EHarness,
+	scenario e2EScenario,
+	result e2EProcessResult,
+	assertion e2EAssertion,
+) error
+
+const (
+	e2EAssertionStdoutContains    = "stdoutContains"
+	e2EAssertionStderrContains    = "stderrContains"
+	e2EAssertionStdoutNotContains = "stdoutNotContains"
+	e2EAssertionStderrNotContains = "stderrNotContains"
+	e2EAssertionStdoutRegex       = "stdoutRegex"
+	e2EAssertionStderrRegex       = "stderrRegex"
+	e2EAssertionFileExists        = "fileExists"
+	e2EAssertionFileNotExists     = "fileNotExists"
+	e2EAssertionJSONFieldEquals   = "jsonFieldEquals"
+	e2EAssertionSARIFFieldEquals  = "sarifFieldEquals"
+)
+
+var e2EAssertionEvaluators = map[string]e2EAssertionEvaluator{
+	e2EAssertionStdoutContains:    evalStdoutContains,
+	e2EAssertionStderrContains:    evalStderrContains,
+	e2EAssertionStdoutNotContains: evalStdoutNotContains,
+	e2EAssertionStderrNotContains: evalStderrNotContains,
+	e2EAssertionStdoutRegex:       evalStdoutRegex,
+	e2EAssertionStderrRegex:       evalStderrRegex,
+	e2EAssertionFileExists:        evalFileExists,
+	e2EAssertionFileNotExists:     evalFileNotExists,
+	e2EAssertionJSONFieldEquals: func(
+		h *e2EHarness,
+		scenario e2EScenario,
+		result e2EProcessResult,
+		assertion e2EAssertion,
+	) error {
+		return h.assertStructuredFieldEquals(scenario, result, assertion)
+	},
+	e2EAssertionSARIFFieldEquals: func(
+		h *e2EHarness,
+		scenario e2EScenario,
+		result e2EProcessResult,
+		assertion e2EAssertion,
+	) error {
+		return h.assertStructuredFieldEquals(scenario, result, assertion)
+	},
 }
 
 var (
@@ -102,7 +162,388 @@ func (h *e2EHarness) mustRunScenario(t *testing.T, scenario e2EScenario) e2EProc
 		)
 	}
 
+	h.assertScenarioAssertions(t, scenario, result)
+
 	return result
+}
+
+func (h *e2EHarness) assertScenarioAssertions(t *testing.T, scenario e2EScenario, result e2EProcessResult) {
+	t.Helper()
+
+	for index, assertion := range scenario.Assertions {
+		if err := h.evaluateScenarioAssertion(scenario, result, assertion); err != nil {
+			t.Fatalf(
+				"%s",
+				h.scenarioFailureDiagnostic(
+					scenario,
+					result,
+					fmt.Sprintf("assertion[%d] (%s): %v", index, assertion.Type, err),
+				),
+			)
+		}
+	}
+}
+
+func (h *e2EHarness) evaluateScenarioAssertion(
+	scenario e2EScenario,
+	result e2EProcessResult,
+	assertion e2EAssertion,
+) error {
+	evaluator, ok := e2EAssertionEvaluators[assertion.Type]
+	if !ok {
+		return fmt.Errorf("unknown assertion type %q", assertion.Type)
+	}
+
+	return evaluator(h, scenario, result, assertion)
+}
+
+func sortE2EScenarios(input []e2EScenario) []e2EScenario {
+	ordered := append([]e2EScenario(nil), input...)
+
+	sort.Slice(ordered, func(i, j int) bool {
+		left := ordered[i]
+		right := ordered[j]
+
+		leftTier := e2ETierOrder(left.Tier)
+		rightTier := e2ETierOrder(right.Tier)
+		if leftTier != rightTier {
+			return leftTier < rightTier
+		}
+
+		if left.ID != right.ID {
+			return left.ID < right.ID
+		}
+
+		if left.Name != right.Name {
+			return left.Name < right.Name
+		}
+
+		if left.Fixture != right.Fixture {
+			return left.Fixture < right.Fixture
+		}
+
+		return strings.Join(left.Command, "\x00") < strings.Join(right.Command, "\x00")
+	})
+
+	return ordered
+}
+
+func e2ETierOrder(tier string) int {
+	switch tier {
+	case "smoke":
+		return 0
+	case "full":
+		return 1
+	default:
+		return 2
+	}
+}
+
+func assertRegexMatch(value, pattern, streamName string) error {
+	if pattern == "" {
+		return fmt.Errorf("%s regex pattern is required", streamName)
+	}
+
+	re, err := regexp.Compile(pattern)
+	if err != nil {
+		return fmt.Errorf("compile %s regex %q: %w", streamName, pattern, err)
+	}
+
+	if re.MatchString(value) {
+		return nil
+	}
+
+	return fmt.Errorf("%s does not match regex %q", streamName, pattern)
+}
+
+func evalStdoutContains(
+	_ *e2EHarness,
+	_ e2EScenario,
+	result e2EProcessResult,
+	assertion e2EAssertion,
+) error {
+	return assertStreamContains(result.Stdout, assertion.Value, "stdout")
+}
+
+func evalStderrContains(
+	_ *e2EHarness,
+	_ e2EScenario,
+	result e2EProcessResult,
+	assertion e2EAssertion,
+) error {
+	return assertStreamContains(result.Stderr, assertion.Value, "stderr")
+}
+
+func evalStdoutNotContains(
+	_ *e2EHarness,
+	_ e2EScenario,
+	result e2EProcessResult,
+	assertion e2EAssertion,
+) error {
+	return assertStreamNotContains(result.Stdout, assertion.Value, "stdout")
+}
+
+func evalStderrNotContains(
+	_ *e2EHarness,
+	_ e2EScenario,
+	result e2EProcessResult,
+	assertion e2EAssertion,
+) error {
+	return assertStreamNotContains(result.Stderr, assertion.Value, "stderr")
+}
+
+func evalStdoutRegex(
+	_ *e2EHarness,
+	_ e2EScenario,
+	result e2EProcessResult,
+	assertion e2EAssertion,
+) error {
+	return assertRegexMatch(result.Stdout, assertion.Value, "stdout")
+}
+
+func evalStderrRegex(
+	_ *e2EHarness,
+	_ e2EScenario,
+	result e2EProcessResult,
+	assertion e2EAssertion,
+) error {
+	return assertRegexMatch(result.Stderr, assertion.Value, "stderr")
+}
+
+func evalFileExists(
+	_ *e2EHarness,
+	scenario e2EScenario,
+	_ e2EProcessResult,
+	assertion e2EAssertion,
+) error {
+	resolvedPath := resolveScenarioPath(scenario, assertion.Path)
+	if resolvedPath == "" {
+		return errors.New("fileExists requires path")
+	}
+
+	if _, err := os.Stat(resolvedPath); err != nil {
+		return fmt.Errorf("expected path to exist: %s (%w)", resolvedPath, err)
+	}
+
+	return nil
+}
+
+func evalFileNotExists(
+	_ *e2EHarness,
+	scenario e2EScenario,
+	_ e2EProcessResult,
+	assertion e2EAssertion,
+) error {
+	resolvedPath := resolveScenarioPath(scenario, assertion.Path)
+	if resolvedPath == "" {
+		return errors.New("fileNotExists requires path")
+	}
+
+	_, err := os.Stat(resolvedPath)
+	if err == nil {
+		return fmt.Errorf("expected path to be absent: %s", resolvedPath)
+	}
+	if errors.Is(err, os.ErrNotExist) {
+		return nil
+	}
+
+	return fmt.Errorf("stat path %s: %w", resolvedPath, err)
+}
+
+func assertStreamContains(value, expected, streamName string) error {
+	if strings.Contains(value, expected) {
+		return nil
+	}
+
+	return fmt.Errorf("%s does not contain %q", streamName, expected)
+}
+
+func assertStreamNotContains(value, blocked, streamName string) error {
+	if !strings.Contains(value, blocked) {
+		return nil
+	}
+
+	return fmt.Errorf("%s unexpectedly contains %q", streamName, blocked)
+}
+
+func (h *e2EHarness) assertStructuredFieldEquals(
+	scenario e2EScenario,
+	result e2EProcessResult,
+	assertion e2EAssertion,
+) error {
+	doc, err := h.loadAssertionDocument(scenario, result, assertion)
+	if err != nil {
+		return err
+	}
+
+	fieldValue, err := resolveStructuredField(doc, assertion.Field)
+	if err != nil {
+		return err
+	}
+
+	if valuesEqual(fieldValue, assertion.Expected) {
+		return nil
+	}
+
+	return fmt.Errorf("field %q mismatch: expected %v, got %v", assertion.Field, assertion.Expected, fieldValue)
+}
+
+func (h *e2EHarness) loadAssertionDocument(
+	scenario e2EScenario,
+	result e2EProcessResult,
+	assertion e2EAssertion,
+) (any, error) {
+	data, err := h.loadAssertionPayload(scenario, result, assertion)
+	if err != nil {
+		return nil, err
+	}
+
+	decoder := json.NewDecoder(bytes.NewReader(data))
+	decoder.UseNumber()
+
+	var document any
+	if err := decoder.Decode(&document); err != nil {
+		return nil, fmt.Errorf("decode assertion document: %w", err)
+	}
+
+	return document, nil
+}
+
+func (h *e2EHarness) loadAssertionPayload(
+	scenario e2EScenario,
+	result e2EProcessResult,
+	assertion e2EAssertion,
+) ([]byte, error) {
+	if assertion.Path != "" {
+		resolvedPath := resolveScenarioPath(scenario, assertion.Path)
+		data, err := os.ReadFile(resolvedPath)
+		if err != nil {
+			return nil, fmt.Errorf("read assertion path %s: %w", resolvedPath, err)
+		}
+
+		return data, nil
+	}
+
+	if result.Stdout == "" {
+		return nil, errors.New("assertion requires JSON payload in stdout when path is unset")
+	}
+
+	return []byte(result.Stdout), nil
+}
+
+func resolveStructuredField(document any, field string) (any, error) {
+	if field == "" {
+		return nil, errors.New("field is required")
+	}
+
+	current := document
+	segments := strings.Split(field, ".")
+	for _, segment := range segments {
+		switch typed := current.(type) {
+		case map[string]any:
+			next, ok := typed[segment]
+			if !ok {
+				return nil, fmt.Errorf("field segment %q not found", segment)
+			}
+
+			current = next
+		case []any:
+			index, err := strconv.Atoi(segment)
+			if err != nil {
+				return nil, fmt.Errorf("field segment %q is not a valid array index", segment)
+			}
+			if index < 0 || index >= len(typed) {
+				return nil, fmt.Errorf("array index %d out of range", index)
+			}
+
+			current = typed[index]
+		default:
+			return nil, fmt.Errorf("cannot traverse segment %q on non-container value", segment)
+		}
+	}
+
+	return current, nil
+}
+
+func valuesEqual(got, want any) bool {
+	if gotNumber, ok := toFloat64(got); ok {
+		if wantNumber, ok := toFloat64(want); ok {
+			return gotNumber == wantNumber
+		}
+	}
+
+	return reflect.DeepEqual(got, want)
+}
+
+func toFloat64(value any) (float64, bool) {
+	if number, ok := value.(json.Number); ok {
+		parsed, err := number.Float64()
+		if err != nil {
+			return 0, false
+		}
+
+		return parsed, true
+	}
+
+	rawValue := reflect.ValueOf(value)
+	if !rawValue.IsValid() {
+		return 0, false
+	}
+
+	if isSignedIntegerKind(rawValue.Kind()) {
+		return float64(rawValue.Int()), true
+	}
+
+	if isUnsignedIntegerKind(rawValue.Kind()) {
+		return float64(rawValue.Uint()), true
+	}
+
+	if isFloatKind(rawValue.Kind()) {
+		return rawValue.Float(), true
+	}
+
+	return 0, false
+}
+
+func isSignedIntegerKind(kind reflect.Kind) bool {
+	switch kind {
+	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
+		return true
+	default:
+		return false
+	}
+}
+
+func isUnsignedIntegerKind(kind reflect.Kind) bool {
+	switch kind {
+	case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
+		return true
+	default:
+		return false
+	}
+}
+
+func isFloatKind(kind reflect.Kind) bool {
+	switch kind {
+	case reflect.Float32, reflect.Float64:
+		return true
+	default:
+		return false
+	}
+}
+
+func resolveScenarioPath(scenario e2EScenario, path string) string {
+	if path == "" {
+		return ""
+	}
+	if filepath.IsAbs(path) {
+		return path
+	}
+	if scenario.Fixture == "" {
+		return path
+	}
+
+	return filepath.Join(scenario.Fixture, path)
 }
 
 func (h *e2EHarness) assertScenarioStdoutContains(
