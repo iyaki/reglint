@@ -258,6 +258,23 @@ func newE2ESmoke001Scenario(moduleRoot string) e2EScenario {
 	}
 }
 
+func newE2ESmoke002Scenario(moduleRoot string) e2EScenario {
+	fixturePath := filepath.Join(moduleRoot, "testdata", "fixtures")
+	configPath := filepath.Join(moduleRoot, "testdata", "rules", "missing-config.yaml")
+
+	return e2EScenario{
+		ID:           "E2E-SMOKE-002",
+		Tier:         "smoke",
+		Name:         "invalid config path returns single actionable error",
+		Fixture:      fixturePath,
+		Command:      []string{"analyze", "--config", configPath, "."},
+		ExpectedExit: 1,
+		Assertions: []e2EAssertion{
+			{Type: e2EAssertionStdoutRegex, Value: `^config file not found: [^\n]+\n?$`},
+		},
+	}
+}
+
 func assertRegexMatch(value, pattern, streamName string) error {
 	if pattern == "" {
 		return fmt.Errorf("%s regex pattern is required", streamName)
