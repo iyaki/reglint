@@ -279,6 +279,19 @@ reglint analyse [flags] [path ...]
 - `reglint analyze -c reglint-rules.yaml --git-mode staged` exits with code 1 when Git is unavailable.
 - `reglint analyze -c reglint-rules.yaml --git-mode off` does not require Git.
 
+### E2E scenario coverage map
+
+- Happy path and fail thresholds: `E2E-SMOKE-001`, `E2E-SMOKE-003`, `E2E-SMOKE-004`
+- Validation errors and single-error behavior: `E2E-SMOKE-002`, `E2E-FULL-011`
+- Color controls and env precedence: `E2E-SMOKE-005`
+- Path handling: `E2E-SMOKE-006`
+- Baseline compare/generation/precedence: `E2E-FULL-001`, `E2E-FULL-002`, `E2E-FULL-003`
+- Formatter output-path and stdout behavior: `E2E-FULL-004`, `E2E-FULL-005`, `E2E-FULL-006`
+- Git mode behavior: `E2E-FULL-007`, `E2E-FULL-008`, `E2E-FULL-009`, `E2E-FULL-010`, `E2E-FULL-011`
+- File handling and deterministic ordering: `E2E-FULL-012`, `E2E-FULL-013`, `E2E-FULL-014`, `E2E-FULL-015`
+
+See `specs/e2e-test-suite.md` for canonical e2e scenario definitions and tiering.
+
 ## Appendices
 
 ### Examples

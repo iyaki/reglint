@@ -76,6 +76,7 @@ make arch
 
 - `/.github/workflows/quality.yml` runs lint, and architecture checks.
 - `/.github/workflows/quality.yml` runs mutation testing via `make mutation`.
+- E2E policy requires a PR smoke gate and a nightly/manual full matrix (see `specs/e2e-test-suite.md`).
 
 ## Validation Rules
 
@@ -171,6 +172,16 @@ make arch
 - In Git-enabled scans, conflicting ignore decisions resolve with `.ignore/.reglintignore` priority over `.gitignore`.
 - With Git mode off, enabling hook infrastructure does not change scan outputs.
 
+### End-to-end tests
+
+- E2E tests validate process-level CLI behavior using a compiled `reglint` binary.
+- E2E scenarios are fixture-driven and assert exit code, stdout/stderr contracts, and output artifacts.
+- Scenario catalog, tiers, and execution contracts are defined in `specs/e2e-test-suite.md`.
+- Tier policy:
+  - Smoke tier (`PR` required): fast, deterministic, non-flaky core flow checks.
+  - Full tier (`nightly/manual`): broader edge-case matrix, still deterministic.
+- E2E failures must report scenario ID, fixture reference, and replay command.
+
 ### Golden tests
 
 - Snapshot console/JSON/SARIF outputs for fixture directories.
@@ -208,6 +219,9 @@ make arch
 - `make test` runs unit and integration tests.
 - `make test-flaky` reruns the full test suite with shuffle to catch flaky behavior (`FLAKY_COUNT` default `20`).
 - Optional: `UPDATE_GOLDEN=1 make test` to refresh golden files.
+- E2E command targets for implementation are:
+  - `make test-e2e-smoke` for PR-required smoke coverage.
+  - `make test-e2e` for nightly/manual full matrix coverage.
 - Unit tests must enforce line coverage > 90% (exclude integration and testdata packages).
 - Mutation testing must meet the minimum mutation score.
 
@@ -218,3 +232,4 @@ make arch
 - `reglint analyze --config testdata/rules/fail.yaml ./testdata/fixtures` exits with `2` when above `failOn`.
 - `reglint analyze --config testdata/rules/example.yaml --git-mode off ./testdata/fixtures` does not require Git.
 - `reglint analyze --config testdata/rules/example.yaml --git-mode staged` exits with `1` when Git is unavailable.
+- E2E smoke scenarios pass in PR validation; full e2e matrix runs on nightly/manual workflow.
