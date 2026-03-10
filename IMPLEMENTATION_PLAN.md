@@ -1,6 +1,6 @@
 # Implementation Plan (e2e-tests)
 
-**Status:** E2E spec and reference integration tests exist; compiled-binary e2e harness now includes build-once execution, typed scenarios, deterministic assertion catalog, ordering guarantees, replay diagnostics, and complete smoke scenario coverage (`E2E-SMOKE-001..006`), while full-tier scenario matrix, `make test-e2e*` targets, and CI tier gates remain outstanding (Phases 15-16 complete; Phase 17 in progress; 2/6 phases complete).
+**Status:** E2E spec and reference integration tests exist; compiled-binary e2e harness now includes build-once execution, typed scenarios, deterministic assertion catalog, ordering guarantees, replay diagnostics, complete smoke scenario coverage (`E2E-SMOKE-001..006`), and a local smoke make target (`make test-e2e-smoke`), while full-tier scenario matrix, `make test-e2e`, and CI tier gates remain outstanding (Phases 15-17 complete; Phase 19 in progress; 3/6 phases complete).
 **Last Updated:** 2026-03-10
 **Primary Specs:** `specs/e2e-test-suite.md` (related: `specs/testing-and-validations.md`, `specs/cli-analyze.md`, `specs/cli-init.md`, `specs/formatter-json.md`, `specs/formatter-sarif.md`, `specs/git-integration.md`, `specs/core-architecture.md`)
 
@@ -12,7 +12,7 @@
 | Existing command-level behavior coverage (in-process, not compiled binary) | `specs/cli.md`, `specs/cli-analyze.md`, `specs/cli-init.md`                           | `cmd/reglint/main_test.go`, `internal/cli/*_test.go`                                             | CLI contract tests for baseline, git, format, help, exit codes   | ✅ Implemented                                                                |
 | File-handling and deterministic ordering reference tests                   | `specs/testing-and-validations.md`, `specs/e2e-test-suite.md`                         | `internal/scan/engine_test.go`, `internal/scan/ignore_test.go`, `internal/output/golden_test.go` | Binary/oversized/unreadable handling tests, golden outputs       | ✅ Implemented                                                                |
 | Compiled-binary e2e scenario harness                                       | `specs/e2e-test-suite.md`                                                             | `cmd/reglint/e2e_harness_internal_test.go`, `cmd/reglint/e2e_harness_test.go`                    | Build-once harness + typed assertion engine + replay diagnostics | Partial (foundation + assertion engine + `E2E-SMOKE-001/002/003/004/005/006`) |
-| PR smoke and nightly/manual full make targets                              | `specs/e2e-test-suite.md`, `specs/testing-and-validations.md`                         | `Makefile`                                                                                       | `make test-e2e-smoke`, `make test-e2e`                           | Missing                                                                       |
+| PR smoke and nightly/manual full make targets                              | `specs/e2e-test-suite.md`, `specs/testing-and-validations.md`                         | `Makefile`                                                                                       | `make test-e2e-smoke`, `make test-e2e`                           | Partial (`make test-e2e-smoke` implemented; `make test-e2e` missing)          |
 | CI gate policy for e2e tiers                                               | `specs/e2e-test-suite.md`, `specs/testing-and-validations.md`                         | `.github/workflows/*.yml`                                                                        | PR smoke e2e job, nightly scheduled full e2e job                 | Missing                                                                       |
 | Scenario-specific fixture workspaces for path/permission/git edge cases    | `specs/e2e-test-suite.md`                                                             | `testdata/fixtures/`, `testdata/rules/`, `testdata/baseline/`, `testdata/golden/`                | Stable fixture matrix for 21 scenarios                           | Partial (base fixtures exist; dedicated e2e matrix missing)                   |
 
@@ -82,7 +82,7 @@ Progress note:
 ## Phase 17: Smoke tier implementation (PR gate)
 
 **Goal:** Implement PR-blocking smoke scenarios `E2E-SMOKE-001..006` using the compiled binary harness.
-**Status:** In progress (all smoke scenarios implemented; local/CI target wiring pending)
+**Status:** Complete
 **Paths:** `cmd/reglint/` (new smoke scenario tests), `testdata/fixtures/**`, `testdata/e2e-fixtures/**`, `testdata/rules/**`
 **Reference pattern:** behavior assertions in `cmd/reglint/main_test.go`
 
@@ -146,13 +146,13 @@ Progress note:
 ## Phase 19: Developer tooling and CI gate wiring
 
 **Goal:** Add local make targets and CI enforcement for smoke/full e2e tiers.
-**Status:** Not started
+**Status:** In progress (`make test-e2e-smoke` added; `make test-e2e` and CI jobs pending)
 **Paths:** `Makefile`, `.github/workflows/quality.yml`, `.github/workflows/security.yml` (or new e2e workflow files)
 **Reference pattern:** existing job structure in `.github/workflows/quality.yml`
 
 ### 19.1 Local command targets
 
-- [ ] Add `make test-e2e-smoke` for PR-required tier.
+- [x] Add `make test-e2e-smoke` for PR-required tier.
 - [ ] Add `make test-e2e` for full matrix tier.
 - [ ] Keep target behavior deterministic and independent from unrelated quality jobs.
 
@@ -249,6 +249,8 @@ Progress note:
 - 2026-03-10: `go test ./cmd/reglint -run TestE2ESmoke006PathWithSpacesCorrectPathReporting` - failed with missing fixture path `testdata/e2e-fixtures/path with spaces` before fixture creation.
 - 2026-03-10: `go test ./cmd/reglint -run TestE2ESmoke006PathWithSpacesCorrectPathReporting` - passed after implementing `E2E-SMOKE-006` and adding path-with-spaces fixture.
 - 2026-03-10: `make build && go test ./cmd/reglint -run TestE2E && go test ./cmd/reglint -run 'TestE2ESmoke00(1|2|3|4|5|6)' -count=3 && go test ./cmd/reglint` - passed; smoke scenarios `E2E-SMOKE-001..006` deterministic over repeated runs and full `cmd/reglint` package tests green.
+- 2026-03-10: `make test-e2e-smoke` - passed (`go test -count=1 ./cmd/reglint -run '^TestE2ESmoke'` returned `ok`).
+- 2026-03-10: `make build` - passed (`go build -o bin/reglint ./cmd/reglint`).
 
 ## Summary
 
@@ -256,12 +258,12 @@ Progress note:
 | ----------------------------------------------------------- | ----------- |
 | Phase 15: Scope lock and stale-plan reset                   | Complete    |
 | Phase 16: Compiled-binary harness foundation                | Complete    |
-| Phase 17: Smoke tier implementation (PR gate)               | In progress |
+| Phase 17: Smoke tier implementation (PR gate)               | Complete    |
 | Phase 18: Full matrix implementation (nightly/manual)       | Not started |
-| Phase 19: Developer tooling and CI gate wiring              | Not started |
+| Phase 19: Developer tooling and CI gate wiring              | In progress |
 | Phase 20: Verification evidence and documentation alignment | Not started |
 
-**Remaining effort:** Wire 15 remaining full-tier scenario IDs on top of the completed smoke/harness assertion model, add `make test-e2e-smoke` and `make test-e2e`, add PR/nightly CI gates, and capture full execution evidence.
+**Remaining effort:** Wire 15 remaining full-tier scenario IDs on top of the completed smoke/harness assertion model, add `make test-e2e`, add PR/nightly CI gates, and capture full execution evidence.
 
 ## Known Existing Work
 
@@ -270,7 +272,7 @@ Progress note:
 - `internal/scan/engine_test.go` already validates binary/oversized skipping, unreadable-file handling, and added-lines behavior; these are strong references for full-tier edge scenarios.
 - `internal/scan/ignore_test.go` already covers ignore precedence and git candidate-scope ordering; use this as canonical precedence behavior.
 - `internal/output/golden_test.go` and `testdata/golden/*` already enforce deterministic formatter output ordering.
-- `Makefile` already provides `make build`, `make test`, and `make quality`; e2e targets can follow existing target style.
+- `Makefile` now provides `make test-e2e-smoke` for compiled-binary smoke scenarios alongside existing `make build`, `make test`, and `make quality` targets.
 - `cmd/reglint/e2e_harness_internal_test.go` and `cmd/reglint/e2e_harness_test.go` now provide a compiled-binary build-once harness with typed scenario metadata, deterministic assertion catalog, scenario ordering helpers, and replayable failure diagnostics.
 - `cmd/reglint/e2e_harness_internal_test.go` now defines `newE2ESmoke001Scenario(...)`, and `cmd/reglint/e2e_harness_test.go` executes `E2E-SMOKE-001` as a compiled-binary smoke contract.
 - `cmd/reglint/e2e_harness_internal_test.go` now defines `newE2ESmoke002Scenario(...)`, and `cmd/reglint/e2e_harness_test.go` executes `E2E-SMOKE-002` for invalid-config single-error process-level behavior.
