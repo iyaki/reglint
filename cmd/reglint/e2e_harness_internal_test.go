@@ -275,6 +275,25 @@ func newE2ESmoke002Scenario(moduleRoot string) e2EScenario {
 	}
 }
 
+func newE2ESmoke003Scenario(moduleRoot string) e2EScenario {
+	fixturePath := filepath.Join(moduleRoot, "testdata", "fixtures")
+	configPath := filepath.Join(moduleRoot, "testdata", "rules", "fail.yaml")
+
+	return e2EScenario{
+		ID:           "E2E-SMOKE-003",
+		Tier:         "smoke",
+		Name:         "fail-on threshold exceeded",
+		Fixture:      fixturePath,
+		Command:      []string{"analyze", "--config", configPath, "."},
+		ExpectedExit: 2,
+		Assertions: []e2EAssertion{
+			{Type: e2EAssertionStdoutContains, Value: "Found token token=abc"},
+			{Type: e2EAssertionStdoutContains, Value: "sample.txt:1"},
+			{Type: e2EAssertionStdoutRegex, Value: `(?m)^Summary: files=1 skipped=0 matches=1 durationMs=[0-9]+$`},
+		},
+	}
+}
+
 func assertRegexMatch(value, pattern, streamName string) error {
 	if pattern == "" {
 		return fmt.Errorf("%s regex pattern is required", streamName)

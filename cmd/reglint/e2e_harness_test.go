@@ -227,3 +227,16 @@ func TestE2ESmoke002InvalidConfigSingleActionableError(t *testing.T) {
 	result := harness.mustRunScenario(t, scenario)
 	harness.assertScenarioStderrEmpty(t, scenario, result)
 }
+
+func TestE2ESmoke003FailOnThresholdExceeded(t *testing.T) {
+	harness := newE2EHarness(t)
+
+	moduleRoot, err := findModuleRoot()
+	if err != nil {
+		t.Fatalf("resolve module root: %v", err)
+	}
+
+	scenario := newE2ESmoke003Scenario(moduleRoot)
+	result := harness.mustRunScenario(t, scenario)
+	harness.assertScenarioStderrEmpty(t, scenario, result)
+}
