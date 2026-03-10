@@ -1,405 +1,227 @@
-# Implementation Plan (baseline)
+# Implementation Plan (git-integration)
 
-**Status:** Baseline feature set is fully implemented and release-readiness verification is complete (Discovery complete, 8/8 phases complete)
+**Status:** Discovery complete; Git integration implementation pending (Phase 9 complete, 1/6 phases complete)
 **Last Updated:** 2026-03-09
-**Primary Specs:** `specs/cli-analyze-baseline.md`, `specs/cli-analyze.md`, `specs/configuration.md` (related: `specs/testing-and-validations.md`, `specs/cli-help.md`, `specs/cli.md`, `specs/core-architecture.md`, `specs/formatter.md`)
+**Primary Specs:** `specs/git-integration.md` (related: `specs/cli-analyze.md`, `specs/configuration.md`, `specs/data-model.md`, `specs/ignore-files.md`, `specs/testing-and-validations.md`, `specs/core-architecture.md`)
 
 ## Quick Reference
 
-| System / Subsystem                                                         | Specs                                                                                              | Modules / Packages                                                                                             | Artifacts                         | Status                                                      |
-| -------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------- | --------------------------------- | ----------------------------------------------------------- |
-| Baseline domain model, loader, comparator, writer                          | `specs/cli-analyze-baseline.md`, `specs/core-architecture.md`                                      | `internal/baseline/*`                                                                                          | `testdata/baseline/*.json`        | ✅ Implemented (model + loader + compare + writer complete) |
-| Analyze baseline flags and control flow (`--baseline`, `--write-baseline`) | `specs/cli-analyze.md`, `specs/cli.md`                                                             | `internal/cli/analyze.go`, `cmd/reglint/main.go`                                                               | CLI integration tests             | ✅ Implemented (flags + precedence + compare/write flow)    |
-| RuleSet baseline config field and propagation                              | `specs/configuration.md`, `specs/cli-analyze.md`                                                   | `internal/config/model.go`, `internal/config/loader.go`, `internal/config/rules.go`, `internal/rules/model.go` | `testdata/rules/*.yaml`           | ✅ Implemented (field + validation + propagation complete)  |
-| Help output coverage for baseline flags                                    | `specs/cli-help.md`, `specs/cli-analyze.md`                                                        | `internal/cli/help.go`, `internal/cli/cli_test.go`                                                             | Help snapshot assertions in tests | ✅ Implemented (baseline flags + alias help coverage)       |
-| Scan + formatter deterministic pipeline dependency                         | `specs/data-model.md`, `specs/formatter.md`, `specs/formatter-json.md`, `specs/formatter-sarif.md` | `internal/scan/engine.go`, `internal/output/*.go`                                                              | `testdata/golden/*`               | ✅ Implemented (reusable baseline dependency)               |
-| Existing analyze routing, fail-on behavior, and output selection           | `specs/cli-analyze.md`                                                                             | `internal/cli/analyze.go`, `internal/cli/analyze_output_test.go`, `cmd/reglint/main_test.go`                   | Existing CLI tests                | ✅ Implemented (baseline extension point)                   |
-| Ignore-file precedence pattern (config -> CLI override)                    | `specs/ignore-files.md`                                                                            | `internal/cli/analyze.go`, `internal/scan/ignore_rules.go`, `internal/ignore/*`                                | Ignore behavior tests             | ✅ Implemented (reference pattern for precedence design)    |
+| System / Subsystem                                                                                       | Specs                                                                                              | Modules / Packages                                                                                             | Artifacts                                                   | Status                                                        |
+| -------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------- | ------------------------------------------------------------- |
+| RuleSet Git schema and validation (`git.mode`, `git.diff`, `git.addedLinesOnly`, `git.gitignoreEnabled`) | `specs/configuration.md`, `specs/git-integration.md`, `specs/testing-and-validations.md`           | `internal/config/model.go`, `internal/config/loader.go`, `internal/config/rules.go`, `internal/rules/model.go` | `testdata/rules/*.yaml`, `internal/config/*_test.go`        | Not implemented (no `git` field in RuleSet models)            |
+| Analyze Git flags and effective settings resolution                                                      | `specs/cli-analyze.md`, `specs/cli-help.md`, `specs/git-integration.md`                            | `internal/cli/analyze.go`, `internal/cli/help.go`, `internal/cli/cli.go`                                       | `internal/cli/*_test.go`, `cmd/reglint/main_test.go`        | Not implemented (no Git flags/help entries)                   |
+| Git adapter and hook provider                                                                            | `specs/git-integration.md`, `specs/core-architecture.md`                                           | `internal/git/*`, `internal/hooks/*`                                                                           | package tests under `internal/git` and `internal/hooks`     | Not implemented (`internal/git` and `internal/hooks` missing) |
+| Scan request Git constraints and line/file scoping                                                       | `specs/data-model.md`, `specs/cli-analyze.md`, `specs/git-integration.md`                          | `internal/scan/model.go`, `internal/scan/engine.go`                                                            | `internal/scan/*_test.go`                                   | Not implemented (no Git fields in `scan.Request`)             |
+| Ignore-file engine foundation (`.ignore`, `.reglintignore`)                                              | `specs/ignore-files.md`                                                                            | `internal/ignore/*`, `internal/scan/ignore_rules.go`                                                           | `internal/ignore/*_test.go`, `internal/scan/ignore_test.go` | ✅ Implemented (reusable precedence foundation for Git mode)  |
+| Deterministic scan ordering and formatter contracts                                                      | `specs/data-model.md`, `specs/formatter.md`, `specs/formatter-json.md`, `specs/formatter-sarif.md` | `internal/scan/engine.go`, `internal/output/*`                                                                 | golden/output tests                                         | ✅ Implemented                                                |
+| Baseline compare/write behavior (related analyze flow)                                                   | `specs/cli-analyze-baseline.md`, `specs/cli-analyze.md`                                            | `internal/baseline/*`, `internal/cli/analyze.go`                                                               | `testdata/baseline/*`, baseline tests                       | ✅ Implemented                                                |
+| Git-focused docs and fixtures                                                                            | `specs/cli-analyze.md`, `specs/testing-and-validations.md`                                         | `README.md`, `testdata/rules/*`, `testdata/fixtures/*`                                                         | git-mode fixtures/examples                                  | Not implemented                                               |
 
-## Phase 1: Scope verification and plan reset
+## Phase 9: Scope lock and stale-plan reset
 
-**Goal:** Lock the baseline scope and replace stale planning content with verified gaps.
+**Goal:** Confirm current Git-integration gaps and replace stale plan content.
 **Status:** Complete
-**Paths:** `specs/cli-analyze-baseline.md`, `specs/cli-analyze.md`, `specs/configuration.md`, `specs/testing-and-validations.md`, `IMPLEMENTATION_PLAN.md`
-**Reference pattern:** `internal/cli/analyze.go` (existing precedence and output pipeline shape)
+**Paths:** `specs/git-integration.md`, `specs/cli-analyze.md`, `specs/configuration.md`, `specs/data-model.md`, `specs/ignore-files.md`, `specs/testing-and-validations.md`, `specs/core-architecture.md`, `IMPLEMENTATION_PLAN.md`
+**Reference pattern:** `internal/cli/analyze.go`, `internal/scan/ignore_rules.go`
 
-### 1.1 Spec and git history verification
+### 9.1 Spec and history verification
 
-- [x] Verified baseline specs are present and linked from `specs/README.md`.
-- [x] Verified recent baseline scope update via commit `fd4ae9f`.
-- [x] Verified baseline-related spec files changed together (`cli`, `analyze`, `help`, `configuration`, `testing`, `core-architecture`, `formatter`).
+- [x] Verified Git integration spec exists and is linked from `specs/README.md`.
+- [x] Verified scope-defining spec commit `0476869` updates Git integration plus related specs together.
+- [x] Verified Git scope includes cross-domain changes in CLI, config, data model, ignore precedence, and testing.
 
-### 1.2 Gap confirmation and stale-plan replacement
+### 9.2 Code reality and plan reset
 
-- [x] Verified previous `IMPLEMENTATION_PLAN.md` was for `ansi-colors` and out of scope for baseline.
-- [x] Verified no production baseline implementation exists in `internal/**` or `cmd/**`.
-- [x] Regenerated plan to baseline scope and current code reality.
+- [x] Verified `internal/git` and `internal/hooks` packages do not exist.
+- [x] Verified `internal/cli/analyze.go` and `internal/cli/help.go` do not expose Git flags/settings.
+- [x] Verified `internal/config/*` and `internal/rules/model.go` do not model RuleSet `git` settings.
+- [x] Verified `internal/scan/model.go` has no Git scope fields and `internal/scan/engine.go` has no Git hook path.
+- [x] Replaced baseline-focused plan with this Git-integration gap plan.
 
 **Definition of Done**
 
-- Verification artifacts captured in the Verification Log.
-- Plan reflects actual repository state instead of prior ANSI-color completion state.
+- Verification evidence is captured in the Verification Log.
+- Plan scope now matches `git-integration` and current codebase reality.
 
 **Risks/Dependencies**
 
-- Several specs claim baseline-ready behavior while runtime code does not; this increases risk of false confidence unless tracked explicitly.
+- Existing specs describe Git behavior as required while code lacks implementation; this is a release-risk if not tracked explicitly.
 
-## Phase 2: RuleSet schema and baseline path propagation
+## Phase 10: RuleSet and shared model contracts
 
-**Goal:** Add baseline path support in config models and enforce schema validation.
-**Status:** Complete
-**Paths:** `internal/config/model.go`, `internal/config/loader.go`, `internal/config/loader_test.go`, `internal/config/rules.go`, `internal/rules/model.go`
-**Reference pattern:** `internal/config/model.go` and `internal/config/rules.go` existing global field propagation (`failOn`, `concurrency`, `consoleColorsEnabled`)
+**Goal:** Add Git settings to configuration and shared models with spec-aligned validation.
+**Status:** Not started
+**Paths:** `internal/config/model.go`, `internal/config/loader.go`, `internal/config/rules.go`, `internal/rules/model.go`, `internal/config/*_test.go`, `internal/rules/*_test.go`, `testdata/rules/*.yaml`
+**Reference pattern:** `internal/config/model.go` and `internal/config/loader.go` existing validation style for `baseline`, `failOn`, `ignoreFiles*`
 
-### 2.1 RuleSet schema updates
+### 10.1 RuleSet schema updates
 
-- [x] Add `baseline` to `config.RuleSet` and `rules.RuleSet`.
-- [x] Keep field optional but reject empty/whitespace values when provided.
-- [x] Propagate value through `RuleSet.ToRules()` with existing copy semantics.
+- [ ] Add `git` settings struct to `config.RuleSet` with `mode`, `diff`, `addedLinesOnly`, `gitignoreEnabled`.
+- [ ] Add corresponding fields in `rules.RuleSet` and copy-safe conversion in `config.RuleSet.ToRules()`.
+- [ ] Preserve defaults expected by spec (`mode=off`, `diff` unset, `addedLinesOnly=false`, `gitignoreEnabled=true`).
 
-### 2.2 Validation and conversion tests
+### 10.2 Validation and fixture coverage
 
-- [x] Add loader tests for valid baseline path values.
-- [x] Add loader tests for invalid baseline path shapes (empty/non-string).
-- [x] Add conversion tests confirming baseline propagation and immutability.
+- [ ] Add cross-field validation (`git.diff` valid only in `mode=diff`; `mode=diff` requires `git.diff`; `addedLinesOnly` only with `staged|diff`).
+- [ ] Add loader tests for valid/invalid Git config combinations and error messages.
+- [ ] Add sample rules fixtures for Git settings combinations under `testdata/rules/`.
 
 **Definition of Done**
 
 - `go test ./internal/config ./internal/rules` passes.
-- Baseline field is available in effective rules model used by analyze runtime.
-- Files touched are limited to config/rules schema + tests.
+- RuleSet conversion exposes effective Git settings for CLI/runtime use.
 
 **Risks/Dependencies**
 
-- Validation behavior must stay compatible with existing YAML parsing error style (single actionable error).
+- Cross-field validation can drift from CLI validation if error semantics are not centralized.
 
-## Phase 3: Baseline package implementation (`internal/baseline`)
+## Phase 11: Analyze CLI flags and settings precedence
 
-**Goal:** Implement deterministic baseline load/validate/compare/write services.
-**Status:** Complete
-**Paths:** `internal/baseline/model.go`, `internal/baseline/loader.go`, `internal/baseline/compare.go`, `internal/baseline/writer.go`, `internal/baseline/*_test.go`
-**Reference pattern:** `internal/scan/engine.go` deterministic ordering (`sortMatches`) and `internal/output/json.go` stable canonical output style
+**Goal:** Add Git CLI flags, help output, and effective settings resolution.
+**Status:** Not started
+**Paths:** `internal/cli/analyze.go`, `internal/cli/help.go`, `internal/cli/cli_test.go`, `internal/cli/analyze_test.go`, `internal/cli/scan_request_test.go`, `cmd/reglint/main_test.go`
+**Reference pattern:** baseline precedence flow in `internal/cli/analyze.go` (`resolveBaselinePaths`, `prepareAnalyzeConfig`)
 
-### 3.1 Data model and validation
+### 11.1 Flag parsing and help exposure
 
-- [x] Define `BaselineEntry`, `BaselineDocument`, `BaselineComparison`, and generation result structs.
-- [x] Enforce `schemaVersion == 1`, required `entries`, and positive `count`.
-- [x] Enforce unique `(filePath, message)` keys and relative normalized `filePath` without traversal.
+- [ ] Add `--git-mode`, `--git-diff`, `--git-added-lines-only`, and `--no-gitignore` to analyze flag parsing.
+- [ ] Extend `cli.Config` with Git fields required by `specs/cli-analyze.md`.
+- [ ] Update help output snapshots to include all Git flags.
 
-### 3.2 Comparison service
+### 11.2 Effective settings and validation
 
-- [x] Implement suppression by `(filePath, message)` with count decrement semantics.
-- [x] Return regression matches only, plus `suppressedCount` and `improvementsCount`.
-- [x] Keep comparison deterministic for equivalent inputs.
-
-### 3.3 Baseline writer service
-
-- [x] Aggregate full matches into canonical `(filePath, message)` counts.
-- [x] Write canonical JSON (`schemaVersion=1`, sorted by `filePath`, then `message`).
-- [x] Overwrite existing target file in write mode.
+- [ ] Implement precedence `defaults -> RuleSet git.* -> CLI`, with `--git-diff` forcing effective `diff` mode.
+- [ ] Enforce CLI validation rules (single error message, exit code 1 via existing error path).
+- [ ] Thread effective Git settings into scan request assembly.
 
 **Definition of Done**
 
-- `go test ./internal/baseline` passes.
-- Loader and writer return deterministic output and single clear errors.
-- New package is isolated and reusable from `internal/cli/analyze.go`.
+- `go test ./internal/cli ./cmd/reglint` passes with Git-flag cases.
+- Analyze help for `analyze` and `analyse` includes Git flags and defaults.
 
 **Risks/Dependencies**
 
-- Message-based keys can be volatile when interpolation changes; tests must pin current behavior.
+- Precedence interactions with existing baseline and ignore flags can introduce subtle regressions.
 
-## Phase 4: Analyze CLI flags, precedence, and path resolution
+## Phase 12: Git adapter and hook infrastructure
 
-**Goal:** Add baseline flags and effective path resolution behavior to analyze command.
-**Status:** Complete
-**Paths:** `internal/cli/analyze.go`, `internal/cli/analyze_test.go`, `internal/cli/scan_request_test.go`, `internal/cli/analyze_handle_test.go`
-**Reference pattern:** existing precedence helpers in `internal/cli/analyze.go` (`resolveFailOn`, ignore settings resolution)
+**Goal:** Introduce Git runtime services and deterministic hook contracts.
+**Status:** Not started
+**Paths:** `internal/git/*.go`, `internal/hooks/*.go`, `internal/cli/analyze.go`, `internal/git/*_test.go`, `internal/hooks/*_test.go`
+**Reference pattern:** deterministic root-scoped rule loading in `internal/scan/ignore_rules.go`
 
-### 4.1 Flag parsing and validation
+### 12.1 Git adapter services
 
-- [x] Add `--baseline` (string) and `--write-baseline` (bool) to `ParseAnalyzeArgs`.
-- [x] Extend `Config` with baseline fields.
-- [x] Enforce `--write-baseline` requires an effective baseline path.
+- [ ] Implement Git capability checks (binary availability and repository context) gated by mode.
+- [ ] Implement staged file selection and diff-target file selection with normalized root-relative slash paths.
+- [ ] Implement added-line extraction (`addedLinesByFile`) from Git diff/staging output.
 
-### 4.2 Effective baseline path precedence
+### 12.2 Hook model integration
 
-- [x] Apply precedence `--baseline` > RuleSet `baseline` > unset.
-- [x] Resolve RuleSet baseline relative to config file directory.
-- [x] Resolve CLI baseline relative to current working directory.
+- [ ] Add hook contracts for capability checks, candidate scoping, ignore augmentation, and post-match filtering.
+- [ ] Register Git hooks only when Git mode is enabled; keep `mode=off` path no-op.
+- [ ] Ensure hook execution order is deterministic and failures are fatal only in Git-enabled modes.
 
 **Definition of Done**
 
-- `go test ./internal/cli -run Baseline` (or equivalent targeted selection) passes.
-- Errors remain single-line and exit through existing `exitCodeError` path.
-- No behavior regression for non-baseline analyze runs.
+- `go test ./internal/git ./internal/hooks` passes.
+- Hook behavior matches `specs/git-integration.md` contracts and error semantics.
 
 **Risks/Dependencies**
 
-- Path resolution differences between config-relative and cwd-relative modes can cause subtle CI regressions if under-tested.
+- Git command output parsing must stay deterministic across supported platforms.
 
-## Phase 5: Analyze runtime integration (compare/write modes + exit semantics)
+## Phase 13: Scan engine and ignore precedence integration
 
-**Goal:** Integrate baseline logic into scan execution without changing formatter contracts.
-**Status:** Complete
-**Paths:** `internal/cli/analyze.go`, `cmd/reglint/main_test.go`, `internal/cli/analyze_output_test.go`, `internal/output/*.go` (verification only)
-**Reference pattern:** current `runAnalyze -> renderOutputs -> fail-on` flow in `internal/cli/analyze.go`
+**Goal:** Apply Git-selected file/line constraints while preserving current deterministic scan behavior.
+**Status:** Not started
+**Paths:** `internal/scan/model.go`, `internal/scan/engine.go`, `internal/scan/ignore_rules.go`, `internal/ignore/*`, `internal/scan/*_test.go`, `internal/ignore/*_test.go`
+**Reference pattern:** candidate collection + deterministic sorting in `internal/scan/engine.go`
 
-### 5.1 Baseline compare mode
+### 13.1 Candidate selection and ignore precedence
 
-- [x] Load baseline when active and `--write-baseline` is false.
-- [x] Filter full scan matches to regression-only result before output rendering.
-- [x] Evaluate `--fail-on` against regression matches only.
+- [ ] Extend `scan.Request` with optional Git selection constraints per `specs/data-model.md`.
+- [ ] Apply Git candidate selection before include/exclude and ignore evaluation.
+- [ ] Implement `.gitignore` augmentation when enabled, with precedence `.gitignore` < `.ignore` < `.reglintignore`.
 
-### 5.2 Baseline write mode
+### 13.2 Added-lines-only filtering and deterministic results
 
-- [x] Skip suppression when `--write-baseline` is set.
-- [x] Generate baseline from full findings and overwrite target file.
-- [x] Return exit code `0` on successful baseline write regardless of matches/`--fail-on`.
-
-### 5.3 Formatter contract guardrails
-
-- [x] Keep console/json/sarif schemas unchanged.
-- [x] Ensure `stats.matches` reflects effective result in compare mode.
-- [x] Ensure write mode still renders full findings.
+- [ ] Apply added-lines filtering only for `mode=staged|diff` when enabled.
+- [ ] Ensure files without added lines report zero matches in added-lines mode.
+- [ ] Preserve deterministic ordering and unchanged formatter schemas.
 
 **Definition of Done**
 
-- `go test ./internal/cli ./cmd/reglint` passes.
-- Manual CLI checks for equal/increase/decrease baseline counts match spec behavior.
-- Formatter outputs remain stable except expected match-count filtering.
+- `go test ./internal/scan ./internal/ignore` passes with Git precedence and added-line cases.
+- Repeated runs with same repo state yield stable file and match ordering.
 
 **Risks/Dependencies**
 
-- Exit code overrides in write mode can be accidentally broken by existing fail-on path if integration is not carefully ordered.
+- Path normalization and root-relative mapping errors can silently drop or misattribute matches.
 
-## Phase 6: Help text, docs, and fixture alignment
+## Phase 14: Integration verification, docs, and quality gates
 
-**Goal:** Align CLI help and user-facing docs with new baseline capabilities.
-**Status:** Complete
-**Paths:** `internal/cli/help.go`, `internal/cli/cli_test.go`, `README.md`, `testdata/rules/*.yaml`, `testdata/baseline/*.json`
-**Reference pattern:** existing deterministic help-output snapshots in `internal/cli/cli_test.go`
+**Goal:** Close remaining gaps with end-to-end coverage, docs alignment, and quality gate evidence.
+**Status:** Not started
+**Paths:** `cmd/reglint/main_test.go`, `internal/cli/*_test.go`, `internal/scan/*_test.go`, `testdata/rules/*`, `testdata/fixtures/*`, `README.md`, `Makefile`
+**Reference pattern:** existing command-level integration harness in `cmd/reglint/main_test.go`
 
-### 6.1 Analyze help output
+### 14.1 Git behavior matrix coverage
 
-- [x] Add `--baseline` and `--write-baseline` to analyze help topic output.
-- [x] Update strict help snapshot tests.
-- [x] Keep alias behavior (`analyse`) unchanged.
+- [ ] Add integration tests for `git-mode=off|staged|diff` success/error paths.
+- [ ] Add tests for `--git-diff` implied mode, invalid diff targets, and missing Git binary handling.
+- [ ] Add tests for added-lines-only output behavior and ignore precedence conflicts.
 
-### 6.2 Docs and sample artifacts
+### 14.2 Docs and final quality checks
 
-- [x] Add baseline usage examples to README.
-- [x] Add baseline JSON fixtures for valid and invalid cases.
-- [x] Keep examples aligned with actual command behavior and exit codes.
+- [ ] Add README examples for Git mode usage and expected exit behavior.
+- [ ] Ensure analyze help/output tests remain deterministic after Git flag additions.
+- [ ] Run and log `go test ./...`, `make test`, `make lint`, and `make quality`.
 
 **Definition of Done**
 
-- `go test ./internal/cli` passes with updated help snapshots.
-- README examples are executable against local fixtures.
-- Baseline fixture files are deterministic and minimal.
+- All spec verification bullets for Git integration are covered by tests and/or reproducible commands.
+- Quality gates pass and Verification Log records outcomes.
 
 **Risks/Dependencies**
 
-- Help snapshot tests are strict; minor formatting drift can cause broad failures.
-
-## Phase 7: End-to-end tests and regression coverage
-
-**Goal:** Add baseline-focused unit/integration coverage across config, CLI, and command entrypoints.
-**Status:** Complete
-**Paths:** `internal/baseline/*_test.go`, `internal/config/loader_test.go`, `internal/cli/*_test.go`, `cmd/reglint/main_test.go`, `testdata/*`
-**Reference pattern:** current command-level tests in `cmd/reglint/main_test.go` and fixture-driven tests in `internal/cli/analyze_handle_test.go`
-
-### 7.1 Baseline behavior matrix
-
-- [x] Equal-count suppression yields zero regressions.
-- [x] Increased count yields only excess regressions.
-- [x] Decreased count yields no regressions and non-failing behavior for that key.
-
-### 7.2 Precedence and validation matrix
-
-- [x] RuleSet baseline path works when CLI flag is unset.
-- [x] CLI baseline overrides RuleSet baseline.
-- [x] Invalid baseline JSON/schema/duplicates fail with exit code `1` and one error message.
-
-### 7.3 Write-mode matrix
-
-- [x] `--write-baseline` requires effective path.
-- [x] Existing baseline content is ignored during write mode.
-- [x] Successful write mode exits `0` even with failing matches.
-
-**Definition of Done**
-
-- `go test ./...` passes with new baseline cases.
-- Added tests explicitly cover all verification bullets in `specs/cli-analyze-baseline.md`.
-- No skipped or flaky baseline tests introduced.
-
-**Risks/Dependencies**
-
-- Command-level tests may require careful cwd and temp-file isolation to avoid cross-test interference.
-
-## Phase 8: Final quality gates and release readiness
-
-**Goal:** Validate baseline implementation against repository quality gates and manual behavior checks.
-**Status:** Complete
-**Paths:** repository-wide (`internal/**`, `cmd/**`, `testdata/**`, `README.md`, `Makefile`)
-**Reference pattern:** `specs/testing-and-validations.md`
-
-### 8.1 Automated gates
-
-- [x] `go test ./...`
-- [x] `make test`
-- [x] `make lint`
-- [x] `make quality`
-- [x] `make mutation` (final stage only, per project guidance)
-
-### 8.2 Manual verification commands
-
-- [x] `reglint analyze --config <rules> --baseline <file> <path>` (compare mode).
-- [x] `reglint analyze --config <rules> --baseline <file> --write-baseline <path>` (write mode).
-- [x] `reglint analyze --help` includes baseline flags.
-- [x] JSON/SARIF outputs remain ANSI-free and schema-stable after baseline filtering.
-
-**Definition of Done**
-
-- All quality gates pass.
-- Verification Log is updated with command outcomes.
-- Remaining effort is reduced to `None`.
-
-**Risks/Dependencies**
-
-- Mutation testing runtime can be long; run only after implementation stabilizes.
+- Git-dependent tests can be flaky without strict temp-repo setup and deterministic commit/diff fixtures.
 
 ## Verification Log
 
-- 2026-03-09: `Read specs/README.md` - baseline spec index confirmed; tests run: none (planning mode); bug fixes discovered: none; files touched: `specs/README.md`.
-- 2026-03-09: `Read specs/cli-analyze-baseline.md` - baseline requirements and data model captured; tests run: none; bug fixes discovered: none; files touched: `specs/cli-analyze-baseline.md`.
-- 2026-03-09: `Read specs/cli-analyze.md` - baseline flags, precedence, and exit semantics captured; tests run: none; bug fixes discovered: none; files touched: `specs/cli-analyze.md`.
-- 2026-03-09: `Read specs/configuration.md` - verified expected RuleSet `baseline` field; tests run: none; bug fixes discovered: none; files touched: `specs/configuration.md`.
-- 2026-03-09: `Read specs/testing-and-validations.md` - baseline validation/test obligations captured; tests run: none; bug fixes discovered: none; files touched: `specs/testing-and-validations.md`.
-- 2026-03-09: `git log --oneline --decorate -n 20 -- specs/cli-analyze-baseline.md` - baseline spec introduced in `fd4ae9f`; tests run: none; bug fixes discovered: none; files touched: `specs/cli-analyze-baseline.md`.
-- 2026-03-09: `git log --oneline --decorate -n 20 -- specs/cli-analyze.md` and `git log --oneline --decorate -n 20 -- specs/configuration.md` - baseline-related spec updates confirmed in `fd4ae9f`; tests run: none; bug fixes discovered: none; files touched: `specs/cli-analyze.md`, `specs/configuration.md`.
-- 2026-03-09: `git show --name-only --oneline fd4ae9f` - confirmed baseline scope touched CLI/analyze/help/config/testing/core architecture specs; tests run: none; bug fixes discovered: none; files touched: `specs/*.md` set listed by command.
-- 2026-03-09: `glob internal/baseline/**/*.go` - no baseline package files found; tests run: none; bug fixes discovered: none; files touched: none.
-- 2026-03-09: `grep "baseline|write-baseline|Baseline" internal/*.go cmd/*.go` - no runtime baseline references found; tests run: none; bug fixes discovered: none; files touched: none.
-- 2026-03-09: `Read internal/cli/analyze.go` - verified no baseline flags or runtime compare/write flow; tests run: none; bug fixes discovered: none; files touched: `internal/cli/analyze.go`.
-- 2026-03-09: `Read internal/config/model.go`, `internal/config/loader.go`, `internal/config/rules.go`, `internal/rules/model.go` - verified `baseline` field not implemented; tests run: none; bug fixes discovered: none; files touched: listed files.
-- 2026-03-09: `Read internal/cli/help.go` and `internal/cli/cli_test.go` - verified analyze help output omits baseline flags despite spec expectations; tests run: none; bug fixes discovered: none; files touched: `internal/cli/help.go`, `internal/cli/cli_test.go`.
-- 2026-03-09: `Read internal/output/console.go`, `internal/output/json.go`, `internal/output/sarif.go`, `internal/scan/engine.go` - verified deterministic scan/output path exists and is reusable for baseline integration; tests run: none; bug fixes discovered: none; files touched: listed files.
-- 2026-03-09: `git status --short` - working tree verified before plan rewrite; tests run: none; bug fixes discovered: none; files touched: none.
-- 2026-03-09: `Plan-only update` - replaced stale ansi-colors plan with baseline gap plan; tests run: none; bug fixes discovered: stale/out-of-sync implementation plan corrected; files touched: `IMPLEMENTATION_PLAN.md`.
-- 2026-03-09: go test ./internal/baseline - pass.
-- 2026-03-09: go test ./internal/config ./internal/rules - pass.
-- 2026-03-09: make lint - pass.
-- 2026-03-09: make arch - pass.
-- 2026-03-09: git show --name-only --oneline 2589fe9 - baseline model + loader + loader tests committed with arch component registration.
-- 2026-03-09: Update IMPLEMENTATION_PLAN.md - marked Phase 3 as in progress with 3.1 complete and refreshed remaining effort.
-- 2026-03-09: go test ./internal/baseline - pass (writer service tests included).
-- 2026-03-09: make lint - pass.
-- 2026-03-09: make test-coverage - pass.
-- 2026-03-09: make mutation ARGS="--diff HEAD" - pass (test efficacy 88.24%, mutator coverage 100%).
-- 2026-03-09: git commit -m "Add deterministic baseline writer generation" -- internal/baseline/writer.go internal/baseline/writer_test.go - success.
-- 2026-03-09: go test ./internal/config ./internal/rules - pass.
-- 2026-03-09: make lint - pass.
-- 2026-03-09: git commit -m "Add baseline path support to rules configuration" -- internal/config/model.go internal/config/rules.go internal/config/loader.go internal/config/loader_test.go internal/rules/model.go - success.
-- 2026-03-09: go test ./internal/baseline - pass.
-- 2026-03-09: make lint - pass.
-- 2026-03-09: git commit -m "Add deterministic baseline comparison service" -- internal/baseline/compare.go internal/baseline/compare_test.go - success.
-- 2026-03-09: Update IMPLEMENTATION_PLAN.md - marked Phase 3 complete and refreshed remaining effort.
-- 2026-03-09: go test ./internal/cli -run "TestHandleAnalyzeBaselineSuppressionAffectsFailOn|TestHandleAnalyzeBaselineCompareReportsOnlyRegressions|TestHandleAnalyzeWriteBaselineIgnoresExistingContentAndReturnsZero" - fail (baseline compare/write behavior not yet integrated).
-- 2026-03-09: go test ./internal/cli -run "TestHandleAnalyzeBaselineSuppressionAffectsFailOn|TestHandleAnalyzeBaselineCompareReportsOnlyRegressions|TestHandleAnalyzeWriteBaselineIgnoresExistingContentAndReturnsZero" - pass.
-- 2026-03-09: go test ./internal/cli - pass.
-- 2026-03-09: go test ./cmd/reglint - pass.
-- 2026-03-09: go test ./... - pass.
-- 2026-03-09: make test - pass.
-- 2026-03-09: make lint - fail (cyclomatic complexity and long-line violations).
-- 2026-03-09: make lint - pass.
-- 2026-03-09: git commit -m "Integrate baseline compare and write behavior into analyze" -- internal/cli/analyze.go internal/cli/analyze_handle_test.go internal/cli/analyze_output_test.go - success.
-- 2026-03-09: Update IMPLEMENTATION_PLAN.md - marked Phases 4 and 5 complete and refreshed remaining effort.
-- 2026-03-09: go test ./internal/cli -run "TestRunShowsHelpForAnalyzeFlag|TestRunShowsHelpForAnalyseFlag" - fail (analyze help output missing baseline flags before implementation).
-- 2026-03-09: go test ./internal/cli -run "TestRunShowsHelpForAnalyzeFlag|TestRunShowsHelpForAnalyseFlag" - pass.
-- 2026-03-09: go test ./internal/cli - pass.
-- 2026-03-09: go test ./cmd/reglint - pass.
-- 2026-03-09: git commit -m "Add baseline flags to analyze help output" -- internal/cli/help.go internal/cli/cli_test.go - success.
-- 2026-03-09: Update IMPLEMENTATION_PLAN.md - marked Phase 6.1 complete and Phase 6 as in progress.
-- 2026-03-09: go test ./cmd/reglint -run "TestRunAnalyzeUsesBaselineFixtureForCompareMode|TestRunAnalyzeUsesRuleSetBaselineFixture|TestRunAnalyzeRejectsInvalidBaselineFixture" - fail (baseline fixtures not present yet).
-- 2026-03-09: go test ./cmd/reglint -run "TestRunAnalyzeUsesBaselineFixtureForCompareMode|TestRunAnalyzeUsesRuleSetBaselineFixture|TestRunAnalyzeRejectsInvalidBaselineFixture" - pass.
-- 2026-03-09: go test ./cmd/reglint - pass.
-- 2026-03-09: go test ./internal/cli -run "Baseline|TestRunAnalyzeResolvesRuleSetBaselinePathFromConfigDirectory|TestRunAnalyzePrefersCLIBaselineOverRuleSetBaseline" - pass.
-- 2026-03-09: go test ./... - pass.
-- 2026-03-09: git commit -m "Add baseline fixtures and README usage examples" -- README.md cmd/reglint/main_test.go testdata/baseline/invalid-duplicate-keys.json testdata/baseline/valid-equal.json testdata/rules/baseline.yaml - success.
-- 2026-03-09: edit IMPLEMENTATION_PLAN.md - marked Phase 6 complete and updated remaining effort.
-- 2026-03-09: go test ./cmd/reglint -run "TestRunAnalyzeBaselineIncreaseReportsOnlyExcessRegressions|TestRunAnalyzeBaselineDecreaseDoesNotFailOnSuppressedKey" - pass.
-- 2026-03-09: go test ./cmd/reglint - pass.
-- 2026-03-09: git commit -m "Add baseline count-delta analyze integration tests" -- cmd/reglint/main_test.go - fail (pre-commit lint: lll in cmd/reglint/main_test.go).
-- 2026-03-09: git commit -m "Add baseline count-delta analyze integration tests" -- cmd/reglint/main_test.go - success.
-- 2026-03-09: Update IMPLEMENTATION_PLAN.md - marked Phase 7 as in progress and completed 7.1 baseline behavior matrix.
-- 2026-03-09: go test ./cmd/reglint -run "TestRunAnalyzeCLIBaselineOverridesRuleSetBaseline|TestRunAnalyzeRejectsInvalidBaselineJSONWithSingleErrorMessage|TestRunAnalyzeRejectsInvalidBaselineSchemaVersionWithSingleErrorMessage|TestRunAnalyzeRejectsInvalidBaselineFixture" - pass.
-- 2026-03-09: go test ./cmd/reglint - pass.
-- 2026-03-09: go test ./... - pass.
-- 2026-03-09: make lint - pass.
-- 2026-03-09: git commit -m "Add baseline precedence and validation integration coverage" -- cmd/reglint/main_test.go - success.
-- 2026-03-09: go test ./cmd/reglint -run "TestRunAnalyzeWriteBaselineRequiresEffectiveBaselinePath|TestRunAnalyzeWriteBaselineIgnoresExistingBaselineContent|TestRunAnalyzeWriteBaselineExitsZeroWithFailOnMatches" - pass.
-- 2026-03-09: go test ./cmd/reglint - pass.
-- 2026-03-09: go test ./... - pass.
-- 2026-03-09: make lint - fail (cyclomatic complexity in new write-mode integration test).
-- 2026-03-09: make lint - pass.
-- 2026-03-09: git commit -m "Add write-mode baseline integration coverage" -- cmd/reglint/main_test.go - success.
-- 2026-03-09: go test ./cmd/reglint -run "TestRunAnalyzeBaselineCompareJSONOutputRemainsANSIFreeAndSchemaStable|TestRunAnalyzeBaselineCompareSARIFOutputRemainsANSIFreeAndSchemaStable" - pass.
-- 2026-03-09: go test ./cmd/reglint - pass.
-- 2026-03-09: go test ./... - pass.
-- 2026-03-09: make test - pass.
-- 2026-03-09: make lint - pass.
-- 2026-03-09: go run ./cmd/reglint analyze --config testdata/rules/fail.yaml --baseline testdata/baseline/valid-equal.json testdata/fixtures - pass (No matches found; Summary matches=0).
-- 2026-03-09: go run ./cmd/reglint analyze --config testdata/rules/fail.yaml --baseline testdata/baseline/valid-equal.json --format json testdata/fixtures - pass (schemaVersion=1; matches empty).
-- 2026-03-09: git commit -m "Add baseline compare output contract integration tests" -- cmd/reglint/main_test.go - success.
-- 2026-03-09: Update IMPLEMENTATION_PLAN.md - marked Phase 8 in progress and completed JSON/SARIF ANSI-free schema-stability verification task.
-- 2026-03-09: go test ./internal/baseline -run TestLoadRejectsInvalidEntries - fail (Windows absolute baseline file paths were accepted).
-- 2026-03-09: go test ./internal/baseline -run TestLoadRejectsInvalidEntries - pass.
-- 2026-03-09: go test ./internal/baseline - pass.
-- 2026-03-09: go test ./internal/ignore - pass.
-- 2026-03-09: make test - pass.
-- 2026-03-09: make lint - pass.
-- 2026-03-09: make mutation - pass.
-- 2026-03-09: make quality - pass.
-- 2026-03-09: go run ./cmd/reglint analyze --config testdata/rules/fail.yaml --baseline testdata/baseline/valid-equal.json testdata/fixtures - pass.
-- 2026-03-09: go run ./cmd/reglint analyze --config testdata/rules/fail.yaml --baseline testdata/baseline/tmp-write-baseline.json --write-baseline testdata/fixtures - pass.
-- 2026-03-09: go run ./cmd/reglint analyze --config testdata/rules/fail.yaml --baseline testdata/baseline/tmp-write-baseline.json testdata/fixtures - pass.
-- 2026-03-09: go run ./cmd/reglint analyze --help - pass.
-- 2026-03-09: git commit -m "Fix baseline path validation for Windows paths" -- internal/baseline/loader.go internal/baseline/loader_test.go internal/ignore/matcher_test.go - success.
+- 2026-03-09: Read `specs/README.md` - confirmed `Git Integration` is indexed; tests run: none (planning mode); bug fixes discovered: none; files touched: `specs/README.md`.
+- 2026-03-09: Read `specs/git-integration.md` - captured hook contracts, settings, precedence, and verification matrix; tests run: none; bug fixes discovered: none; files touched: `specs/git-integration.md`.
+- 2026-03-09: Read `specs/cli-analyze.md`, `specs/configuration.md`, `specs/data-model.md`, `specs/ignore-files.md`, `specs/testing-and-validations.md`, `specs/core-architecture.md` - confirmed cross-domain Git requirements; tests run: none; bug fixes discovered: none; files touched: listed spec files.
+- 2026-03-09: `git log --oneline --decorate -n 30 -- specs/git-integration.md` - confirmed latest Git scope commit `0476869`; tests run: none; bug fixes discovered: none; files touched: `specs/git-integration.md`.
+- 2026-03-09: `git show --name-only --oneline 0476869` - verified related specs changed together (`cli`, `configuration`, `data-model`, `ignore-files`, `testing`, `core-architecture`); tests run: none; bug fixes discovered: none; files touched: spec files listed by command.
+- 2026-03-09: `glob internal/git/**/*.go` and `glob internal/hooks/**/*.go` - no Git integration packages found; tests run: none; bug fixes discovered: none; files touched: none.
+- 2026-03-09: `grep "git-mode|git\.mode|--git-diff|--no-gitignore" --include "*.go"` - no runtime Git support found in Go sources; tests run: none; bug fixes discovered: none; files touched: none.
+- 2026-03-09: Read `internal/cli/analyze.go` and `internal/cli/help.go` - verified baseline/ignore features exist and Git flags are absent; tests run: none; bug fixes discovered: none; files touched: `internal/cli/analyze.go`, `internal/cli/help.go`.
+- 2026-03-09: Read `internal/config/model.go`, `internal/config/loader.go`, `internal/config/rules.go`, `internal/rules/model.go` - verified RuleSet has no Git settings model/validation; tests run: none; bug fixes discovered: none; files touched: listed config/rules files.
+- 2026-03-09: Read `internal/scan/model.go`, `internal/scan/engine.go`, `internal/scan/ignore_rules.go` - verified no Git request constraints/hooks and confirmed deterministic scan/ignore foundation exists; tests run: none; bug fixes discovered: none; files touched: listed scan files.
+- 2026-03-09: `glob testdata/**/*git*` and read `testdata/rules/*.yaml` - verified no Git fixtures currently exist; tests run: none; bug fixes discovered: none; files touched: `testdata/rules/example.yaml`, `testdata/rules/fail.yaml`, `testdata/rules/baseline.yaml`.
+- 2026-03-09: Plan-only update - replaced stale baseline-scoped plan with Git-integration plan reflecting current gaps; tests run: none; bug fixes discovered: stale plan corrected; files touched: `IMPLEMENTATION_PLAN.md`.
 
 ## Summary
 
-| Phase                                                                       | Status   |
-| --------------------------------------------------------------------------- | -------- |
-| Phase 1: Scope verification and plan reset                                  | Complete |
-| Phase 2: RuleSet schema and baseline path propagation                       | Complete |
-| Phase 3: Baseline package implementation (`internal/baseline`)              | Complete |
-| Phase 4: Analyze CLI flags, precedence, and path resolution                 | Complete |
-| Phase 5: Analyze runtime integration (compare/write modes + exit semantics) | Complete |
-| Phase 6: Help text, docs, and fixture alignment                             | Complete |
-| Phase 7: End-to-end tests and regression coverage                           | Complete |
-| Phase 8: Final quality gates and release readiness                          | Complete |
+| Phase                                                       | Status      |
+| ----------------------------------------------------------- | ----------- |
+| Phase 9: Scope lock and stale-plan reset                    | Complete    |
+| Phase 10: RuleSet and shared model contracts                | Not started |
+| Phase 11: Analyze CLI flags and settings precedence         | Not started |
+| Phase 12: Git adapter and hook infrastructure               | Not started |
+| Phase 13: Scan engine and ignore precedence integration     | Not started |
+| Phase 14: Integration verification, docs, and quality gates | Not started |
 
-**Remaining effort:** None.
+**Remaining effort:** Implement Phases 10-14 (Git schema/validation, CLI flags and precedence, adapter/hooks, scan integration, integration tests, and docs/quality verification).
 
 ## Known Existing Work
 
-- `internal/scan/engine.go` already provides deterministic match sorting and stable stats aggregation.
-- `internal/cli/analyze.go` now integrates baseline path resolution, compare-mode suppression, and write-mode generation while preserving formatter contracts.
-- `internal/output/console.go`, `internal/output/json.go`, and `internal/output/sarif.go` already provide deterministic formatter behavior and should remain schema-compatible.
-- `internal/cli/help.go` and `internal/cli/cli_test.go` now include deterministic analyze help coverage for `--baseline`/`--write-baseline`, including the `analyse` alias help path.
-- `internal/config/loader.go` + `internal/config/loader_test.go` already provide strong schema validation scaffolding for additional RuleSet fields.
-- `internal/config/model.go`, `internal/config/rules.go`, and `internal/rules/model.go` now support RuleSet `baseline` propagation with copy-safe conversion.
-- `cmd/reglint/main_test.go` already contains command-level integration tests that can be extended for baseline behavior.
-- `internal/baseline/model.go` and `internal/baseline/loader.go` now provide baseline document structures and strict load/validation behavior.
-- `internal/baseline/compare.go` now provides deterministic suppression-by-count comparison with regression-only outputs and improvement/suppression counts.
-- `internal/baseline/writer.go` now provides deterministic baseline generation and canonical JSON overwrite behavior.
-- `internal/baseline/loader.go` now rejects Windows absolute drive-path values (`<drive>:/...`) for `BaselineEntry.filePath`, preserving the relative-path validation contract across platforms.
-- `README.md` now documents baseline compare/write usage and expected exit-code behavior with executable fixture examples.
-- `testdata/baseline/valid-equal.json`, `testdata/baseline/invalid-duplicate-keys.json`, and `testdata/rules/baseline.yaml` now provide deterministic fixtures for baseline compare, RuleSet baseline resolution, and validation-failure scenarios.
-- `cmd/reglint/main_test.go` now includes baseline increase/decrease integration coverage to verify regression-only excess reporting and non-failing decrease behavior.
-- `cmd/reglint/main_test.go` now includes baseline CLI-overrides-RuleSet precedence coverage and invalid baseline JSON/schema/duplicate validation coverage with single-line error assertions.
-- `cmd/reglint/main_test.go` now includes write-mode integration coverage for missing effective path validation, ignore-existing-baseline overwrite behavior, and guaranteed exit code `0` with `--fail-on` in write mode.
-- `cmd/reglint/main_test.go` now includes baseline-compare integration coverage asserting JSON and SARIF outputs remain ANSI-free and schema-stable after suppression.
+- `internal/ignore/loader.go`, `internal/ignore/parser.go`, `internal/ignore/matcher.go`, and `internal/scan/ignore_rules.go` already provide deterministic `.ignore`/`.reglintignore` support and are the reference for Git-ignore precedence integration.
+- `internal/scan/engine.go` already provides deterministic file and match ordering and should remain the ordering reference after Git candidate filtering is added.
+- `internal/cli/analyze.go` already has robust precedence patterns (baseline path resolution and ignore toggles) that should be reused for Git settings precedence.
+- `internal/cli/help.go` and `internal/cli/cli_test.go` already enforce strict help snapshots and should be extended (not replaced) for Git flags.
+- `internal/baseline/*` and `internal/output/*` already implement baseline compare/write behavior and stable formatter schemas that Git integration must not alter.
 
 ## Manual Deployment Tasks
 
