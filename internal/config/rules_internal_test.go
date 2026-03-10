@@ -1,6 +1,10 @@
 package config
 
-import "testing"
+import (
+	"testing"
+
+	"github.com/iyaki/reglint/internal/rules"
+)
 
 func TestRuleToRulesRulePreservesExplicitValues(t *testing.T) {
 	t.Parallel()
@@ -79,5 +83,107 @@ func TestRuleSetToRulesHandlesEmptyRules(t *testing.T) {
 	}
 	if converted.Concurrency == nil {
 		t.Fatal("expected default concurrency to be set")
+	}
+}
+
+func TestCopyStringPointerReturnsNilForNilInput(t *testing.T) {
+	t.Parallel()
+
+	if got := copyStringPointer(nil); got != nil {
+		t.Fatalf("expected nil copy, got %v", got)
+	}
+}
+
+func TestCopyStringPointerReturnsIndependentCopy(t *testing.T) {
+	t.Parallel()
+
+	value := "baseline.json"
+	copyValue := copyStringPointer(&value)
+	if copyValue == nil {
+		t.Fatal("expected non-nil copy")
+	}
+
+	*copyValue = "changed.json"
+	if value != "baseline.json" {
+		t.Fatalf("expected original value unchanged, got %q", value)
+	}
+}
+
+func TestToRulesGitSettingsDefaultsWhenMissing(t *testing.T) {
+	t.Parallel()
+
+	got := toRulesGitSettings(nil)
+	if got.Mode != "off" {
+		t.Fatalf("expected mode off, got %q", got.Mode)
+	}
+	if got.Diff != "" {
+		t.Fatalf("expected empty diff, got %q", got.Diff)
+	}
+	if got.AddedLinesOnly {
+		t.Fatal("expected addedLinesOnly false")
+	}
+	if !got.GitignoreEnabled {
+		t.Fatal("expected gitignoreEnabled true")
+	}
+}
+
+func TestToRulesGitSettingsUsesProvidedValues(t *testing.T) {
+	t.Parallel()
+
+	mode := "diff"
+	diff := "HEAD~1..HEAD"
+	addedLinesOnly := true
+	gitignoreEnabled := false
+
+	got := toRulesGitSettings(&GitSettings{
+		Mode:             &mode,
+		Diff:             &diff,
+		AddedLinesOnly:   &addedLinesOnly,
+		GitignoreEnabled: &gitignoreEnabled,
+	})
+
+	if got.Mode != "diff" {
+		t.Fatalf("expected mode diff, got %q", got.Mode)
+	}
+	if got.Diff != "HEAD~1..HEAD" {
+		t.Fatalf("expected diff HEAD~1..HEAD, got %q", got.Diff)
+	}
+	if !got.AddedLinesOnly {
+		t.Fatal("expected addedLinesOnly true")
+	}
+	if got.GitignoreEnabled {
+		t.Fatal("expected gitignoreEnabled false")
+	}
+}
+
+func TestToRulesRulesReturnsNilForEmptyInput(t *testing.T) {
+	t.Parallel()
+
+	got := toRulesRules(nil, []string{"**/*"}, []string{"**/.git/**"})
+	if got != nil {
+		t.Fatalf("expected nil rules, got %v", got)
+	}
+}
+
+func TestApplyRuleSetDefaultsDoesNotOverrideConfiguredValues(t *testing.T) {
+	t.Parallel()
+
+	concurrency := 3
+	converted := rules.RuleSet{
+		Include:     []string{"src/**"},
+		Exclude:     []string{"vendor/**"},
+		Concurrency: &concurrency,
+	}
+
+	applyRuleSetDefaults(&converted)
+
+	if len(converted.Include) != 1 || converted.Include[0] != "src/**" {
+		t.Fatalf("expected include preserved, got %v", converted.Include)
+	}
+	if len(converted.Exclude) != 1 || converted.Exclude[0] != "vendor/**" {
+		t.Fatalf("expected exclude preserved, got %v", converted.Exclude)
+	}
+	if converted.Concurrency == nil || *converted.Concurrency != 3 {
+		t.Fatalf("expected concurrency 3, got %v", converted.Concurrency)
 	}
 }

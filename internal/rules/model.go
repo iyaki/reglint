@@ -13,9 +13,18 @@ type RuleSet struct {
 	FailOn               *string
 	Concurrency          *int
 	Baseline             *string
+	Git                  GitSettings
 	ConsoleColorsEnabled *bool
 	IgnoreFilesEnabled   *bool
 	IgnoreFiles          []string
+}
+
+// GitSettings represents effective Git controls for a single run.
+type GitSettings struct {
+	Mode             string
+	Diff             string
+	AddedLinesOnly   bool
+	GitignoreEnabled bool
 }
 
 // Rule represents a single regex rule entry.

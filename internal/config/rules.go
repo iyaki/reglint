@@ -39,22 +39,62 @@ func (r Rule) toRulesRule() rules.Rule {
 
 // ToRules converts the parsed config into shared rule models.
 func (ruleSet RuleSet) ToRules() rules.RuleSet {
-	var baseline *string
-	if ruleSet.Baseline != nil {
-		baselineValue := *ruleSet.Baseline
-		baseline = &baselineValue
-	}
-
 	converted := rules.RuleSet{
 		Include:              append([]string{}, []string(ruleSet.Include)...),
 		Exclude:              append([]string{}, []string(ruleSet.Exclude)...),
 		FailOn:               ruleSet.FailOn,
 		Concurrency:          ruleSet.Concurrency,
-		Baseline:             baseline,
+		Baseline:             copyStringPointer(ruleSet.Baseline),
+		Git:                  toRulesGitSettings(ruleSet.Git),
 		ConsoleColorsEnabled: ruleSet.ConsoleColorsEnabled,
 		IgnoreFilesEnabled:   ruleSet.IgnoreFilesEnabled,
 		IgnoreFiles:          append([]string{}, []string(ruleSet.IgnoreFiles)...),
 	}
+
+	applyRuleSetDefaults(&converted)
+	converted.Rules = toRulesRules(ruleSet.Rules, converted.Include, converted.Exclude)
+
+	return converted
+}
+
+func copyStringPointer(value *string) *string {
+	if value == nil {
+		return nil
+	}
+
+	copyValue := *value
+
+	return &copyValue
+}
+
+func toRulesGitSettings(git *GitSettings) rules.GitSettings {
+	settings := rules.GitSettings{
+		Mode:             "off",
+		Diff:             "",
+		AddedLinesOnly:   false,
+		GitignoreEnabled: true,
+	}
+
+	if git == nil {
+		return settings
+	}
+	if git.Mode != nil {
+		settings.Mode = *git.Mode
+	}
+	if git.Diff != nil {
+		settings.Diff = *git.Diff
+	}
+	if git.AddedLinesOnly != nil {
+		settings.AddedLinesOnly = *git.AddedLinesOnly
+	}
+	if git.GitignoreEnabled != nil {
+		settings.GitignoreEnabled = *git.GitignoreEnabled
+	}
+
+	return settings
+}
+
+func applyRuleSetDefaults(converted *rules.RuleSet) {
 	if len(converted.Include) == 0 {
 		converted.Include = []string{"**/*"}
 	}
@@ -65,21 +105,25 @@ func (ruleSet RuleSet) ToRules() rules.RuleSet {
 		concurrency := runtime.GOMAXPROCS(0)
 		converted.Concurrency = &concurrency
 	}
+}
 
-	if len(ruleSet.Rules) > 0 {
-		converted.Rules = make([]rules.Rule, len(ruleSet.Rules))
-		for i, rule := range ruleSet.Rules {
-			convertedRule := rule.toRulesRule()
-			convertedRule.Index = i
-			if len(rule.Paths) == 0 {
-				convertedRule.Paths = append([]string{}, converted.Include...)
-			}
-			if len(rule.Exclude) == 0 {
-				convertedRule.Exclude = append([]string{}, converted.Exclude...)
-			}
-			converted.Rules[i] = convertedRule
-		}
+func toRulesRules(configRules []Rule, include, exclude []string) []rules.Rule {
+	if len(configRules) == 0 {
+		return nil
 	}
 
-	return converted
+	convertedRules := make([]rules.Rule, len(configRules))
+	for i, rule := range configRules {
+		convertedRule := rule.toRulesRule()
+		convertedRule.Index = i
+		if len(rule.Paths) == 0 {
+			convertedRule.Paths = append([]string{}, include...)
+		}
+		if len(rule.Exclude) == 0 {
+			convertedRule.Exclude = append([]string{}, exclude...)
+		}
+		convertedRules[i] = convertedRule
+	}
+
+	return convertedRules
 }

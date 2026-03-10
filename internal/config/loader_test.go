@@ -167,6 +167,30 @@ func TestLoadRuleSetAllowsBaselinePath(t *testing.T) {
 	}
 }
 
+func TestLoadRuleSetParsesGitSettings(t *testing.T) {
+	t.Parallel()
+
+	gitConfig := "git:\n" +
+		"  mode: 'diff'\n" +
+		"  diff: 'HEAD~1..HEAD'\n" +
+		"  addedLinesOnly: true\n" +
+		"  gitignoreEnabled: false\n" +
+		"rules:\n" +
+		"  - message: 'hello'\n" +
+		"    regex: 'world'\n"
+
+	path := writeConfigFile(
+		t,
+		gitConfig,
+	)
+
+	ruleSet, err := config.LoadRuleSet(path)
+	if err != nil {
+		t.Fatalf("expected no error, got %v", err)
+	}
+	assertGitSettings(t, ruleSet.Git)
+}
+
 func TestLoadRuleSetRejectsEmptyBaseline(t *testing.T) {
 	t.Parallel()
 
@@ -558,6 +582,60 @@ func TestRuleSetToRulesLeavesBaselineUnsetWhenMissing(t *testing.T) {
 	}
 }
 
+func TestRuleSetToRulesDefaultsGitSettings(t *testing.T) {
+	t.Parallel()
+
+	ruleSet := config.RuleSet{
+		Rules: []config.Rule{{Message: "hello", Regex: "world"}},
+	}
+
+	converted := ruleSet.ToRules()
+	if converted.Git.Mode != "off" {
+		t.Fatalf("expected git mode off, got %q", converted.Git.Mode)
+	}
+	if converted.Git.Diff != "" {
+		t.Fatalf("expected git diff to be empty by default, got %q", converted.Git.Diff)
+	}
+	if converted.Git.AddedLinesOnly {
+		t.Fatal("expected git addedLinesOnly to default to false")
+	}
+	if !converted.Git.GitignoreEnabled {
+		t.Fatal("expected git gitignoreEnabled to default to true")
+	}
+}
+
+func TestRuleSetToRulesPropagatesGitSettings(t *testing.T) {
+	t.Parallel()
+
+	mode := "diff"
+	diff := "HEAD~1..HEAD"
+	addedLinesOnly := true
+	gitignoreEnabled := false
+	ruleSet := config.RuleSet{
+		Git: &config.GitSettings{
+			Mode:             &mode,
+			Diff:             &diff,
+			AddedLinesOnly:   &addedLinesOnly,
+			GitignoreEnabled: &gitignoreEnabled,
+		},
+		Rules: []config.Rule{{Message: "hello", Regex: "world"}},
+	}
+
+	converted := ruleSet.ToRules()
+	if converted.Git.Mode != "diff" {
+		t.Fatalf("expected git mode diff, got %q", converted.Git.Mode)
+	}
+	if converted.Git.Diff != "HEAD~1..HEAD" {
+		t.Fatalf("expected git diff HEAD~1..HEAD, got %q", converted.Git.Diff)
+	}
+	if !converted.Git.AddedLinesOnly {
+		t.Fatal("expected git addedLinesOnly true")
+	}
+	if converted.Git.GitignoreEnabled {
+		t.Fatal("expected git gitignoreEnabled false")
+	}
+}
+
 func TestRuleSetToRulesLeavesConsoleColorsEnabledUnsetWhenMissing(t *testing.T) {
 	t.Parallel()
 
@@ -568,6 +646,26 @@ func TestRuleSetToRulesLeavesConsoleColorsEnabledUnsetWhenMissing(t *testing.T) 
 	converted := ruleSet.ToRules()
 	if converted.ConsoleColorsEnabled != nil {
 		t.Fatal("expected consoleColorsEnabled to remain unset")
+	}
+}
+
+func assertGitSettings(t *testing.T, git *config.GitSettings) {
+	t.Helper()
+
+	if git == nil {
+		t.Fatal("expected git settings to be set")
+	}
+	if git.Mode == nil || *git.Mode != "diff" {
+		t.Fatalf("expected git.mode to be diff, got %+v", git.Mode)
+	}
+	if git.Diff == nil || *git.Diff != "HEAD~1..HEAD" {
+		t.Fatalf("expected git.diff to be propagated, got %+v", git.Diff)
+	}
+	if git.AddedLinesOnly == nil || !*git.AddedLinesOnly {
+		t.Fatalf("expected git.addedLinesOnly to be true, got %+v", git.AddedLinesOnly)
+	}
+	if git.GitignoreEnabled == nil || *git.GitignoreEnabled {
+		t.Fatalf("expected git.gitignoreEnabled to be false, got %+v", git.GitignoreEnabled)
 	}
 }
 
