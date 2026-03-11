@@ -9,6 +9,19 @@ reglint init
 reglint analyze --config reglint-rules.yaml
 ```
 
+## Development Checks
+
+For contributor workflows, run the e2e tier that matches your intent:
+
+- `make test-e2e-smoke` runs the fast PR-blocking smoke scenarios.
+- `make test-e2e` runs the full nightly/manual matrix (smoke + full scenarios).
+
+For complete local validation, run:
+
+```bash
+make quality
+```
+
 ## CLI
 
 ```bash
