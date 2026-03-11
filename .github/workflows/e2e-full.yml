@@ -1,0 +1,21 @@
+name: e2e-full
+
+on:
+  schedule:
+    - cron: "0 3 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  e2e-full:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-go@v6
+        with:
+          go-version: "~1.25.8"
+      - name: e2e full matrix
+        if: ${{ hashFiles('**/*.go') != '' }}
+        run: make test-e2e
