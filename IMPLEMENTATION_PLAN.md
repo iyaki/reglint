@@ -1,6 +1,6 @@
 # Implementation Plan (e2e-tests)
 
-**Status:** E2E spec and reference integration tests exist; compiled-binary e2e harness now includes build-once execution, typed scenarios, deterministic assertion catalog, ordering guarantees, replay diagnostics, complete smoke scenario coverage (`E2E-SMOKE-001..006`), complete full-tier scenario coverage (`E2E-FULL-001..015`), local make targets for both smoke and full tiers (`make test-e2e-smoke`, `make test-e2e`), a PR smoke CI gate, and a nightly/manual full CI workflow gate with scenario-level diagnostics in test failures; final verification/docs alignment remains outstanding (Phases 15-19 complete; 5/6 phases complete).
+**Status:** E2E spec and reference integration tests exist; compiled-binary e2e harness now includes build-once execution, typed scenarios, deterministic assertion catalog, ordering guarantees, replay diagnostics, complete smoke scenario coverage (`E2E-SMOKE-001..006`), complete full-tier scenario coverage (`E2E-FULL-001..015`), local make targets for both smoke and full tiers (`make test-e2e-smoke`, `make test-e2e`), a PR smoke CI gate, and a nightly/manual full CI workflow gate with scenario-level diagnostics in test failures; Phase 20 is now in progress with README e2e command guidance completed while full verification evidence remains outstanding.
 **Last Updated:** 2026-03-11
 **Primary Specs:** `specs/e2e-test-suite.md` (related: `specs/testing-and-validations.md`, `specs/cli-analyze.md`, `specs/cli-init.md`, `specs/formatter-json.md`, `specs/formatter-sarif.md`, `specs/git-integration.md`, `specs/core-architecture.md`)
 
@@ -187,7 +187,7 @@ Progress note:
 ## Phase 20: Verification evidence and documentation alignment
 
 **Goal:** Produce reproducible verification evidence and align user/developer docs with implemented e2e commands.
-**Status:** Not started
+**Status:** In progress
 **Paths:** `README.md`, `Makefile`, `.github/workflows/*.yml`, `cmd/reglint/` e2e tests, `IMPLEMENTATION_PLAN.md`
 **Reference pattern:** verification sections in `specs/e2e-test-suite.md` and `specs/testing-and-validations.md`
 
@@ -200,8 +200,8 @@ Progress note:
 ### 20.2 Documentation touchpoints
 
 - [x] Verified e2e command expectations are already documented in specs.
-- [ ] Update `README.md` with e2e smoke/full commands and usage expectations (if implementation scope includes docs update).
-- [ ] Ensure any contributor guidance references the exact make target names.
+- [x] Update `README.md` with e2e smoke/full commands and usage expectations (if implementation scope includes docs update).
+- [x] Ensure any contributor guidance references the exact make target names.
 
 **Definition of Done**
 
@@ -272,9 +272,9 @@ Progress note:
 | Phase 17: Smoke tier implementation (PR gate)               | Complete    |
 | Phase 18: Full matrix implementation (nightly/manual)       | Complete    |
 | Phase 19: Developer tooling and CI gate wiring              | Complete    |
-| Phase 20: Verification evidence and documentation alignment | Not started |
+| Phase 20: Verification evidence and documentation alignment | In progress |
 
-**Remaining effort:** Capture full execution evidence and documentation alignment in Phase 20.
+**Remaining effort:** Capture the remaining full execution evidence in Phase 20 (`make build`, `make test-e2e`, and `make quality`) and record results.
 
 ## Known Existing Work
 
@@ -284,6 +284,7 @@ Progress note:
 - `internal/scan/ignore_test.go` already covers ignore precedence and git candidate-scope ordering; use this as canonical precedence behavior.
 - `internal/output/golden_test.go` and `testdata/golden/*` already enforce deterministic formatter output ordering.
 - `Makefile` now provides `make test-e2e-smoke` and `make test-e2e` for compiled-binary smoke/full scenarios alongside existing `make build`, `make test`, and `make quality` targets.
+- `README.md` now includes a `Development Checks` section documenting `make test-e2e-smoke`, `make test-e2e`, and `make quality` for contributor workflows.
 - `.github/workflows/quality.yml` now includes a PR-only `e2e-smoke` job that runs `make test-e2e-smoke` as the smoke-tier CI gate.
 - `.github/workflows/e2e-full.yml` now includes a nightly scheduled plus manual-dispatch `e2e-full` job that runs `make test-e2e` as the full-tier CI gate.
 - `cmd/reglint/e2e_workflow_test.go` now asserts the full-tier workflow contract (`schedule`, `workflow_dispatch`, and `run: make test-e2e`) to keep CI wiring deterministic.
@@ -315,6 +316,10 @@ Progress note:
 None
 
 ## Verification Log Addendum
+
+- 2026-03-11: `Read README.md` - confirmed user-facing docs did not yet include explicit e2e make-target guidance before the update.
+- 2026-03-11: `make test-e2e-smoke` - passed (`go test -count=1 ./cmd/reglint -run '^TestE2ESmoke'`).
+- 2026-03-11: `git diff -- README.md` - confirmed new `Development Checks` docs include `make test-e2e-smoke` and `make test-e2e` usage.
 
 - 2026-03-11: `go test ./cmd/reglint -run TestE2EFullWorkflowExistsForNightlyAndManualRuns` - failed in RED stage because `.github/workflows/e2e-full.yml` was missing.
 - 2026-03-11: `go test ./cmd/reglint -run TestE2EFullWorkflowExistsForNightlyAndManualRuns` - passed after adding `.github/workflows/e2e-full.yml` and workflow contract coverage in `cmd/reglint/e2e_workflow_test.go`.
