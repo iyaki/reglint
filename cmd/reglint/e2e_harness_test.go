@@ -381,3 +381,25 @@ func TestE2EFull007GitModeOffWorksWhenGitExecutableUnavailable(t *testing.T) {
 	result := harness.mustRunScenario(t, scenario)
 	harness.assertScenarioStderrEmpty(t, scenario, result)
 }
+
+func TestE2EFull008GitModeStagedScansOnlyStagedFiles(t *testing.T) {
+	ensureGitAvailable(t)
+
+	harness := newE2EHarness(t)
+
+	moduleRoot, err := findModuleRoot()
+	if err != nil {
+		t.Fatalf("resolve module root: %v", err)
+	}
+
+	repoDir := t.TempDir()
+	initGitRepo(t, repoDir)
+
+	writeFixture(t, repoDir, "staged.txt", "token=aaa\n")
+	writeFixture(t, repoDir, "unstaged.txt", "token=bbb\n")
+	runGit(t, repoDir, "add", "staged.txt")
+
+	scenario := newE2EFull008Scenario(moduleRoot, repoDir)
+	result := harness.mustRunScenario(t, scenario)
+	harness.assertScenarioStderrEmpty(t, scenario, result)
+}
