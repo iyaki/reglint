@@ -471,3 +471,29 @@ func TestE2EFull011GitEnabledRunOutsideRepoExitsWithSingleError(t *testing.T) {
 	result := harness.mustRunScenario(t, scenario)
 	harness.assertScenarioStderrEmpty(t, scenario, result)
 }
+
+func TestE2EFull012BinaryAndOversizedFilesSkippedWithDeterministicStats(t *testing.T) {
+	harness := newE2EHarness(t)
+
+	moduleRoot, err := findModuleRoot()
+	if err != nil {
+		t.Fatalf("resolve module root: %v", err)
+	}
+
+	fixtureDir := t.TempDir()
+	writeFixture(t, fixtureDir, "scannable.txt", "token=abc\n")
+
+	binaryPath := filepath.Join(fixtureDir, "binary.bin")
+	if err := os.WriteFile(binaryPath, []byte{0x00, 0x01, 0x02}, 0o600); err != nil {
+		t.Fatalf("write binary fixture: %v", err)
+	}
+
+	oversizedPath := filepath.Join(fixtureDir, "oversized.txt")
+	if err := os.WriteFile(oversizedPath, []byte("token=abcdefghij\n"), 0o600); err != nil {
+		t.Fatalf("write oversized fixture: %v", err)
+	}
+
+	scenario := newE2EFull012Scenario(moduleRoot, fixtureDir)
+	result := harness.mustRunScenario(t, scenario)
+	harness.assertScenarioStderrEmpty(t, scenario, result)
+}
