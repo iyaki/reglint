@@ -1,6 +1,6 @@
 # Implementation Plan (e2e-tests)
 
-**Status:** E2E spec and reference integration tests exist; compiled-binary e2e harness now includes build-once execution, typed scenarios, deterministic assertion catalog, ordering guarantees, replay diagnostics, complete smoke scenario coverage (`E2E-SMOKE-001..006`), complete full-tier scenario coverage (`E2E-FULL-001..015`), and local make targets for both smoke and full tiers (`make test-e2e-smoke`, `make test-e2e`), while CI tier gates and final verification/docs alignment remain outstanding (Phases 15-18 complete; Phase 19 in progress; 4/6 phases complete).
+**Status:** E2E spec and reference integration tests exist; compiled-binary e2e harness now includes build-once execution, typed scenarios, deterministic assertion catalog, ordering guarantees, replay diagnostics, complete smoke scenario coverage (`E2E-SMOKE-001..006`), complete full-tier scenario coverage (`E2E-FULL-001..015`), local make targets for both smoke and full tiers (`make test-e2e-smoke`, `make test-e2e`), and a PR smoke CI gate, while nightly/manual full CI wiring and final verification/docs alignment remain outstanding (Phases 15-18 complete; Phase 19 in progress; 4/6 phases complete).
 **Last Updated:** 2026-03-11
 **Primary Specs:** `specs/e2e-test-suite.md` (related: `specs/testing-and-validations.md`, `specs/cli-analyze.md`, `specs/cli-init.md`, `specs/formatter-json.md`, `specs/formatter-sarif.md`, `specs/git-integration.md`, `specs/core-architecture.md`)
 
@@ -13,7 +13,7 @@
 | File-handling and deterministic ordering reference tests                   | `specs/testing-and-validations.md`, `specs/e2e-test-suite.md`                         | `internal/scan/engine_test.go`, `internal/scan/ignore_test.go`, `internal/output/golden_test.go` | Binary/oversized/unreadable handling tests, golden outputs       | ✅ Implemented                                                                                                                                             |
 | Compiled-binary e2e scenario harness                                       | `specs/e2e-test-suite.md`                                                             | `cmd/reglint/e2e_harness_internal_test.go`, `cmd/reglint/e2e_harness_test.go`                    | Build-once harness + typed assertion engine + replay diagnostics | Implemented (foundation + assertion engine + `E2E-SMOKE-001/002/003/004/005/006` + `E2E-FULL-001/002/003/004/005/006/007/008/009/010/011/012/013/014/015`) |
 | PR smoke and nightly/manual full make targets                              | `specs/e2e-test-suite.md`, `specs/testing-and-validations.md`                         | `Makefile`                                                                                       | `make test-e2e-smoke`, `make test-e2e`                           | ✅ Implemented                                                                                                                                             |
-| CI gate policy for e2e tiers                                               | `specs/e2e-test-suite.md`, `specs/testing-and-validations.md`                         | `.github/workflows/*.yml`                                                                        | PR smoke e2e job, nightly scheduled full e2e job                 | Missing                                                                                                                                                    |
+| CI gate policy for e2e tiers                                               | `specs/e2e-test-suite.md`, `specs/testing-and-validations.md`                         | `.github/workflows/*.yml`                                                                        | PR smoke e2e job, nightly scheduled full e2e job                 | Partial (PR smoke gate implemented in `.github/workflows/quality.yml`; nightly/manual full e2e job pending)                                                |
 | Scenario-specific fixture workspaces for path/permission/git edge cases    | `specs/e2e-test-suite.md`                                                             | `testdata/fixtures/`, `testdata/rules/`, `testdata/baseline/`, `testdata/golden/`                | Stable fixture matrix for 21 scenarios                           | Partial (base fixtures exist; dedicated e2e matrix missing)                                                                                                |
 
 ## Phase 15: Scope lock and stale-plan reset
@@ -157,7 +157,7 @@ Progress note:
 ## Phase 19: Developer tooling and CI gate wiring
 
 **Goal:** Add local make targets and CI enforcement for smoke/full e2e tiers.
-**Status:** In progress (local make targets complete; CI jobs pending)
+**Status:** In progress (local make targets complete; PR smoke CI job complete; nightly/manual full CI job and diagnostics verification pending)
 **Paths:** `Makefile`, `.github/workflows/quality.yml`, `.github/workflows/security.yml` (or new e2e workflow files)
 **Reference pattern:** existing job structure in `.github/workflows/quality.yml`
 
@@ -170,7 +170,7 @@ Progress note:
 ### 19.2 CI policy enforcement
 
 - [x] Verified current workflows have no e2e test jobs and no nightly `schedule` trigger.
-- [ ] Add PR smoke e2e job (blocking gate).
+- [x] Add PR smoke e2e job (blocking gate).
 - [ ] Add nightly/manual full e2e job.
 - [ ] Ensure CI outputs include scenario-level diagnostics and replay commands.
 
@@ -274,7 +274,7 @@ Progress note:
 | Phase 19: Developer tooling and CI gate wiring              | In progress |
 | Phase 20: Verification evidence and documentation alignment | Not started |
 
-**Remaining effort:** Add PR/nightly CI gates, and capture full execution evidence/documentation alignment.
+**Remaining effort:** Add nightly/manual full CI gate, verify scenario-level CI diagnostics, and capture full execution evidence/documentation alignment.
 
 ## Known Existing Work
 
@@ -284,6 +284,7 @@ Progress note:
 - `internal/scan/ignore_test.go` already covers ignore precedence and git candidate-scope ordering; use this as canonical precedence behavior.
 - `internal/output/golden_test.go` and `testdata/golden/*` already enforce deterministic formatter output ordering.
 - `Makefile` now provides `make test-e2e-smoke` and `make test-e2e` for compiled-binary smoke/full scenarios alongside existing `make build`, `make test`, and `make quality` targets.
+- `.github/workflows/quality.yml` now includes a PR-only `e2e-smoke` job that runs `make test-e2e-smoke` as the smoke-tier CI gate.
 - `cmd/reglint/e2e_harness_internal_test.go` and `cmd/reglint/e2e_harness_test.go` now provide a compiled-binary build-once harness with typed scenario metadata, deterministic assertion catalog, scenario ordering helpers, and replayable failure diagnostics.
 - `cmd/reglint/e2e_harness_internal_test.go` now defines `newE2ESmoke001Scenario(...)`, and `cmd/reglint/e2e_harness_test.go` executes `E2E-SMOKE-001` as a compiled-binary smoke contract.
 - `cmd/reglint/e2e_harness_internal_test.go` now defines `newE2ESmoke002Scenario(...)`, and `cmd/reglint/e2e_harness_test.go` executes `E2E-SMOKE-002` for invalid-config single-error process-level behavior.
@@ -312,6 +313,11 @@ Progress note:
 None
 
 ## Verification Log Addendum
+
+- 2026-03-11: `Read .github/workflows/quality.yml` - confirmed no PR smoke e2e job existed before implementation.
+- 2026-03-11: `git diff -- .github/workflows/quality.yml` - verified new `e2e-smoke` PR job runs `make test-e2e-smoke`.
+- 2026-03-11: `make test-e2e-smoke` - passed (`go test -count=1 ./cmd/reglint -run '^TestE2ESmoke'`).
+- 2026-03-11: `Edit IMPLEMENTATION_PLAN.md` - marked Phase 19.2 PR smoke CI gate complete and updated remaining effort.
 
 - 2026-03-11: `make test-e2e` - failed before implementation with `No rule to make target 'test-e2e'` (expected RED stage for Phase 19 local full-target work).
 - 2026-03-11: `make test-e2e` - passed after adding the Makefile full-tier target (`go test -count=1 ./cmd/reglint -run '^TestE2E(Smoke|Full)'`).
