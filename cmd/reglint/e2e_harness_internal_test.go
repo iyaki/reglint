@@ -661,6 +661,49 @@ func newE2EFull013Scenario(moduleRoot, fixturePath string) e2EScenario {
 	}
 }
 
+func newE2EFull014Scenario(moduleRoot, fixturePath string) e2EScenario {
+	configPath := filepath.Join(moduleRoot, "testdata", "rules", "example.yaml")
+
+	return e2EScenario{
+		ID:           "E2E-FULL-014",
+		Tier:         "full",
+		Name:         "ignore precedence favors .reglintignore over .ignore over .gitignore",
+		Fixture:      fixturePath,
+		Command:      []string{"analyze", "--config", configPath, "--format", "json", "--git-mode", "staged", "."},
+		ExpectedExit: 0,
+		Assertions: []e2EAssertion{
+			{Type: e2EAssertionJSONFieldEquals, Field: "schemaVersion", Expected: 1},
+			{Type: e2EAssertionJSONFieldEquals, Field: "stats.matches", Expected: 1},
+			{Type: e2EAssertionJSONFieldEquals, Field: "matches.0.filePath", Expected: "ignore-wins.txt"},
+			{Type: e2EAssertionJSONFieldEquals, Field: "matches.0.line", Expected: 1},
+			{Type: e2EAssertionStdoutNotContains, Value: `"filePath":"reglintignore-wins.txt"`},
+		},
+	}
+}
+
+func newE2EFull015Scenario(moduleRoot, fixturePath string) e2EScenario {
+	configPath := filepath.Join(moduleRoot, "testdata", "rules", "example.yaml")
+
+	return e2EScenario{
+		ID:           "E2E-FULL-015",
+		Tier:         "full",
+		Name:         "repeated runs produce stable ordering",
+		Fixture:      fixturePath,
+		Command:      []string{"analyze", "--config", configPath, "--format", "json", "."},
+		ExpectedExit: 0,
+		Assertions: []e2EAssertion{
+			{Type: e2EAssertionJSONFieldEquals, Field: "schemaVersion", Expected: 1},
+			{Type: e2EAssertionJSONFieldEquals, Field: "stats.matches", Expected: 3},
+			{Type: e2EAssertionJSONFieldEquals, Field: "matches.0.filePath", Expected: "a.txt"},
+			{Type: e2EAssertionJSONFieldEquals, Field: "matches.0.line", Expected: 1},
+			{Type: e2EAssertionJSONFieldEquals, Field: "matches.1.filePath", Expected: "a.txt"},
+			{Type: e2EAssertionJSONFieldEquals, Field: "matches.1.line", Expected: 2},
+			{Type: e2EAssertionJSONFieldEquals, Field: "matches.2.filePath", Expected: "b.txt"},
+			{Type: e2EAssertionJSONFieldEquals, Field: "matches.2.line", Expected: 1},
+		},
+	}
+}
+
 func assertRegexMatch(value, pattern, streamName string) error {
 	if pattern == "" {
 		return fmt.Errorf("%s regex pattern is required", streamName)

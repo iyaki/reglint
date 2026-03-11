@@ -1,9 +1,12 @@
 package main
 
 import (
+	"encoding/json"
 	"os"
 	"path/filepath"
+	"reflect"
 	"runtime"
+	"strconv"
 	"strings"
 	"testing"
 )
@@ -525,4 +528,93 @@ func TestE2EFull013UnreadableFilesRecordErrorsWhileScanContinues(t *testing.T) {
 	scenario := newE2EFull013Scenario(moduleRoot, fixtureDir)
 	result := harness.mustRunScenario(t, scenario)
 	harness.assertScenarioStderrEmpty(t, scenario, result)
+}
+
+func TestE2EFull014IgnorePrecedenceDeterministicReglintignoreOverrides(t *testing.T) {
+	ensureGitAvailable(t)
+
+	harness := newE2EHarness(t)
+
+	moduleRoot, err := findModuleRoot()
+	if err != nil {
+		t.Fatalf("resolve module root: %v", err)
+	}
+
+	repoDir := t.TempDir()
+	initGitRepo(t, repoDir)
+
+	writeFixture(t, repoDir, "ignore-wins.txt", "token=ignorewins\n")
+	writeFixture(t, repoDir, "reglintignore-wins.txt", "token=reglintignorewins\n")
+	writeFixture(t, repoDir, ".gitignore", "ignore-wins.txt\nreglintignore-wins.txt\n")
+	writeFixture(t, repoDir, ".ignore", "!ignore-wins.txt\n!reglintignore-wins.txt\n")
+	writeFixture(t, repoDir, ".reglintignore", "reglintignore-wins.txt\n")
+	runGit(t, repoDir, "add", "-f", "ignore-wins.txt", "reglintignore-wins.txt")
+
+	scenario := newE2EFull014Scenario(moduleRoot, repoDir)
+	result := harness.mustRunScenario(t, scenario)
+	harness.assertScenarioStderrEmpty(t, scenario, result)
+}
+
+func TestE2EFull015RepeatedRunsProduceStableOrdering(t *testing.T) {
+	harness := newE2EHarness(t)
+
+	moduleRoot, err := findModuleRoot()
+	if err != nil {
+		t.Fatalf("resolve module root: %v", err)
+	}
+
+	fixtureDir := t.TempDir()
+	writeFixture(t, fixtureDir, "b.txt", "token=bbb\n")
+	writeFixture(t, fixtureDir, "a.txt", "token=aaa\ntoken=ccc\n")
+
+	scenario := newE2EFull015Scenario(moduleRoot, fixtureDir)
+	first := harness.mustRunScenario(t, scenario)
+	second := harness.mustRunScenario(t, scenario)
+	third := harness.mustRunScenario(t, scenario)
+
+	harness.assertScenarioStderrEmpty(t, scenario, first)
+	harness.assertScenarioStderrEmpty(t, scenario, second)
+	harness.assertScenarioStderrEmpty(t, scenario, third)
+
+	firstOrder := extractMatchOrderFromJSON(t, first.Stdout)
+	secondOrder := extractMatchOrderFromJSON(t, second.Stdout)
+	thirdOrder := extractMatchOrderFromJSON(t, third.Stdout)
+
+	if !reflect.DeepEqual(firstOrder, secondOrder) {
+		t.Fatalf("expected second run ordering %v to equal first run %v", secondOrder, firstOrder)
+	}
+	if !reflect.DeepEqual(firstOrder, thirdOrder) {
+		t.Fatalf("expected third run ordering %v to equal first run %v", thirdOrder, firstOrder)
+	}
+}
+
+func extractMatchOrderFromJSON(t *testing.T, payload string) []string {
+	t.Helper()
+
+	var document struct {
+		Matches []struct {
+			FilePath string `json:"filePath"`
+			Line     int    `json:"line"`
+			Column   int    `json:"column"`
+			Severity string `json:"severity"`
+			Message  string `json:"message"`
+		} `json:"matches"`
+	}
+	if err := json.Unmarshal([]byte(payload), &document); err != nil {
+		t.Fatalf("decode json output: %v", err)
+	}
+
+	order := make([]string, 0, len(document.Matches))
+	for _, match := range document.Matches {
+		order = append(
+			order,
+			match.FilePath+":"+
+				strconv.Itoa(match.Line)+":"+
+				strconv.Itoa(match.Column)+":"+
+				match.Severity+":"+
+				match.Message,
+		)
+	}
+
+	return order
 }
