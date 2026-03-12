@@ -941,11 +941,30 @@ func resolveIgnoreSettings(effective rules.RuleSet, gitSettings rules.GitSetting
 	if len(effective.IgnoreFiles) > 0 {
 		settings.Files = append([]string{}, effective.IgnoreFiles...)
 	}
+	if !gitSettings.GitignoreEnabled {
+		settings.Files = removeIgnoreFile(settings.Files, ".gitignore")
+	}
 	if settings.Enabled && gitSettings.GitignoreEnabled {
 		settings.Files = mergeIgnoreFiles([]string{".gitignore"}, settings.Files)
 	}
 
 	return settings
+}
+
+func removeIgnoreFile(files []string, target string) []string {
+	if len(files) == 0 {
+		return nil
+	}
+
+	filtered := make([]string, 0, len(files))
+	for _, file := range files {
+		if file == target {
+			continue
+		}
+		filtered = append(filtered, file)
+	}
+
+	return filtered
 }
 
 func wasFlagProvided(flagSet *flag.FlagSet, name string) bool {
