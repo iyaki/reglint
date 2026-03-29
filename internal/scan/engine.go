@@ -19,6 +19,7 @@ import (
 )
 
 var readFile = os.ReadFile
+var walkRootTree = filepath.Walk
 
 const (
 	binaryProbeSize = 8000
@@ -78,11 +79,11 @@ func collectRootFiles(
 	files := make([]string, 0)
 	skipped := 0
 
-	if err := filepath.WalkDir(root, func(filePath string, entry os.DirEntry, err error) error {
+	if err := walkRootTree(root, func(filePath string, info os.FileInfo, err error) error {
 		if err != nil {
 			return err
 		}
-		if entry.IsDir() {
+		if info.IsDir() {
 			return nil
 		}
 
@@ -101,7 +102,7 @@ func collectRootFiles(
 		selected, fileSkipped, err := evaluateFile(
 			filePath,
 			relPath,
-			entry,
+			fs.FileInfoToDirEntry(info),
 			include,
 			exclude,
 			matcher,
