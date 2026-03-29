@@ -35,7 +35,7 @@ format:
 	gofmt -w $$(git ls-files '*.go')
 
 lint:
-	golangci-lint run
+	golangci-lint run --timeout 5m
 
 test:
 	go test ./...

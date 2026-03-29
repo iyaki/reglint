@@ -4,29 +4,6 @@ run:
   timeout: 5m
   tests: true
 
-#   gocyclo:
-#     min-complexity: 15
-#   govet:
-#     enable-all: true
-#     disable:
-#       - fieldalignment
-#   lll:
-#     line-length: 120
-#     tab-width: 2
-#   revive:
-#     rules:
-#       - name: exported
-#       - name: indent-error-flow
-#       - name: if-return
-#       - name: range
-#       - name: var-declaration
-#       - name: var-naming
-#         arguments:
-#           - ["ID", "JSON", "SARIF", "YAML", "CLI", "HTTP", "URL"]
-#   errcheck:
-#     exclude-functions:
-#       - (*os.File).Close
-
 linters:
   default: fast
   enable:
@@ -35,6 +12,9 @@ linters:
   disable:
     - depguard
     - wsl
+  settings:
+    errcheck:
+      check-type-assertions: true
 
 issues:
   max-same-issues: 0

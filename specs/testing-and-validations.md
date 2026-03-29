@@ -69,7 +69,6 @@ make arch
 
 - `/.golangci.yml` - lint configuration
 - `/.go-arch-lint.yml` - architecture rules
-- `/.tool-versions` - pinned golangci-lint version
 - `/lefthook.yml` - git hook configuration
 
 ### CI coverage
@@ -217,6 +216,7 @@ make arch
 ## Test Execution
 
 - `make test` runs unit and integration tests.
+- `make lint` is the canonical lint entrypoint and uses `/.golangci.yml`.
 - `make test-flaky` reruns the full test suite with shuffle to catch flaky behavior (`FLAKY_COUNT` default `20`).
 - Optional: `UPDATE_GOLDEN=1 make test` to refresh golden files.
 - E2E command targets for implementation are:
