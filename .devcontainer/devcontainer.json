@@ -37,11 +37,6 @@
 			"source": "${localWorkspaceFolder}/.devcontainer/pull-git-lfs-artifacts-override.sh",
 			"target": "/usr/local/share/pull-git-lfs-artifacts.sh",
 			"type": "bind"
-		},
-		{
-			"source": "${localWorkspaceFolderBasename}-gopath",
-			"target": "/go",
-			"type": "volume"
 		}
 	],
 
