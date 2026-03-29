@@ -79,14 +79,14 @@
 		"ghcr.io/devcontainers/features/go:": {
 			"version": "1.25"
 		},
-		"ghcr.io/devcontainers-extra/features/shfmt:1": {},
-		"ghcr.io/devcontainers-extra/features/npm-packages:1": {
+		"ghcr.io/devcontainers-extra/features/shfmt:": {},
+		"ghcr.io/devcontainers-extra/features/npm-packages:": {
 			"packages": "repomix"
 		},
-		// "ghcr.io/devcontainers-extra/features/uv:1": {},
-		"ghcr.io/devcontainers-extra/features/opencode:1": {},
-		"ghcr.io/iyaki/devcontainer-features/opencode-ralph:1": {},
-		"ghcr.io/iyaki/devcontainer-features/lefthook:1": {}
+		// "ghcr.io/devcontainers-extra/features/uv:": {},
+		"ghcr.io/devcontainers-extra/features/opencode:": {},
+		"ghcr.io/iyaki/devcontainer-features/ralph:": {},
+		"ghcr.io/iyaki/devcontainer-features/lefthook:": {}
 	},
 
 	"customizations": {
