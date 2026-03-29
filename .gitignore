@@ -6,3 +6,4 @@ report.json
 gremlins-output.json
 *.tmp
 /oom
+/bin
