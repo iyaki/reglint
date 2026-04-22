@@ -173,3 +173,67 @@ Run full local quality checks:
 ```bash
 make quality
 ```
+
+## CI Recipe (GitHub Actions)
+
+Example workflow that runs RegLint on pull requests and uploads SARIF results:
+
+```yaml
+name: reglint
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  analyze:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+
+      - name: Build reglint
+        run: make build
+
+      - name: Run reglint and emit SARIF
+        run: |
+          mkdir -p artifacts
+          ./bin/reglint analyze \
+            --config reglint-rules.yaml \
+            --format console,sarif \
+            --out-sarif artifacts/reglint.sarif
+
+      - name: Upload SARIF
+        if: always()
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: artifacts/reglint.sarif
+```
+
+Notes:
+
+- Keep `--format console,sarif` so logs stay visible in job output while SARIF is archived.
+- If you use `--fail-on`, findings at that threshold fail the job with exit code `2`.
+- `if: always()` on SARIF upload keeps diagnostics available even when analyze fails.
+
+## Troubleshooting
+
+- `config file not found: reglint-rules.yaml`
+  - Run `reglint init` in the repository root or pass `--config <path>`.
+- `effective --git-mode=diff requires --git-diff`
+  - Add `--git-diff <target>` when using `--git-mode diff`.
+- `--out-json is required` or `--out-sarif is required`
+  - When selecting multiple formats, provide an output file path for each non-console formatter.
+- Command exits `2` in CI
+  - This is expected when `--fail-on` threshold is met; tune `failOn` in config or CLI if needed.
+- No findings in staged/diff mode when you expected matches
+  - Verify file selection (`--git-mode`, `--git-diff`) and ignore settings (`--no-gitignore`, `--no-ignore-files`).
