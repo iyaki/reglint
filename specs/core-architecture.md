@@ -12,7 +12,7 @@
 - Keep the scanning engine deterministic and reproducible across platforms.
 - Make output generation pluggable across multiple formats.
 - Separate configuration, scanning, and rendering concerns.
-- Ensure the core can be reused by future integrations (e.g., reviewdog wrapper).
+- Ensure the core can be reused by future integrations (e.g., editor plugins, alternative CI consumers).
 
 ### Non-Goals
 

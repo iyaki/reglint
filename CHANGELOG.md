@@ -6,6 +6,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+## [1.0.0] - 2026-09-29
+
+First stable release — no functional changes since 0.2.1. As of this version, RegLint commits to backward compatibility of its public surface: the `reglint-rules.yaml` rule schema, the `analyze`/`init`/`version` commands with their flags and exit codes (`0` success, `1` error, `2` `--fail-on` threshold met), the `console`, `json`, `sarif`, and `github` output formats, the baseline file format, and the ignore-file precedence. Breaking changes ship only in a new major version.
+
+### Changed
+
+- Specs aligned with reality: PR annotations ship natively via `--format github` and are consumed by the `reglint/reglint-action` marketplace action; the once-planned reviewdog wrapper was never built and is no longer planned.
+
 ## [0.2.1] - 2026-09-26
 
 ### Fixed
