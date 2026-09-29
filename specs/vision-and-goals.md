@@ -28,9 +28,5 @@ RegLint is a tool designed to help developers enforce custom code quality rules 
   - Local scans in a repository.
   - Pre-commit checks.
   - CI gate checks.
-  - PR annotations (via reviewdog in a separate repository).
+  - PR annotations via the native `--format github` output, consumed by the separate `reglint/reglint-action` marketplace action.
 - Platforms: Linux, macOS, Windows.
-
-## Appendices
-
-- PR annotation integration will be developed in a separate repository using reviewdog: https://github.com/reviewdog/reviewdog

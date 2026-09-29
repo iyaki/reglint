@@ -1,6 +1,6 @@
 # Implementation Plan (formatter-github)
 
-**Status:** Done — Phases 1–4 done (`96c2237` latest code/docs); Phase 5 verification done 2026-09-15; only spec enum deltas remain blocked pending user approval.
+**Status:** Done — all phases complete; the pending spec enum deltas were applied and verified in-tree 2026-09-29 (`github` present in all formats enums).
 **Last Updated:** 2026-09-15
 **Primary Specs:** `specs/formatter-github.md` (related: `specs/formatter.md`, `specs/formatter-sarif.md`, `specs/cli-analyze.md`, `specs/testing-and-validations.md`)
 
@@ -15,7 +15,7 @@
 | Unit + golden tests | `specs/formatter-github.md`, `specs/testing-and-validations.md` | `internal/output/github_test.go`, `testdata/golden/github.txt` (new) | Golden + targeted cases | ✅ Done (`1930576`, in `github_test.go`; `golden_test.go` untouched) |
 | CLI + process tests | `specs/testing-and-validations.md` | `internal/cli/analyze_output_test.go`, `internal/cli/cli_test.go`, `cmd/reglint/main_test.go` | `--format github` contracts | ✅ Done (`e8598e2`, in `analyze_output_test.go`/`analyze_handle_test.go`/`main_test.go`; `cli_test.go` untouched) |
 | Docs (README, CI example) | `specs/formatter-github.md` | `README.md` | Formats list + PR annotations example | ✅ Done (`96c2237`) |
-| Spec deltas for `github` FormatID | `specs/cli-analyze.md`, `specs/cli.md`, `specs/formatter.md` | spec files only | Formats enum updates | ⬜ Blocked pending user approval (AGENTS.md: update specs only when asked) |
+| Spec deltas for `github` FormatID | `specs/cli-analyze.md`, `specs/cli.md`, `specs/formatter.md` | spec files only | Formats enum updates | ✅ Done (`5f1af23`) |
 
 ## Phase 1: Formatter core in `internal/output`
 
@@ -100,13 +100,13 @@
 ## Phase 4: Docs and spec-index alignment
 
 **Goal:** Users can discover the format; spec references stay coherent.
-**Status:** Done (README, 2026-09-15) — spec enum deltas blocked pending user approval
+**Status:** Done (2026-09-15) — spec enum deltas applied in `5f1af23`
 **Paths:** `README.md`, `specs/README.md` (already indexed), `specs/cli-analyze.md`, `specs/cli.md`, `specs/formatter.md`
 
 ### 4.1 Docs checklist
 
 - [x] README.md:7 formats list; README Output Formats section adds `github` stdout rule (stdout even alongside other formats — no out flag) and a combined-format example; new "CI Recipe: PR Annotations (GitHub Actions)" section after the SARIF recipe with `--git-mode diff --git-added-lines-only` per spec notes.
-- [ ] Spec deltas (formats enums) in `specs/cli-analyze.md:85,155,199`, `specs/cli.md:16`, `specs/formatter.md:84` — **[ ] pending user approval**: AGENTS.md says update specs only when asked.
+- [x] Spec deltas (formats enums) in `specs/cli-analyze.md:85,155,199`, `specs/cli.md:16`, `specs/formatter.md:84` — applied in `5f1af23`; verified in-tree 2026-09-29.
 
 **Definition of Done**
 
@@ -114,7 +114,7 @@
 
 **Risks/Dependencies**
 
-- Blocked item: spec enum deltas (4.1 second bullet).
+- Resolved: spec enum deltas (4.1 second bullet) applied in `5f1af23`.
 
 ## Phase 5: Final verification
 
@@ -169,10 +169,10 @@
 | Phase 1: Formatter core in `internal/output` | Done (`1930576`) |
 | Phase 2: Registry and CLI wiring | Done (`e8598e2`) |
 | Phase 3: Tests | Done (`1930576`, `e8598e2`) |
-| Phase 4: Docs and spec-index alignment | README done (`96c2237`); spec deltas blocked on user approval |
+| Phase 4: Docs and spec-index alignment | README done (`96c2237`); spec deltas done (`5f1af23`) |
 | Phase 5: Final verification | Done (2026-09-15) |
 
-**Remaining effort:** None for implementation — all phases done. Only the spec enum deltas (4.1 second bullet) stay blocked pending user approval.
+**Remaining effort:** None — all phases done, including the spec enum deltas (applied in `5f1af23`).
 
 ## Known Existing Work
 
@@ -186,4 +186,4 @@
 ## Manual Deployment Tasks
 
 - Manual QA in a real GitHub repository: run a `pull_request` workflow using `--format github` and confirm annotations appear in the run summary and inline in the PR Files changed view (spec Verifications, formatter-github.md:159). Cannot be verified locally.
-- Optional follow-up (not deployment-blocking): decide whether reglint-action marketplace workflow docs should mention `--format github` vs reviewdog/SARIF (spec Non-Goals defers this to `specs/release-process.md`).
+- Resolved 2026-09-15: reglint-action v1.1.0 runs `reglint analyze --format github` natively (no reviewdog); SARIF remains available for consumers wanting external annotation tooling.
