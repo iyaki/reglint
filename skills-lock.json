@@ -4,12 +4,14 @@
     "skill-creator": {
       "source": "anthropics/skills",
       "sourceType": "github",
-      "computedHash": "a096b9af85c9d954374ebe3f7a23b5b7737ed3f35fe2a8f5893742c4e00dba1c"
+      "skillPath": "skills/skill-creator/SKILL.md",
+      "computedHash": "5ea13a6d9f0d4bb694405d79acd00cadec0d21bb138c4dd10fcf3c500cb835c2"
     },
     "spec-creator": {
       "source": "iyaki/ralph",
       "sourceType": "github",
-      "computedHash": "f9bb9884230313ba4a62ecc4d6a299b85c9df4584c40b80504f6f43d90defff8"
+      "skillPath": ".agents/skills/spec-creator/SKILL.md",
+      "computedHash": "30d745eb65ac5d51a1e161937dae6bc5080a24427a66c5f41bcb1bac34034e1f"
     }
   }
 }
